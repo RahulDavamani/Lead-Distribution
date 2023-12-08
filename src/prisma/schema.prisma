@@ -7,8 +7,43 @@ datasource db {
    url      = env("DATABASE_URL")
 }
 
-model LMRole {
+model LMRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
+
+   name        String
+   description String?
+
+   ghlContactStatus            String
+   waitTimeForCustomerResponse Int?
+
+   notification   LMRuleNotification? @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   notificationId String?             @unique
+}
+
+model LMRuleNotification {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+   role      LMRule?
+
+   notificationType     String
+   notificationAttempts LMRuleNotificationAttempt[]
+
+   escalateToSupervisor   Boolean
+   supervisorTextTemplate String
+}
+
+model LMRuleNotificationAttempt {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num          Int
+   textTemplate String
+   waitTime     Int
+
+   roleNotification   LMRuleNotification? @relation(fields: [roleNotificationId], references: [id])
+   roleNotificationId String?
 }
