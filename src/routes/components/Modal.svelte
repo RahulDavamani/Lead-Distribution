@@ -2,13 +2,15 @@
 	import Icon from '@iconify/svelte';
 
 	export let showModal: boolean = true;
-	export let title: string | undefined = undefined;
 	export let closeModal: boolean | (() => void) = true;
+	export let title: string | undefined = undefined;
+	export let classes: string = '';
+	export let boxClasses: string = '';
 </script>
 
 {#if showModal}
-	<div class="modal modal-open">
-		<div class="modal-box">
+	<div class="modal modal-open {classes}">
+		<div class="modal-box {boxClasses}">
 			<div class="flex justify-between items-center mb-4">
 				{#if title}
 					<div class="text-lg font-bold">{title}</div>
