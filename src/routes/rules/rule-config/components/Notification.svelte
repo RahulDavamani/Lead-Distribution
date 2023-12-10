@@ -4,9 +4,11 @@
 	import FormControl from '../../../components/FormControl.svelte';
 
 	$: ({
-		rule: { notification },
-		zodErrors
+		rule: { notification }
 	} = $ruleConfig);
+
+	$: if ($ruleConfig.rule.notification && $ruleConfig.rule.notification.escalateToSupervisor === false)
+		$ruleConfig.rule.notification.supervisorTextTemplate = '';
 
 	const addNotificationAttempt = () => {
 		if ($ruleConfig.rule.notification && notification)

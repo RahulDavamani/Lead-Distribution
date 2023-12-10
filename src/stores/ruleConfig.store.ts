@@ -1,7 +1,11 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import type { Rule } from '../zod/ruleSchema';
 import type { Affiliate, Operator } from '@prisma/client';
-import type { TRPCZodErrors } from '../trpc/trpcErrorhandler';
+import { trpcClientErrorHandler, type TRPCZodErrors } from '../trpc/trpcErrorhandler';
+import { page } from '$app/stores';
+import { ui } from './ui.store';
+import { trpc } from '../trpc/client';
+import { invalidateAll } from '$app/navigation';
 
 export interface RuleConfig {
 	init: boolean;
@@ -36,6 +40,44 @@ export const ruleConfig = (() => {
 		affiliates: []
 	});
 
+	const saveRule = async () => {
+		ui.setLoader({ title: 'Saving Rule' });
+		const $page = get(page);
+		const { rule } = get(ruleConfig);
+
+		const { rule: updatedRule } = await trpc($page)
+			.rule.saveRule.query(rule)
+			.catch((e) => trpcClientErrorHandler<Rule>(e, (e) => update((state) => ({ ...state, zodErrors: e.zodErrors }))));
+
+		update((state) => ({ ...state, rule: updatedRule }));
+		window.history.replaceState(history.state, '', `/rules/rule-config?id=${updatedRule.id}`);
+
+		ui.showToast({
+			class: 'alert-success',
+			title: 'Rule Updated Successfully'
+		});
+		invalidateAll();
+		ui.setLoader();
+	};
+
+	const deleteRule = async () => {
+		ui.setLoader({ title: 'Deleting Rule' });
+		const $page = get(page);
+		const {
+			rule: { id }
+		} = get(ruleConfig);
+
+		if (id) await trpc($page).rule.deleteRole.query({ id }).catch(trpcClientErrorHandler);
+
+		ui.showToast({
+			class: 'alert-success',
+			title: 'Rule Deleted Successfully'
+		});
+		invalidateAll();
+		ui.setLoader();
+		window.location.href = '/rules';
+	};
+
 	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
 		update((state) => ({
 			...state,
@@ -46,5 +88,5 @@ export const ruleConfig = (() => {
 		}));
 	};
 
-	return { subscribe, set, update, init };
+	return { subscribe, set, update, init, saveRule, deleteRule };
 })();

@@ -24,11 +24,12 @@
 	<div class="divider mt-1" />
 	<div class="flex flex-col gap-4">
 		{#each rules as { id, name }}
-			<div class="card border shadow p-4 flex flex-row justify-between">
+			<a href={`/rules/rule-config?id=${id}`} class="card border shadow p-4 flex flex-row justify-between">
 				<div>{name}</div>
 				<button
 					class="btn btn-sm btn-square btn-ghost btn-error"
-					on:click={async () => {
+					on:click={async (e) => {
+						e.preventDefault();
 						ui.setLoader({ title: 'Deleting Rule' });
 						await trpc($page).rule.deleteRole.query({ id }).catch(trpcClientErrorHandler);
 						ui.showToast({
@@ -41,14 +42,9 @@
 				>
 					<Icon icon="mdi:delete" width={22} class="text-error" />
 				</button>
-			</div>
+			</a>
 		{:else}
 			<div class="text-center mt-10">No Rule Found</div>
 		{/each}
 	</div>
-	<!-- {#each rules as rule}
-      <div>
-         {rule.}
-      </div>
-   {/each} -->
 </div>

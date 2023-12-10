@@ -47,7 +47,7 @@ model LMRuleNotification {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
-   role      LMRule?
+   rule      LMRule?
 
    notificationType     String
    notificationAttempts LMRuleNotificationAttempt[]
@@ -65,6 +65,6 @@ model LMRuleNotificationAttempt {
    textTemplate String
    waitTime     Int
 
-   roleNotification   LMRuleNotification? @relation(fields: [roleNotificationId], references: [id])
-   roleNotificationId String?
+   ruleNotification   LMRuleNotification? @relation(fields: [ruleNotificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   ruleNotificationId String?
 }

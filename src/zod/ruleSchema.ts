@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const ruleSchema = z.object({
 	id: z.string().nullable(),
 	name: z.string().min(1),
-	description: z.string().min(1),
+	description: z.string(),
 
 	ghlContactStatus: z.string().min(1),
 	waitTimeForCustomerResponse: z.number().nullable(),
@@ -16,13 +16,13 @@ export const ruleSchema = z.object({
 				z.object({
 					id: z.string().nullable(),
 					num: z.number(),
-					textTemplate: z.string().min(1),
+					textTemplate: z.string(),
 					waitTime: z.number()
 				})
 			),
 
 			escalateToSupervisor: z.boolean(),
-			supervisorTextTemplate: z.string().min(1)
+			supervisorTextTemplate: z.string()
 		})
 		.nullable(),
 

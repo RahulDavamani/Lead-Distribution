@@ -43,26 +43,44 @@ export const ruleRouter = router({
 					affiliates
 				}
 			}) => {
+				let notificationId = null;
+				if (notification) {
+					await prisma.lMRuleNotificationAttempt.deleteMany({
+						where: { ruleNotificationId: notification.id ?? '' }
+					});
+					notificationId = (
+						await prisma.lMRuleNotification.upsert({
+							where: { id: id ?? '' },
+							create: {
+								notificationType: notification.notificationType,
+								escalateToSupervisor: notification.escalateToSupervisor,
+								supervisorTextTemplate: notification.supervisorTextTemplate,
+								notificationAttempts: {
+									// eslint-disable-next-line @typescript-eslint/no-unused-vars
+									create: notification.notificationAttempts.map(({ id, ...values }) => ({ ...values }))
+								}
+							},
+							update: {
+								notificationType: notification.notificationType,
+								escalateToSupervisor: notification.escalateToSupervisor,
+								supervisorTextTemplate: notification.supervisorTextTemplate,
+								notificationAttempts: {
+									// eslint-disable-next-line @typescript-eslint/no-unused-vars
+									create: notification.notificationAttempts.map(({ id, ...values }) => ({ ...values }))
+								}
+							}
+						})
+					).id;
+				} else await prisma.lMRuleNotification.deleteMany({ where: { rule: { id: id ?? '' } } });
+
 				const rule = await prisma.lMRule.upsert({
-					where: { id: id ?? undefined },
+					where: { id: id ?? '' },
 					create: {
 						name,
 						description,
 						ghlContactStatus,
 						waitTimeForCustomerResponse,
-						notification: notification
-							? {
-									create: {
-										notificationType: notification.notificationType,
-										notificationAttempts: {
-											// eslint-disable-next-line @typescript-eslint/no-unused-vars
-											create: notification.notificationAttempts.map(({ id, ...values }) => ({ ...values }))
-										},
-										escalateToSupervisor: notification.escalateToSupervisor,
-										supervisorTextTemplate: notification.supervisorTextTemplate
-									}
-							  }
-							: undefined,
+						notificationId,
 						operators: { connect: operators },
 						affiliates: { connect: affiliates }
 					},
@@ -71,34 +89,7 @@ export const ruleRouter = router({
 						description,
 						ghlContactStatus,
 						waitTimeForCustomerResponse,
-						notification: notification
-							? {
-									upsert: {
-										where: { id: notification.id ?? undefined },
-										create: {
-											notificationType: notification.notificationType,
-											notificationAttempts: {
-												// eslint-disable-next-line @typescript-eslint/no-unused-vars
-												create: notification.notificationAttempts.map(({ id, ...values }) => ({ ...values }))
-											},
-											escalateToSupervisor: notification.escalateToSupervisor,
-											supervisorTextTemplate: notification.supervisorTextTemplate
-										},
-										update: {
-											notificationType: notification.notificationType,
-											notificationAttempts: {
-												upsert: notification.notificationAttempts.map(({ id, ...values }) => ({
-													where: { id: id ?? undefined },
-													create: { ...values },
-													update: { ...values }
-												}))
-											},
-											escalateToSupervisor: notification.escalateToSupervisor,
-											supervisorTextTemplate: notification.supervisorTextTemplate
-										}
-									}
-							  }
-							: { delete: true },
+						notificationId,
 						operators: { set: operators },
 						affiliates: { set: affiliates }
 					},

@@ -11,6 +11,6 @@
 		overlay ? 'z-50 bg-base-200 bg-opacity-60' : '-z-50'
 	} flex flex-col justify-center items-center`}
 >
-	<Circle2 {size} colorOuter="hsl(var(--p))" colorCenter="hsl(var(--s))" colorInner="hsl(var(--a))" />
+	<Circle2 {size} colorOuter="oklch(var(--p))" colorCenter="oklch(var(--s))" colorInner="oklch(var(--a))" />
 	<div class="font-semibold mt-5 bg-base-200 p-2 rounded-box">{title} ...</div>
 </div>
