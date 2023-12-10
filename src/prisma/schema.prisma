@@ -7,6 +7,24 @@ datasource db {
    url      = env("DATABASE_URL")
 }
 
+model Operator {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   name  String
+   rules LMRule[]
+}
+
+model Affiliate {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   name  String
+   rules LMRule[]
+}
+
 model LMRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -20,6 +38,9 @@ model LMRule {
 
    notification   LMRuleNotification? @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    notificationId String?             @unique
+
+   operators  Operator[]
+   affiliates Affiliate[]
 }
 
 model LMRuleNotification {

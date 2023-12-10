@@ -3,28 +3,22 @@ import { ruleSchema } from '../../zod/ruleSchema';
 import { procedure, router } from '../server';
 import { prisma } from '../../prisma/prisma';
 
+const ruleInclude = {
+	notification: {
+		include: { notificationAttempts: true }
+	}
+};
+
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
-		const rules = await prisma.lMRule.findMany({
-			include: {
-				notification: {
-					select: {
-						notificationAttempts: { select: { id: true } }
-					}
-				}
-			}
-		});
+		const rules = await prisma.lMRule.findMany({ include: ruleInclude });
 		return { rules };
 	}),
 
 	getById: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
 		const rule = await prisma.lMRule.findUnique({
 			where: { id },
-			include: {
-				notification: {
-					include: { notificationAttempts: true }
-				}
-			}
+			include: ruleInclude
 		});
 		return { rule };
 	}),
@@ -32,7 +26,18 @@ export const ruleRouter = router({
 	saveRule: procedure
 		.input(ruleSchema)
 		.query(
-			async ({ input: { id, name, description, ghlContactStatus, waitTimeForCustomerResponse, notification } }) => {
+			async ({
+				input: {
+					id,
+					name,
+					description,
+					ghlContactStatus,
+					waitTimeForCustomerResponse,
+					notification,
+					operators,
+					affiliates
+				}
+			}) => {
 				const rule = await prisma.lMRule.upsert({
 					where: { id: id ?? undefined },
 					create: {
@@ -52,7 +57,9 @@ export const ruleRouter = router({
 										supervisorTextTemplate: notification.supervisorTextTemplate
 									}
 							  }
-							: undefined
+							: undefined,
+						operators: { connect: operators },
+						affiliates: { connect: affiliates }
 					},
 					update: {
 						name,
@@ -86,13 +93,11 @@ export const ruleRouter = router({
 										}
 									}
 							  }
-							: { delete: true }
+							: { delete: true },
+						operators: { set: operators },
+						affiliates: { set: affiliates }
 					},
-					include: {
-						notification: {
-							include: { notificationAttempts: true }
-						}
-					}
+					include: ruleInclude
 				});
 
 				return { rule };

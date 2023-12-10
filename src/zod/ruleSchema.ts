@@ -24,7 +24,10 @@ export const ruleSchema = z.object({
 			escalateToSupervisor: z.boolean(),
 			supervisorTextTemplate: z.string().min(1)
 		})
-		.nullable()
+		.nullable(),
+
+	operators: z.array(z.object({ id: z.string().min(1) })),
+	affiliates: z.array(z.object({ id: z.string().min(1) }))
 });
 
 export type Rule = z.infer<typeof ruleSchema>;
