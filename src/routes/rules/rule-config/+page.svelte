@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import FormControl from '../../components/FormControl.svelte';
 
 	let waitForReply = true;
 	let notification = true;
@@ -11,42 +12,51 @@
 <div class="font-bold text-2xl text-center mt-10">Distribution Rule</div>
 
 <div class="container mx-auto mb-10">
-	<div class="form-control w-full">
-		<div class="label font-semibold">Rule Name</div>
+	<FormControl label="Rule Name">
 		<input type="text" placeholder="Type here" class="input input-bordered" />
-	</div>
-	<div class="form-control w-full">
-		<div class="label font-semibold">Description</div>
+	</FormControl>
+	<FormControl label="Description">
 		<textarea placeholder="Type here" class="textarea textarea-bordered" />
-	</div>
+	</FormControl>
 	<div class="divider" />
 
-	<div class="text-lg font-semibold mb-2">Campaign Operators:</div>
-
-	<div class="px-2">
-		{#each campaignOperators as _, i}
-			<div class="form-control">
-				<label class="label cursor-pointer justify-start gap-4">
-					<input type="checkbox" class="checkbox" />
-					<span class="font-semibold">Operator {i + 1}</span>
-				</label>
+	<div class="flex gap-4">
+		<div class="flex-grow card border p-4">
+			<div class="text-lg font-semibold mb-2">Campaign Operators:</div>
+			<div class="px-2">
+				{#each campaignOperators as _, i}
+					<FormControl inputType="In" label="Operator {i + 1}">
+						<input type="checkbox" class="checkbox" />
+					</FormControl>
+				{:else}
+					<div class="text-center">No Operators</div>
+				{/each}
 			</div>
-		{:else}
-			<div class="text-center">No Operators</div>
-		{/each}
+		</div>
+		<div class="flex-grow card border p-4">
+			<div class="text-lg font-semibold mb-2">Campaign Operators:</div>
+			<div class="px-2">
+				{#each campaignOperators as _, i}
+					<FormControl inputType="In" label="Operator {i + 1}">
+						<input type="checkbox" class="checkbox" />
+					</FormControl>
+				{:else}
+					<div class="text-center">No Operators</div>
+				{/each}
+			</div>
+		</div>
 	</div>
 	<div class="divider" />
 
 	<div class="text-lg font-semibold mb-2">New Contact to GHL</div>
-	<div class="form-control w-full">
-		<div class="label font-semibold">New Contact Status</div>
+	<FormControl label="New Contact Status">
 		<div class="join">
 			<select placeholder="Type here" class="select select-bordered w-full join-item">
 				<option>Created</option>
 			</select>
 			<div class="btn btn-primary join-item">JSON from Text</div>
 		</div>
-	</div>
+	</FormControl>
 	<div class="divider" />
 
 	<div class="form-control flex flex-row items-center">
@@ -63,29 +73,27 @@
 	</div>
 	<div class="divider" />
 
-	<div class="form-control mb-2">
-		<label class="label cursor-pointer justify-start gap-4">
-			<input type="checkbox" class="checkbox" bind:checked={notification} />
-			<span class="font-semibold">Notification</span> (if no reply from Customer)
-		</label>
-	</div>
+	<FormControl
+		inputType="In"
+		label="Notification"
+		labelClasses="font-semibold"
+		secLabel="(if no reply from Customer)"
+		secLabelClasses="text-sm"
+	>
+		<input type="checkbox" class="checkbox" bind:checked={notification} />
+	</FormControl>
 
 	{#if notification}
 		<div class="px-4">
 			<div class="label font-semibold">Send Notification to Operators</div>
 			<div class="px-2 mb-4">
-				<div class="form-control">
-					<label class="label cursor-pointer justify-start gap-3">
-						<input type="radio" name="abc" class="radio checked:bg-red-500" checked />
-						<span>Send one by one (round-robin)</span>
-					</label>
-				</div>
-				<div class="form-control">
-					<label class="label cursor-pointer justify-start gap-3">
-						<input type="radio" name="abc" class="radio checked:bg-red-500" checked />
-						<span>Send to All</span>
-					</label>
-				</div>
+				<FormControl inputType="In" label="Send one by one (round-robin)">
+					<input type="radio" name="abc" class="radio radio-primary" checked />
+				</FormControl>
+
+				<FormControl inputType="In" label="Send to All">
+					<input type="radio" name="abc" class="radio radio-primary" checked />
+				</FormControl>
 			</div>
 
 			<div class="flex items-start gap-2 mb-2">
@@ -96,8 +104,7 @@
 			</div>
 			<div class="space-y-2 px-2 mb-2">
 				{#each notificationAttempts as _, i}
-					<div class="form-control">
-						<div class="label font-semibold">Attempt {i + 1}</div>
+					<FormControl label="Attempt {i + 1}">
 						<div class="join">
 							<input
 								type="number"
@@ -107,18 +114,20 @@
 							/>
 							<div class="btn btn-sm join-item no-animation cursor-default">sec</div>
 						</div>
-					</div>
+					</FormControl>
 				{:else}
 					<div class="text-center">No Attempts</div>
 				{/each}
 			</div>
 
-			<div class="form-control">
-				<label class="label cursor-pointer justify-start gap-4">
-					<input type="checkbox" class="checkbox" />
-					<span class="font-semibold">Escalate to Supervisor</span> (if no pick from Operator)
-				</label>
-			</div>
+			<FormControl
+				inputType="In"
+				label="Escalate to Supervisor"
+				labelClasses="font-semibold"
+				secLabel="(if no pick from Operator)"
+			>
+				<input type="checkbox" class="checkbox" />
+			</FormControl>
 		</div>
 	{/if}
 </div>

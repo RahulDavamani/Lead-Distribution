@@ -4,7 +4,7 @@ export interface UI {
 	loader?: Loader;
 	toast?: Toast;
 	toastInterval?: NodeJS.Timeout;
-	modal?: Modal;
+	alertModal?: AlertModal;
 }
 
 export interface Loader {
@@ -17,13 +17,14 @@ export interface Toast {
 	class?: string;
 }
 
-export interface Modal {
+export interface AlertModal {
 	title: string;
 	body?: string;
 	details?: string;
-	actions?: ModalAction[];
+	actions?: AlertModalAction[];
 }
-export interface ModalAction {
+
+export interface AlertModalAction {
 	name: string;
 	class?: string;
 	onClick?: () => void | Promise<void>;

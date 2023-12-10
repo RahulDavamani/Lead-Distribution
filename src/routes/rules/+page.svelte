@@ -25,7 +25,7 @@
 	<div class="flex flex-col gap-4">
 		{#each rules as { id, name }}
 			<div class="card border shadow p-4 flex flex-row justify-between">
-				<div>Rule Name</div>
+				<div>{name}</div>
 				<button
 					class="btn btn-sm btn-square btn-ghost btn-error"
 					on:click={async () => {
