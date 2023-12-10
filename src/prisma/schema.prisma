@@ -31,7 +31,7 @@ model LMRule {
    updatedAt DateTime @updatedAt
 
    name        String
-   description String?
+   description String
 
    ghlContactStatus            String
    waitTimeForCustomerResponse Int?

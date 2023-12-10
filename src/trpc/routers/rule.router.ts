@@ -4,14 +4,19 @@ import { procedure, router } from '../server';
 import { prisma } from '../../prisma/prisma';
 
 const ruleInclude = {
-	notification: {
-		include: { notificationAttempts: true }
-	}
+	notification: { include: { notificationAttempts: true } },
+	affiliates: { select: { id: true } },
+	operators: { select: { id: true } }
 };
 
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
-		const rules = await prisma.lMRule.findMany({ include: ruleInclude });
+		const rules = await prisma.lMRule.findMany({
+			include: {
+				_count: true,
+				notification: { select: { id: true } }
+			}
+		});
 		return { rules };
 	}),
 
