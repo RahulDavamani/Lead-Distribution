@@ -6,7 +6,8 @@
 	$: ({ rule, affiliates } = $ruleConfig);
 	let showModal = false;
 
-	const deleteAffiliate = (id: string) => ($ruleConfig.rule.affiliates = rule.affiliates.filter((o) => o.id !== id));
+	const deleteAffiliate = (id: string) =>
+		($ruleConfig.rule.affiliates = rule.affiliates.filter((a) => a.affiliateId !== id));
 </script>
 
 <div class="flex-grow card border p-4">
@@ -17,12 +18,12 @@
 		</button>
 	</div>
 	<div class="px-2 space-y-2">
-		{#each rule.affiliates as { id }}
-			{@const affiliateName = affiliates.find((o) => o.id === id)?.name ?? 'Invalid Affiliate'}
+		{#each rule.affiliates as { affiliateId }}
+			{@const affiliateName = affiliates.find((a) => a.CompanyKey === affiliateId)?.CompanyName ?? 'Invalid Affiliate'}
 
 			<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
 				<div>{affiliateName}</div>
-				<button class="text-error" on:click={() => deleteAffiliate(id)}>
+				<button class="text-error" on:click={() => deleteAffiliate(affiliateId)}>
 					<Icon icon="mdi:delete" width={20} />
 				</button>
 			</div>

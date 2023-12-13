@@ -1,6 +1,5 @@
 <script>
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
-	import FormControl from '../../../components/FormControl.svelte';
 
 	$: ({
 		rule: { waitTimeForCustomerResponse }

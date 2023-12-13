@@ -12,17 +12,20 @@
 	export let showModal: boolean;
 	$: ({ rule, operators } = $ruleConfig);
 
-	let selectedOperators: string[] = [];
-	$: addedOperators = rule.operators.map(({ id }) => id);
+	let selectedOperators: number[] = [];
+	$: addedOperators = rule.operators.map(({ operatorId }) => operatorId);
 
-	const selectOperator = (id: string) => {
+	const selectOperator = (id: number) => {
 		if (addedOperators.includes(id)) return;
 		if (selectedOperators.includes(id)) selectedOperators = selectedOperators.filter((o) => o !== id);
 		else selectedOperators = [...selectedOperators, id];
 	};
 
 	const addOperator = () => {
-		$ruleConfig.rule.operators = [...$ruleConfig.rule.operators, ...selectedOperators.map((id) => ({ id }))];
+		$ruleConfig.rule.operators = [
+			...$ruleConfig.rule.operators,
+			...selectedOperators.map((operatorId) => ({ operatorId }))
+		];
 		showModal = false;
 		selectedOperators = [];
 	};
@@ -44,18 +47,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each operators as { id, name }}
-					<tr class="hover {!addedOperators.includes(id) && 'cursor-pointer'}" on:click={() => selectOperator(id)}>
+				{#each operators as { UserId, Name }}
+					<tr
+						class="hover {!addedOperators.includes(UserId) && 'cursor-pointer'}"
+						on:click={() => selectOperator(UserId)}
+					>
 						<td class="text-center w-12">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-sm checkbox-success"
-								checked={selectedOperators.includes(id)}
-								disabled={addedOperators.includes(id)}
+								checked={selectedOperators.includes(UserId)}
+								disabled={addedOperators.includes(UserId)}
 							/>
 						</td>
-						<td>{id}</td>
-						<td>{name}</td>
+						<td>{UserId}</td>
+						<td>{Name}</td>
 					</tr>
 				{/each}
 			</tbody>

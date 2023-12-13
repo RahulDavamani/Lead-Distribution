@@ -13,7 +13,7 @@
 	$: ({ rule, affiliates } = $ruleConfig);
 
 	let selectedAffiliates: string[] = [];
-	$: addedAffiliates = rule.affiliates.map(({ id }) => id);
+	$: addedAffiliates = rule.affiliates.map(({ affiliateId }) => affiliateId);
 
 	const selectAffiliate = (id: string) => {
 		if (addedAffiliates.includes(id)) return;
@@ -22,7 +22,10 @@
 	};
 
 	const addAffiliate = () => {
-		$ruleConfig.rule.affiliates = [...$ruleConfig.rule.affiliates, ...selectedAffiliates.map((id) => ({ id }))];
+		$ruleConfig.rule.affiliates = [
+			...$ruleConfig.rule.affiliates,
+			...selectedAffiliates.map((affiliateId) => ({ affiliateId }))
+		];
 		showModal = false;
 		selectedAffiliates = [];
 	};
@@ -44,18 +47,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each affiliates as { id, name }}
-					<tr class="hover {!addedAffiliates.includes(id) && 'cursor-pointer'}" on:click={() => selectAffiliate(id)}>
+				{#each affiliates as { CompanyKey, CompanyName }}
+					<tr
+						class="hover {!addedAffiliates.includes(CompanyKey) && 'cursor-pointer'}"
+						on:click={() => selectAffiliate(CompanyKey)}
+					>
 						<td class="text-center w-12">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-sm checkbox-success"
-								checked={selectedAffiliates.includes(id)}
-								disabled={addedAffiliates.includes(id)}
+								checked={selectedAffiliates.includes(CompanyKey)}
+								disabled={addedAffiliates.includes(CompanyKey)}
 							/>
 						</td>
-						<td>{id}</td>
-						<td>{name}</td>
+						<td>{CompanyKey}</td>
+						<td>{CompanyName}</td>
 					</tr>
 				{/each}
 			</tbody>

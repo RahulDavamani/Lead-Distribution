@@ -6,7 +6,8 @@
 	$: ({ rule, operators } = $ruleConfig);
 	let showModal = false;
 
-	const deleteOperator = (id: string) => ($ruleConfig.rule.operators = rule.operators.filter((o) => o.id !== id));
+	const deleteOperator = (id: number) =>
+		($ruleConfig.rule.operators = rule.operators.filter((o) => o.operatorId !== id));
 </script>
 
 <div class="flex-grow card border p-4">
@@ -17,12 +18,12 @@
 		</button>
 	</div>
 	<div class="px-2 space-y-2">
-		{#each rule.operators as { id }}
-			{@const operatorName = operators.find((o) => o.id === id)?.name ?? 'Invalid Operator'}
+		{#each rule.operators as { operatorId }}
+			{@const operatorName = operators.find((o) => o.UserId === operatorId)?.Name ?? 'Invalid Operator'}
 
 			<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
 				<div>{operatorName}</div>
-				<button class="text-error" on:click={() => deleteOperator(id)}>
+				<button class="text-error" on:click={() => deleteOperator(operatorId)}>
 					<Icon icon="mdi:delete" width={20} />
 				</button>
 			</div>

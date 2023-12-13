@@ -5,8 +5,21 @@ import { ruleRouter } from './rule.router';
 import { operatorRouter } from './operator.router';
 import { affiliateRouter } from './affiliate.router';
 
+// userKey 74bedd5f-c117-474c-90d5-5a13eedd068f
+
 export const appRouter = router({
-	hello: procedure.query(async () => 'hello'),
+	test: procedure.query(async () => {
+		// const result = await prisma.$queryRaw`select * from VonageUsers where Active=1 and License='Agent'`;
+		const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
+		@Title = 'Alert',
+		@Message = 'This is a Alert!',
+		@UserKeys = '74bedd5f-c117-474c-90d5-5a13eedd068f',
+		@ExpireInSeconds = 600,
+		@HrefURL = 'https://www.google.co.in/',
+		@ActionBtnTitle = 'Action Button';`;
+
+		return result;
+	}),
 	rule: ruleRouter,
 	operator: operatorRouter,
 	affiliate: affiliateRouter
