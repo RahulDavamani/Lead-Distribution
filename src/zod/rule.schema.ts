@@ -26,8 +26,8 @@ export const ruleSchema = z.object({
 		})
 		.nullable(),
 
-	operators: z.array(z.object({ operatorId: z.number() })),
-	affiliates: z.array(z.object({ affiliateId: z.string().min(1) }))
+	operators: z.array(z.object({ UserId: z.number() })),
+	affiliates: z.array(z.object({ CompanyKey: z.string().min(1) }))
 });
 
 export type Rule = z.infer<typeof ruleSchema>;

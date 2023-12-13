@@ -76,6 +76,7 @@
 					value="one"
 					class="radio radio-primary"
 					bind:group={$ruleConfig.rule.notification.notificationType}
+					disabled={true}
 				/>
 			</FormControl>
 
@@ -86,6 +87,7 @@
 					value="all"
 					class="radio radio-primary"
 					bind:group={$ruleConfig.rule.notification.notificationType}
+					disabled={true}
 				/>
 			</FormControl>
 		</div>

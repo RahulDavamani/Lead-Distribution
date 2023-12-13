@@ -5,8 +5,8 @@ import { prisma } from '../../prisma/prisma';
 
 const ruleInclude = {
 	notification: { include: { notificationAttempts: true } },
-	affiliates: { select: { affiliateId: true } },
-	operators: { select: { operatorId: true } }
+	affiliates: { select: { CompanyKey: true } },
+	operators: { select: { UserId: true } }
 };
 
 export const ruleRouter = router({
@@ -96,10 +96,10 @@ export const ruleRouter = router({
 				await prisma.ldRule_Affiliate.deleteMany({ where: { ruleId } });
 
 				await prisma.ldRule_Operator.createMany({
-					data: operators.map(({ operatorId }) => ({ ruleId, operatorId }))
+					data: operators.map(({ UserId }) => ({ ruleId, UserId }))
 				});
 				await prisma.ldRule_Affiliate.createMany({
-					data: affiliates.map(({ affiliateId }) => ({ ruleId, affiliateId }))
+					data: affiliates.map(({ CompanyKey }) => ({ ruleId, CompanyKey }))
 				});
 
 				if (notification) {

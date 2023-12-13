@@ -5251,6 +5251,8 @@ model ImportFrontierPayment {
    Voice_Add_On                String?   @map("Voice Add On") @db.NVarChar(255)
    Value_Added_Services        String?   @map("Value Added Services") @db.VarChar(150)
    Equipment                   String?   @db.VarChar(200)
+   Order_Stage                 String?   @map("Order Stage") @db.VarChar(100)
+   Order_Stage_Desc            String?   @map("Order Stage Desc") @db.VarChar(255)
 
    @@ignore
 }
@@ -13043,11 +13045,11 @@ model LdRule_Operator {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   operatorId Int
-   ruleId     String
-   rule       LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   UserId Int
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-   @@unique([ruleId, operatorId])
+   @@unique([ruleId, UserId])
 }
 
 model LdRule_Affiliate {
@@ -13055,11 +13057,11 @@ model LdRule_Affiliate {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   affiliateId String
-   ruleId      String
-   rule        LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   CompanyKey String
+   ruleId     String
+   rule       LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-   @@unique([ruleId, affiliateId])
+   @@unique([ruleId, CompanyKey])
 }
 
 model LdRuleNotification {
@@ -13088,4 +13090,22 @@ model LdRuleNotificationAttempt {
 
    notification   LdRuleNotification? @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    notificationId String?
+}
+
+model ldLeadQueue {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ProspectKey String @unique
+   status      String
+}
+
+model ldLeadCompleted {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ProspectKey String @unique
+   status      String
 }

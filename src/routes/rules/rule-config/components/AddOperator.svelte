@@ -13,7 +13,7 @@
 	$: ({ rule, operators } = $ruleConfig);
 
 	let selectedOperators: number[] = [];
-	$: addedOperators = rule.operators.map(({ operatorId }) => operatorId);
+	$: addedOperators = rule.operators.map(({ UserId }) => UserId);
 
 	const selectOperator = (id: number) => {
 		if (addedOperators.includes(id)) return;
@@ -22,10 +22,7 @@
 	};
 
 	const addOperator = () => {
-		$ruleConfig.rule.operators = [
-			...$ruleConfig.rule.operators,
-			...selectedOperators.map((operatorId) => ({ operatorId }))
-		];
+		$ruleConfig.rule.operators = [...$ruleConfig.rule.operators, ...selectedOperators.map((UserId) => ({ UserId }))];
 		showModal = false;
 		selectedOperators = [];
 	};
@@ -39,15 +36,17 @@
 <Modal bind:showModal title="Add Campaign Operator" boxClasses="max-w-6xl" {closeModal}>
 	<div class="overflow-x-auto">
 		<table id="operatorsTable" class="table table-zebra border">
-			<thead>
+			<thead class="bg-base-200">
 				<tr>
 					<th></th>
 					<th>ID</th>
 					<th>Name</th>
+					<th>Email</th>
+					<th>Phone Number</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each operators as { UserId, Name }}
+				{#each operators as { UserId, Name, Email, PhoneNumber }}
 					<tr
 						class="hover {!addedOperators.includes(UserId) && 'cursor-pointer'}"
 						on:click={() => selectOperator(UserId)}
@@ -62,6 +61,8 @@
 						</td>
 						<td>{UserId}</td>
 						<td>{Name}</td>
+						<td>{Email}</td>
+						<td>{PhoneNumber}</td>
 					</tr>
 				{/each}
 			</tbody>

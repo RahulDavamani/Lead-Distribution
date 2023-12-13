@@ -13,7 +13,7 @@
 	$: ({ rule, affiliates } = $ruleConfig);
 
 	let selectedAffiliates: string[] = [];
-	$: addedAffiliates = rule.affiliates.map(({ affiliateId }) => affiliateId);
+	$: addedAffiliates = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
 
 	const selectAffiliate = (id: string) => {
 		if (addedAffiliates.includes(id)) return;
@@ -24,7 +24,7 @@
 	const addAffiliate = () => {
 		$ruleConfig.rule.affiliates = [
 			...$ruleConfig.rule.affiliates,
-			...selectedAffiliates.map((affiliateId) => ({ affiliateId }))
+			...selectedAffiliates.map((CompanyKey) => ({ CompanyKey }))
 		];
 		showModal = false;
 		selectedAffiliates = [];
@@ -39,7 +39,7 @@
 <Modal bind:showModal title="Add Campaign Affiliate" boxClasses="max-w-6xl" {closeModal}>
 	<div class="overflow-x-auto">
 		<table id="affiliatesTable" class="table table-zebra border">
-			<thead>
+			<thead class="bg-base-200">
 				<tr>
 					<th></th>
 					<th>ID</th>
