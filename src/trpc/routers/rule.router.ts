@@ -3,12 +3,6 @@ import { ruleSchema } from '../../zod/rule.schema';
 import { procedure, router } from '../server';
 import { prisma } from '../../prisma/prisma';
 
-const ruleInclude = {
-	notification: { include: { notificationAttempts: true } },
-	affiliates: { select: { CompanyKey: true } },
-	operators: { select: { UserId: true } }
-};
-
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
 		const rules = await prisma.ldRule.findMany({
@@ -23,7 +17,11 @@ export const ruleRouter = router({
 	getById: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
 		const rule = await prisma.ldRule.findUnique({
 			where: { id },
-			include: ruleInclude
+			include: {
+				notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
+				affiliates: { select: { CompanyKey: true } },
+				operators: { select: { UserId: true } }
+			}
 		});
 		return { rule };
 	}),
@@ -136,7 +134,11 @@ export const ruleRouter = router({
 
 				const rule = await prisma.ldRule.findUnique({
 					where: { id: ruleId },
-					include: ruleInclude
+					include: {
+						notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
+						affiliates: { select: { CompanyKey: true } },
+						operators: { select: { UserId: true } }
+					}
 				});
 				return { rule };
 			}

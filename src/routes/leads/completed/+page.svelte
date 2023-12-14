@@ -9,7 +9,7 @@
 	$: ({ leads } = data);
 	let interval: NodeJS.Timeout | undefined;
 	onMount(() => {
-		interval = setInterval(() => invalidateAll(), 2000);
+		interval = setInterval(() => invalidateAll(), 1000);
 	});
 	onDestroy(() => {
 		clearInterval(interval);
@@ -34,25 +34,25 @@
 		<table id="completedLeadsTable" class="table table-zebra border">
 			<thead class="bg-base-200">
 				<tr>
-					<th>id</th>
 					<th>Prospect Key</th>
 					<th>Created On</th>
 					<th>Completed On</th>
-					<th>Company Name</th>
-					<th>Rule Name</th>
+					<th>Affiliate</th>
+					<th>Rule</th>
 					<th>Status</th>
+					<th>Operator</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each leads as { id, ProspectKey, createdAt, updatedAt, companyName, ruleName, status }}
+				{#each leads as { ProspectKey, createdAt, updatedAt, companyName, ruleName, status, operatorName }}
 					<tr class="hover">
-						<td>{id}</td>
 						<td>{ProspectKey}</td>
 						<td>{createdAt.toLocaleString()}</td>
 						<td>{updatedAt.toLocaleString()}</td>
 						<td>{companyName}</td>
 						<td>{ruleName}</td>
 						<td>{status}</td>
+						<td>{operatorName ?? 'N/A'}</td>
 					</tr>
 				{/each}
 			</tbody>

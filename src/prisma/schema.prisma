@@ -13024,6 +13024,32 @@ model XzyiesReceivables {
    @@ignore
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model UserLoginLog {
+   LogSeq     Int
+   UserKey    String?   @db.UniqueIdentifier
+   CompanyKey String?   @db.UniqueIdentifier
+   LoginDate  DateTime? @db.DateTime
+   Browser    String?   @db.VarChar(200)
+   IP         String?   @db.VarChar(50)
+   ValidFrom  DateTime
+   ValidTo    DateTime
+
+   @@index([ValidTo, ValidFrom], map: "ix_UserLoginLog", clustered: true)
+   @@ignore
+}
+
+model UserRecentLogin {
+   LogSeq     Int       @id(map: "PK__UserRece__D0A11A3A0211AF60") @default(autoincrement())
+   UserKey    String?   @db.UniqueIdentifier
+   CompanyKey String?   @db.UniqueIdentifier
+   LoginDate  DateTime? @default(now(), map: "DF__UserRecen__Login__5E63199D") @db.DateTime
+   Browser    String?   @db.VarChar(200)
+   IP         String?   @db.VarChar(50)
+   ValidFrom  DateTime
+   ValidTo    DateTime
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -13073,6 +13099,7 @@ model LdRuleNotification {
    notificationAttempts LdRuleNotificationAttempt[]
 
    escalateToSupervisor   Boolean
+   supervisorUserId       Int?
    supervisorTextTemplate String
 
    ruleId String @unique
@@ -13106,6 +13133,7 @@ model ldLeadCompleted {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   ProspectKey String @unique
+   ProspectKey String  @unique
+   UserId      String?
    status      String
 }
