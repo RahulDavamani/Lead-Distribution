@@ -44,6 +44,14 @@
 		<FormControl label="Description" error={zodErrors?.description}>
 			<textarea placeholder="Type here" class="textarea textarea-bordered" bind:value={$ruleConfig.rule.description} />
 		</FormControl>
+		<FormControl label="Outbound Call Number" error={zodErrors?.outBoundCall}>
+			<input
+				type="text"
+				placeholder="Type here"
+				class="input input-bordered"
+				bind:value={$ruleConfig.rule.outBoundCall}
+			/>
+		</FormControl>
 		<div class="divider" />
 
 		<div class="flex gap-4">

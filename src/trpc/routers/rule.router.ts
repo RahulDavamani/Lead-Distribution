@@ -66,6 +66,7 @@ export const ruleRouter = router({
 					id,
 					name,
 					description,
+					outBoundCall,
 					ghlContactStatus,
 					waitTimeForCustomerResponse,
 					notification,
@@ -80,12 +81,14 @@ export const ruleRouter = router({
 							create: {
 								name,
 								description,
+								outBoundCall,
 								ghlContactStatus,
 								waitTimeForCustomerResponse
 							},
 							update: {
 								name,
 								description,
+								outBoundCall,
 								ghlContactStatus,
 								waitTimeForCustomerResponse
 							},

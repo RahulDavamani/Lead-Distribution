@@ -13058,6 +13058,7 @@ model LdRule {
    name        String
    description String
 
+   outBoundCall                String @default("")
    ghlContactStatus            String
    waitTimeForCustomerResponse Int?
 
@@ -13116,9 +13117,10 @@ model LdRuleNotificationAttempt {
 
    notification   LdRuleNotification? @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    notificationId String?
+   leadAttempts   LdLeadAttempts[]
 }
 
-model ldLead {
+model LdLead {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13128,10 +13130,25 @@ model ldLead {
    status      String
    isCompleted Boolean
 
-   history ldLeadHistory[]
+   attempts LdLeadAttempts[]
+   history  LdLeadHistory[]
 }
 
-model ldLeadHistory {
+model LdLeadAttempts {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   leadId    String
+   lead      LdLead                    @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   attemptId String
+   attempt   LdRuleNotificationAttempt @relation(fields: [attemptId], references: [id])
+   UserId    Int
+
+   @@unique([leadId, UserId])
+}
+
+model LdLeadHistory {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13139,5 +13156,5 @@ model ldLeadHistory {
    status String
 
    leadId String
-   lead   ldLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   lead   LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }

@@ -21,7 +21,7 @@
 			{@const operatorName = operators.find((o) => o.UserId === UserId)?.Name ?? 'Invalid Operator'}
 
 			<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
-				<div>{UserId} - {operatorName}</div>
+				<div>{UserId}: {operatorName}</div>
 				<button class="text-error" on:click={() => deleteOperator(UserId)}>
 					<Icon icon="mdi:delete" width={20} />
 				</button>

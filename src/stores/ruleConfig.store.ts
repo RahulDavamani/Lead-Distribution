@@ -26,6 +26,7 @@ export const ruleConfig = (() => {
 		id: null,
 		name: '',
 		description: '',
+		outBoundCall: '',
 		operators: [],
 		affiliates: [],
 		ghlContactStatus: '',
@@ -48,6 +49,7 @@ export const ruleConfig = (() => {
 			...state,
 			init: true,
 			rule: rule ?? cloneDeep(newRule),
+			zodErrors: undefined,
 			operators,
 			affiliates
 		}));
@@ -63,7 +65,7 @@ export const ruleConfig = (() => {
 			.catch((e) => trpcClientErrorHandler<Rule>(e, (e) => update((state) => ({ ...state, zodErrors: e.zodErrors }))));
 		if (!updatedRule) return;
 
-		update((state) => ({ ...state, rule: updatedRule }));
+		update((state) => ({ ...state, rule: updatedRule, zodErrors: undefined }));
 		window.history.replaceState(history.state, '', `/rules/rule-config?id=${updatedRule.id}`);
 
 		ui.showToast({
