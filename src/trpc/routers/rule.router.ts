@@ -29,30 +29,25 @@ export const ruleRouter = router({
 			})
 			.catch(prismaErrorHandler);
 
-		const queueLeads = await prisma.ldLeadQueue.findMany({ select: { ProspectKey: true } }).catch(prismaErrorHandler);
-		const completedLeads = await prisma.ldLeadQueue
-			.findMany({ select: { ProspectKey: true } })
+		const allLeads = await prisma.ldLead
+			.findMany({ select: { ProspectKey: true, isCompleted: true } })
 			.catch(prismaErrorHandler);
 
 		const rules = [];
 		for (const rule of ldRules) {
 			const affiliates = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
-
-			const queueLeadsCount = queueLeads.filter(async ({ ProspectKey }) => {
+			const leads = allLeads.filter(async ({ ProspectKey }) => {
 				const prospect = await prisma.leadProspect
 					.findFirstOrThrow({ where: { ProspectKey } })
 					.catch(prismaErrorHandler);
 				return affiliates.includes(prospect.CompanyKey ?? '');
-			}).length;
+			});
 
-			const completedLeadsCount = completedLeads.filter(async ({ ProspectKey }) => {
-				const prospect = await prisma.leadProspect
-					.findFirstOrThrow({ where: { ProspectKey } })
-					.catch(prismaErrorHandler);
-				return affiliates.includes(prospect.CompanyKey ?? '');
-			}).length;
-
-			rules.push({ ...rule, queueLeadsCount, completedLeadsCount });
+			rules.push({
+				...rule,
+				queueLeadsCount: leads.filter((l) => !l.isCompleted).length,
+				completedLeadsCount: leads.filter((l) => l.isCompleted).length
+			});
 		}
 
 		return { rules };

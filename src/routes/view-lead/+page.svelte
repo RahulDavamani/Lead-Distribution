@@ -9,8 +9,8 @@
 
 	const acceptClick = async () => {
 		ui.setLoader({ title: 'Calling Customer' });
-		await trpc($page).lead.completeLead.query({ leadId: lead.id, UserId });
-		ui.showToast({ title: 'Lead Accepted', class: 'alert-success' });
+		await trpc($page).lead.complete.query({ ProspectKey: prospect.ProspectKey, UserId: Number(UserId) });
+		ui.showToast({ title: 'Lead Completed', class: 'alert-success' });
 		ui.setLoader();
 	};
 </script>

@@ -11,7 +11,7 @@ import { leadRouter } from './lead.router';
 export const appRouter = router({
 	test: procedure.query(async () => {
 		const result =
-			await prisma.$queryRaw`select top 10 * from LeadProspect where CompanyKey is not null and CompanyKey != 'a3f77572-65ff-4534-9d48-9b44ba95d62f' `;
+			await prisma.$queryRaw`select top 10 * from LeadProspect where CompanyKey is not null and CompanyKey = 'a3f77572-65ff-4534-9d48-9b44ba95d62f' `;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',
 		// @Message = 'This is a Alert!',

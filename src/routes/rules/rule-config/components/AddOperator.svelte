@@ -42,11 +42,10 @@
 					<th>ID</th>
 					<th>Name</th>
 					<th>Email</th>
-					<th>Phone Number</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each operators as { UserId, Name, Email, PhoneNumber }}
+				{#each operators as { UserId, Name, Email }}
 					<tr
 						class="hover {!addedOperators.includes(UserId) && 'cursor-pointer'}"
 						on:click={() => selectOperator(UserId)}
@@ -62,7 +61,6 @@
 						<td>{UserId}</td>
 						<td>{Name}</td>
 						<td>{Email}</td>
-						<td>{PhoneNumber}</td>
 					</tr>
 				{/each}
 			</tbody>

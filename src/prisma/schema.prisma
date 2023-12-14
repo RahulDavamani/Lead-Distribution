@@ -13118,19 +13118,26 @@ model LdRuleNotificationAttempt {
    notificationId String?
 }
 
-model ldLeadQueue {
-   ProspectKey String   @id @unique
-   createdAt   DateTime @default(now())
-   updatedAt   DateTime @updatedAt
+model ldLead {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
 
-   status String
+   ProspectKey String  @unique
+   UserId      Int?
+   status      String
+   isCompleted Boolean
+
+   history ldLeadHistory[]
 }
 
-model ldLeadCompleted {
-   ProspectKey String   @id @unique
-   createdAt   DateTime
-   updatedAt   DateTime @updatedAt
+model ldLeadHistory {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
 
    status String
-   UserId String?
+
+   leadId String
+   lead   ldLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
