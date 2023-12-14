@@ -13098,7 +13098,6 @@ model LdRuleNotification {
    notificationType     String
    notificationAttempts LdRuleNotificationAttempt[]
 
-   escalateToSupervisor   Boolean
    supervisorUserId       Int?
    supervisorTextTemplate String
 
@@ -13120,20 +13119,18 @@ model LdRuleNotificationAttempt {
 }
 
 model ldLeadQueue {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
+   ProspectKey String   @id @unique
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
 
-   ProspectKey String @unique
-   status      String
+   status String
 }
 
 model ldLeadCompleted {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
+   ProspectKey String   @id @unique
+   createdAt   DateTime
+   updatedAt   DateTime @updatedAt
 
-   ProspectKey String  @unique
-   UserId      String?
-   status      String
+   status String
+   UserId String?
 }

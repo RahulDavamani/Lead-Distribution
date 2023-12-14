@@ -21,7 +21,7 @@ export const ruleSchema = z.object({
 				})
 			),
 
-			escalateToSupervisor: z.boolean(),
+			supervisorUserId: z.number().nullable(),
 			supervisorTextTemplate: z.string()
 		})
 		.nullable(),

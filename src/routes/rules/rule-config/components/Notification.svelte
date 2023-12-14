@@ -2,13 +2,23 @@
 	import Icon from '@iconify/svelte';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import FormControl from '../../../components/FormControl.svelte';
+	import { onMount } from 'svelte';
+	import SelectSupervisor from './SelectSupervisor.svelte';
 
 	$: ({
 		rule: { notification }
 	} = $ruleConfig);
 
-	$: if ($ruleConfig.rule.notification && $ruleConfig.rule.notification.escalateToSupervisor === false)
+	let escalateToSupervisor = false;
+	let showSupervisorSelect = false;
+	onMount(() => {
+		escalateToSupervisor = $ruleConfig.rule.notification?.supervisorUserId !== null;
+	});
+
+	$: if ($ruleConfig.rule.notification && $ruleConfig.rule.notification.supervisorUserId === null)
 		$ruleConfig.rule.notification.supervisorTextTemplate = '';
+	$: supervisorName =
+		$ruleConfig.operators.find(({ UserId }) => UserId === $ruleConfig.rule.notification?.supervisorUserId)?.Name ?? '';
 
 	const addNotificationAttempt = () => {
 		if ($ruleConfig.rule.notification && notification)
@@ -30,7 +40,7 @@
 				.map((a, i) => ({ ...a, num: i + 1 }));
 	};
 
-	const deleteNotification = (num: number) => {
+	const deleteNotificationAttempt = (num: number) => {
 		if ($ruleConfig.rule.notification && notification)
 			$ruleConfig.rule.notification.notificationAttempts = notification.notificationAttempts.filter(
 				(a) => a.num !== num
@@ -57,7 +67,7 @@
 					id: null,
 					notificationType: 'one',
 					notificationAttempts: [],
-					escalateToSupervisor: false,
+					supervisorUserId: null,
 					supervisorTextTemplate: ''
 				};
 			else $ruleConfig.rule.notification = null;
@@ -102,7 +112,7 @@
 			{#each notification.notificationAttempts as { num }, i}
 				<div class="card border-2 p-4">
 					<div class="flex justify-start items-center gap-2 mb-1">
-						<button on:click={() => deleteNotification(num)}>
+						<button on:click={() => deleteNotificationAttempt(num)}>
 							<Icon icon="mdi:close" class="text-error" width="20" />
 						</button>
 						<div class="font-semibold">Attempt {num}</div>
@@ -140,16 +150,32 @@
 			labelClasses="font-semibold"
 			secLabel="(if no pick from Operator)"
 		>
-			<input type="checkbox" class="checkbox" bind:checked={$ruleConfig.rule.notification.escalateToSupervisor} />
+			<input type="checkbox" class="checkbox" bind:checked={escalateToSupervisor} />
 		</FormControl>
-		{#if notification.escalateToSupervisor}
-			<FormControl label="Supervisor Text Template" classes="px-2">
-				<input
-					type="text"
-					class="input input-bordered input-sm"
-					bind:value={$ruleConfig.rule.notification.supervisorTextTemplate}
-				/>
-			</FormControl>
+
+		{#if escalateToSupervisor}
+			<div class="flex mt-2">
+				<FormControl classes="w-full px-2" label="Supervisor">
+					<input
+						type="text"
+						placeholder="Select here"
+						class="input input-bordered input-sm cursor-pointer"
+						readonly={true}
+						on:click={() => (showSupervisorSelect = true)}
+						value={supervisorName}
+					/>
+				</FormControl>
+				<FormControl classes="w-full px-2" label="Supervisor Text Template">
+					<input
+						type="text"
+						placeholder="Type here"
+						class="input input-bordered input-sm"
+						bind:value={$ruleConfig.rule.notification.supervisorTextTemplate}
+					/>
+				</FormControl>
+			</div>
 		{/if}
 	</div>
 {/if}
+
+<SelectSupervisor bind:showModal={showSupervisorSelect} />

@@ -7,6 +7,7 @@ import { trpc } from '../trpc/client';
 import { invalidateAll } from '$app/navigation';
 import type { Operator } from '../zod/operator.schema';
 import type { Affiliate } from '../zod/affiliate.schema';
+import cloneDeep from 'lodash.clonedeep';
 
 export interface RuleConfig {
 	init: boolean;
@@ -21,18 +22,19 @@ export interface RuleConfig {
 }
 
 export const ruleConfig = (() => {
+	const newRule: Rule = {
+		id: null,
+		name: '',
+		description: '',
+		operators: [],
+		affiliates: [],
+		ghlContactStatus: '',
+		waitTimeForCustomerResponse: null,
+		notification: null
+	};
 	const { subscribe, set, update } = writable<RuleConfig>({
 		init: false,
-		rule: {
-			id: null,
-			name: '',
-			description: '',
-			operators: [],
-			affiliates: [],
-			ghlContactStatus: '',
-			waitTimeForCustomerResponse: null,
-			notification: null
-		},
+		rule: cloneDeep(newRule),
 
 		showAddOperators: false,
 		showAddAffiliates: false,
@@ -40,6 +42,16 @@ export const ruleConfig = (() => {
 		operators: [],
 		affiliates: []
 	});
+
+	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
+		update((state) => ({
+			...state,
+			init: true,
+			rule: rule ?? cloneDeep(newRule),
+			operators,
+			affiliates
+		}));
+	};
 
 	const saveRule = async () => {
 		ui.setLoader({ title: 'Saving Rule' });
@@ -78,16 +90,6 @@ export const ruleConfig = (() => {
 		});
 		invalidateAll();
 		ui.setLoader();
-	};
-
-	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
-		update((state) => ({
-			...state,
-			init: true,
-			rule: rule ?? state.rule,
-			operators,
-			affiliates
-		}));
 	};
 
 	return { subscribe, set, update, init, saveRule, deleteRule };
