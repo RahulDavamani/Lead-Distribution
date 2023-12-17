@@ -17,8 +17,9 @@
 
 	$: if ($ruleConfig.rule.notification && $ruleConfig.rule.notification.supervisorUserId === null)
 		$ruleConfig.rule.notification.supervisorTextTemplate = '';
-	$: supervisorName =
-		$ruleConfig.operators.find(({ UserId }) => UserId === $ruleConfig.rule.notification?.supervisorUserId)?.Name ?? '';
+	$: supervisor = $ruleConfig.operators.find(
+		({ UserId }) => UserId === $ruleConfig.rule.notification?.supervisorUserId && UserId
+	);
 
 	const addNotificationAttempt = () => {
 		if ($ruleConfig.rule.notification && notification)
@@ -156,14 +157,18 @@
 		{#if escalateToSupervisor}
 			<div class="flex mt-2">
 				<FormControl classes="w-full px-2" label="Supervisor">
-					<input
-						type="text"
-						placeholder="Select here"
-						class="input input-bordered input-sm cursor-pointer"
-						readonly={true}
+					<button
+						class="input input-bordered input-sm cursor-pointer text-left"
 						on:click={() => (showSupervisorSelect = true)}
-						value={supervisorName}
-					/>
+					>
+						{#if supervisor}
+							<span class="font-mono">{$ruleConfig.rule.notification.supervisorUserId}:</span>
+							<span class="font-semibold">{supervisor.Name}</span>
+							<span class="italic"> - {supervisor.Email}</span>
+						{:else}
+							<span class="opacity-80">Select here</span>
+						{/if}
+					</button>
 				</FormControl>
 				<FormControl classes="w-full px-2" label="Supervisor Text Template">
 					<input

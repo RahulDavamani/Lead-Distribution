@@ -9,7 +9,7 @@
 	const deleteOperator = (id: number) => ($ruleConfig.rule.operators = rule.operators.filter((o) => o.UserId !== id));
 </script>
 
-<div class="flex-grow card border p-4 max-h-96 overflow-auto">
+<div class="w-full card border p-4">
 	<div class="flex items-center gap-2 mb-4">
 		<div class="text-lg font-semibold">Campaign Operators:</div>
 		<button class="z-10 text-success" on:click={() => (showModal = true)}>
@@ -18,10 +18,18 @@
 	</div>
 	<div class="px-2 space-y-2">
 		{#each rule.operators as { UserId }}
-			{@const operatorName = operators.find((o) => o.UserId === UserId)?.Name ?? 'Invalid Operator'}
+			{@const operator = operators.find((o) => o.UserId === UserId)}
 
 			<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
-				<div>{UserId}: {operatorName}</div>
+				<div>
+					{#if operator}
+						<span class="font-mono">{UserId}:</span>
+						<span class="font-semibold">{operator.Name}</span>
+						<span class="italic"> - {operator.Email}</span>
+					{:else}
+						<span>Invalid Operator</span>
+					{/if}
+				</div>
 				<button class="text-error" on:click={() => deleteOperator(UserId)}>
 					<Icon icon="mdi:delete" width={20} />
 				</button>

@@ -27,10 +27,10 @@
 			Rules:
 			<span class="font-normal font-mono text-2xl">({rules.length})</span>
 		</h1>
-		<a href="/rules/rule-config" class="btn btn-sm btn-success">
+		<button class="btn btn-sm btn-success" on:click={() => (window.location.href = '/rules/rule-config')}>
 			<Icon icon="mdi:add" width={20} />
 			Add Rule
-		</a>
+		</button>
 	</div>
 	<div class="divider mt-1" />
 
@@ -77,9 +77,12 @@
 				</div>
 
 				<div class="flex gap-2">
-					<a href={`/rules/rule-config?id=${id}`} class="btn btn-sm btn-square btn-info">
+					<button
+						class="btn btn-sm btn-square btn-info"
+						on:click={() => (window.location.href = `/rules/rule-config?id=${id}`)}
+					>
 						<Icon icon="mdi:edit" width={20} />
-					</a>
+					</button>
 					<button
 						class="btn btn-sm btn-square btn-error"
 						on:click={async (e) => {

@@ -10,7 +10,7 @@
 		($ruleConfig.rule.affiliates = rule.affiliates.filter((a) => a.CompanyKey !== id));
 </script>
 
-<div class="flex-grow card border p-4">
+<div class="w-full card border p-4">
 	<div class="flex items-center gap-2 mb-4">
 		<div class="text-lg font-semibold">Affiliates:</div>
 		<button class="z-10 text-success" on:click={() => (showModal = true)}>

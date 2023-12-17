@@ -28,7 +28,7 @@
 	};
 </script>
 
-<Modal bind:showModal title="Add Campaign Operator" boxClasses="max-w-6xl" {closeModal}>
+<Modal bind:showModal title="Select Supervisor" boxClasses="max-w-6xl" {closeModal}>
 	<div class="overflow-x-auto">
 		<table id="operatorsTable" class="table table-zebra border">
 			<thead class="bg-base-200">
