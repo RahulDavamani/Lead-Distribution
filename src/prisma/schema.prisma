@@ -13130,6 +13130,8 @@ model LdLead {
    status      String
    isCompleted Boolean
 
+   VonageGUID String? @db.UniqueIdentifier
+
    attempts LdLeadAttempts[]
    history  LdLeadHistory[]
 }

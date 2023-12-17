@@ -11,7 +11,7 @@
 {#if showModal}
 	<div class="modal modal-open {classes}">
 		<div class="modal-box {boxClasses}">
-			<div class="flex justify-between items-center mb-4">
+			<div class="flex justify-between items-center">
 				{#if title}
 					<div class="text-lg font-bold">{title}</div>
 				{/if}
@@ -26,6 +26,7 @@
 					</button>
 				{/if}
 			</div>
+			<div class="divider mt-0 mb-2" />
 			<slot />
 		</div>
 	</div>

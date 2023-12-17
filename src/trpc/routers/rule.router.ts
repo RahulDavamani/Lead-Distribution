@@ -134,17 +134,25 @@ export const ruleRouter = router({
 							.catch(prismaErrorHandler)
 					).id;
 
-					await prisma.ldRuleNotificationAttempt.deleteMany({ where: { notificationId } }).catch(prismaErrorHandler);
+					const existingNotificationAttempts = await prisma.ldRuleNotificationAttempt.findMany({
+						where: { notificationId },
+						select: { id: true }
+					});
+					const deleteNotificationAttemptsId = existingNotificationAttempts
+						.filter((en) => !notificationAttempts.find((n) => n.id === en.id))
+						.map(({ id }) => id);
+
 					await prisma.ldRuleNotificationAttempt
-						.createMany({
-							data: notificationAttempts.map(({ num, textTemplate, waitTime }) => ({
-								notificationId,
-								num,
-								textTemplate,
-								waitTime
-							}))
-						})
+						.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
 						.catch(prismaErrorHandler);
+
+					for (const { id, ...values } of notificationAttempts) {
+						await prisma.ldRuleNotificationAttempt.upsert({
+							where: { id: id ?? '' },
+							create: { ...values },
+							update: { ...values }
+						});
+					}
 				} else await prisma.ldRuleNotification.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
 
 				const rule = await getRuleById(ruleId);

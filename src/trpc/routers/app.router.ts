@@ -6,19 +6,33 @@ import { operatorRouter } from './operator.router';
 import { affiliateRouter } from './affiliate.router';
 import { leadRouter } from './lead.router';
 
-// userKey 74bedd5f-c117-474c-90d5-5a13eedd068f
+// Davamani@yopmail userKey 74bedd5f-c117-474c-90d5-5a13eedd068f
+// rahul@xyzies userKey c3a81c29-a0f1-4470-8a70-73d3866d30e9
 
 export const appRouter = router({
 	test: procedure.query(async () => {
-		const result =
-			await prisma.$queryRaw`select top 10 * from LeadProspect where CompanyKey is not null and CompanyKey = 'a3f77572-65ff-4534-9d48-9b44ba95d62f' `;
+		// const result = await prisma.$queryRaw`select * from Users where Email = 'rahul@xyzies.com'`;
+		await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
+		const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',
 		// @Message = 'This is a Alert!',
-		// @UserKeys = '5A36AA41-73E1-44F7-B71B-F5BCEEAFF626',
+		// @UserKeys = 'c3a81c29-a0f1-4470-8a70-73d3866d30e9',
 		// @ExpireInSeconds = 600,
 		// @HrefURL = 'https://www.google.co.in/',
 		// @ActionBtnTitle = 'Action Button';`;
+		// const result =
+		// 	await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] 'C26BBA4F-8944-40FC-BB28-C112F4CD4059',1013,'+19492103047'`;
+		// const result =
+		// 	await prisma.$queryRaw`select * from LeadProspect where ProspectKey = '8B24406A-C8B8-4E0F-8B0C-816BF04833DA'`;
+		// const UserKey = (
+		// 	await prisma.users
+		// 		.findFirst({
+		// 			where: { VonageAgentId: '1013' },
+		// 			select: { UserKey: true }
+		// 		})
+		// 		.catch(prismaErrorHandler)
+		// )?.UserKey;
 		return result;
 	}),
 	rule: ruleRouter,

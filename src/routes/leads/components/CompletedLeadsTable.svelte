@@ -3,39 +3,62 @@
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { PageData } from '../$types';
+	import type { LdLeadHistory } from '@prisma/client';
+	import LeadHistoryModal from './LeadHistoryModal.svelte';
+	import Icon from '@iconify/svelte';
 
 	export let completedLeads: PageData['completedLeads'];
+	let viewHistory: LdLeadHistory[] | undefined;
 
 	afterUpdate(() => {
 		new DataTable('#completedLeadsTable');
 	});
+
+	const secondsToMinsSec = (seconds: number): string => {
+		const mins: number = Math.floor(seconds / 60);
+		const remainingSec: number = seconds % 60;
+		return `${mins} mins ${remainingSec} sec`;
+	};
 </script>
 
 <div class="overflow-x-auto">
-	<table id="completedLeadsTable" class="table table-zebra border">
-		<thead class="bg-base-200">
+	<table id="completedLeadsTable" class="table table-zebra border rounded-t-none">
+		<thead class="bg-base-300">
 			<tr>
-				<th>Prospect Key</th>
+				<th>Prospect ID</th>
+				<th>Vonage GUID</th>
 				<th>Created On</th>
 				<th>Completed On</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
-				<th>Status</th>
 				<th>Operator</th>
+				<th>Status</th>
+				<th>Response Time</th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { ProspectKey, createdAt, updatedAt, companyName, ruleName, status, operatorName }}
+			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, ruleName, operatorName, status, history }}
 				<tr class="hover">
-					<td>{ProspectKey}</td>
+					<td class="text-center">{ProspectId}</td>
+					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
 					<td>{companyName}</td>
 					<td>{ruleName}</td>
-					<td>{status}</td>
 					<td>{operatorName}</td>
+					<td>{status}</td>
+					<td class="text-center">{secondsToMinsSec(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}</td
+					>
+					<td>
+						<button class="btn btn-xs btn-primary h-fit py-1 flex gap-2" on:click={() => (viewHistory = history)}>
+							<Icon icon="mdi:history" />
+							View History
+						</button>
+					</td>
 				</tr>
 			{/each}
 		</tbody>
 	</table>
 </div>
+<LeadHistoryModal {viewHistory} />
