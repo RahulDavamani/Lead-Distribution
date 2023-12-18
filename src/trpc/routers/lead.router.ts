@@ -12,23 +12,26 @@ export const getLeadDetails = async (ProspectKey: string, UserId: number | null)
 	const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
 	const affiliates = (
 		prospect?.CompanyKey
-			? await prisma.$queryRaw`select CompanyName from v_AffilateLeadDistribution where CompanyKey=${prospect?.CompanyKey}`.catch(
+			? await prisma.$queryRaw`select * from v_AffilateLeadDistribution where CompanyKey=${prospect?.CompanyKey}`.catch(
 					prismaErrorHandler
 			  )
 			: []
 	) as (Affiliate | undefined)[];
-	const rule = await prisma.ldRule
-		.findFirst({
-			where: { affiliates: { some: { CompanyKey: affiliates[0]?.CompanyKey } } },
-			include: { notification: true, operators: true }
-		})
-		.catch(prismaErrorHandler);
+	const rule = affiliates[0]?.CompanyKey
+		? await prisma.ldRule
+				.findFirst({
+					where: { affiliates: { some: { CompanyKey: affiliates[0]?.CompanyKey } } },
+					include: { notification: true, operators: true }
+				})
+				.catch(prismaErrorHandler)
+		: undefined;
 	const operators = (
 		UserId ? await prisma.$queryRaw`select * from VonageUsers where UserId=${UserId}`.catch(prismaErrorHandler) : []
 	) as (Operator | undefined)[];
 
 	return {
 		ProspectId: prospect.ProspectId,
+		customerName: prospect?.CustomerFirstName + ' ' + prospect?.CustomerLastName,
 		companyName: affiliates[0]?.CompanyName ?? 'N/A',
 		operatorName: operators[0]?.Name ?? 'N/A',
 		ruleName: rule?.name ?? 'N/A',
@@ -147,22 +150,40 @@ export const leadRouter = router({
 			await upsertLead(ProspectKey, 'LEAD RESPONDED', true, UserId);
 		}),
 
-	getAll: procedure.query(async () => {
-		const ldLeads = await prisma.ldLead.findMany({
+	getQueued: procedure.query(async () => {
+		const leads = await prisma.ldLead.findMany({
+			where: { isCompleted: false },
 			include: {
-				history: {
-					orderBy: { updatedAt: 'desc' }
-				},
+				history: true,
 				attempts: true
 			}
 		});
 
-		const leads = [];
-		for (const lead of ldLeads) {
+		const queuedLeads = [];
+		for (const lead of leads) {
 			const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
-			leads.push({ ...lead, ...leadDetails });
+			queuedLeads.push({ ...lead, ...leadDetails });
 		}
-		return { queuedLeads: leads.filter((l) => !l.isCompleted), completedLeads: leads.filter((l) => l.isCompleted) };
+		queuedLeads.sort((a, b) => a.ProspectId - b.ProspectId);
+		return { queuedLeads };
+	}),
+
+	getCompleted: procedure.query(async () => {
+		const leads = await prisma.ldLead.findMany({
+			where: { isCompleted: true },
+			include: {
+				history: true,
+				attempts: true
+			}
+		});
+
+		const completedLeads = [];
+		for (const lead of leads) {
+			const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
+			completedLeads.push({ ...lead, ...leadDetails });
+		}
+		completedLeads.sort((a, b) => a.ProspectId - b.ProspectId);
+		return { completedLeads };
 	}),
 
 	distribute: procedure

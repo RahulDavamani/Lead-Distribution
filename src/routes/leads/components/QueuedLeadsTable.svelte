@@ -30,39 +30,39 @@
 				<th>Created On</th>
 				<th>Updated On</th>
 				<th>Affiliate</th>
+				<th>Customer</th>
 				<th>Rule</th>
 				<th>Status</th>
 				<th>Time Elapsed</th>
-				<th></th>
-				<th></th>
+				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, ruleName, status, history, ruleUserId }}
+			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerName, ruleName, status, history, ruleUserId }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
 					<td>{companyName}</td>
+					<td>{customerName}</td>
 					<td>{ruleName}</td>
 					<td>{status}</td>
 					<td class="text-center">
 						{secondsToMinsSec(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
-						<button class="btn btn-xs btn-primary h-fit py-1 flex gap-2" on:click={() => (viewHistory = history)}>
-							<Icon icon="mdi:history" />
-							View History
-						</button>
-					</td>
-					<td>
-						<a
-							href={`/view-lead?ProspectKey=${ProspectKey}&UserId=${ruleUserId}`}
-							class="btn btn-xs btn-success h-fit py-1 flex gap-2"
-						>
-							<Icon icon="mdi:arrow-right" width={16} />
-						</a>
+						<div class="flex justify-center gap-2">
+							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
+								<Icon icon="mdi:history" width={16} />
+							</button>
+							<button
+								class="btn btn-xs btn-success h-fit py-1 flex gap-2"
+								on:click={() => (window.location.href = `/view-lead?ProspectKey=${ProspectKey}&UserId=${ruleUserId}`)}
+							>
+								<Icon icon="mdi:arrow-right" width={16} />
+							</button>
+						</div>
 					</td>
 				</tr>
 			{/each}

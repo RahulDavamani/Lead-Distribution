@@ -4,7 +4,7 @@
 	import Loader from './components/Loader.svelte';
 	import Toast from './components/Toast.svelte';
 	import { ui } from '../stores/ui.store';
-
+	import '../../node_modules/.pnpm/flatpickr@4.6.13/node_modules/flatpickr/dist/flatpickr.css';
 	$: ({ loader } = $ui);
 </script>
 

@@ -30,30 +30,32 @@
 				<th>Created On</th>
 				<th>Completed On</th>
 				<th>Affiliate</th>
+				<th>Customer</th>
 				<th>Rule</th>
 				<th>Operator</th>
 				<th>Status</th>
 				<th>Response Time</th>
-				<th></th>
+				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, ruleName, operatorName, status, history }}
+			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerName, ruleName, operatorName, status, history }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
 					<td>{companyName}</td>
+					<td>{customerName}</td>
 					<td>{ruleName}</td>
 					<td>{operatorName}</td>
 					<td>{status}</td>
-					<td class="text-center">{secondsToMinsSec(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}</td
-					>
-					<td>
-						<button class="btn btn-xs btn-primary h-fit py-1 flex gap-2" on:click={() => (viewHistory = history)}>
-							<Icon icon="mdi:history" />
-							View History
+					<td class="text-center">
+						{secondsToMinsSec(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}
+					</td>
+					<td class="flex justify-center">
+						<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
+							<Icon icon="mdi:history" width={16} />
 						</button>
 					</td>
 				</tr>
