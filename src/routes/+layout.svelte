@@ -13,8 +13,7 @@
 	onMount(() => auth.authenticate());
 	$: error = (() => {
 		if (!$auth.isAuth) return { code: 401, message: 'Unauthorized' };
-		if ($page.url.pathname.startsWith('/rules') && !$auth.user?.userRole.find(({ ID }) => [5, 9].includes(ID)))
-			return { code: 403, message: 'Forbidden' };
+		if ($page.url.pathname.startsWith('/rules') && !auth.isAdmin()) return { code: 403, message: 'Forbidden' };
 	})() as { code: number; message: string } | undefined;
 </script>
 

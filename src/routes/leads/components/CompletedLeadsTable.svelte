@@ -56,10 +56,12 @@
 					<td class="text-center">
 						{secondsToMinsSec(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}
 					</td>
-					<td class="flex justify-center">
-						<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
-							<Icon icon="mdi:history" width={16} />
-						</button>
+					<td>
+						<div class="flex justify-center items-center">
+							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
+								<Icon icon="mdi:history" width={16} />
+							</button>
+						</div>
 					</td>
 				</tr>
 			{/each}

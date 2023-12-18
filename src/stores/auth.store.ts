@@ -14,7 +14,21 @@ export interface Auth {
 }
 
 export const auth = (() => {
-	const { subscribe, set, update } = writable<Auth>({ isAuth: false });
+	const { subscribe, set, update } = writable<Auth>({
+		isAuth: true,
+		token: 'abc',
+		user: {
+			Message: 'Success',
+			UserKey: '5a36aa41-73e1-44f7-b71b-f5bceeaff626',
+			CompanyKey: '4f82d8a1-3933-4a02-8c6a-ebfaa2763a6b',
+			userRole: [
+				{
+					ID: 1,
+					Role: 'Agent'
+				}
+			]
+		}
+	});
 
 	// Methods
 	const authenticate = async () => {
@@ -46,10 +60,24 @@ export const auth = (() => {
 		ui.setLoader();
 	};
 
+	const isAdmin = () => {
+		const { user } = get(auth);
+		if (!user) return false;
+		return user.userRole.find(({ ID }) => [5, 9].includes(ID)) !== undefined;
+	};
+
+	const isSupervisor = () => {
+		const { user } = get(auth);
+		if (!user) return false;
+		return user.userRole.find(({ ID }) => [41, 42, 43, 44].includes(ID)) !== undefined;
+	};
+
 	return {
 		subscribe,
 		set,
 		update,
-		authenticate
+		authenticate,
+		isAdmin,
+		isSupervisor
 	};
 })();

@@ -7,13 +7,17 @@
 	import { trpc } from '../../trpc/client';
 	import Flatpickr from 'svelte-flatpickr';
 	import { ui } from '../../stores/ui.store';
+	import { auth } from '../../stores/auth.store';
 
 	export let data: PageData;
 	let queuedLeads = data.queuedLeads;
 	let completedLeads = data.completedLeads;
 
 	const fetchQueuedLeads = async () => {
-		const leads = await trpc($page).lead.getQueued.query();
+		const isSupervisor = auth.isSupervisor();
+		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
+		const leads = await trpc($page).lead.getQueued.query({ UserKey });
+
 		queuedLeads = leads.queuedLeads.map((lead) => ({
 			...lead,
 			createdAt: new Date(lead.createdAt),
@@ -31,9 +35,14 @@
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
 		ui.setLoader({ title: 'Fetching Completed Leads' });
+
+		const isSupervisor = auth.isSupervisor();
+		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
 		const leads = await trpc($page).lead.getCompleted.query({
-			dateRange: [dateRange[0].toString(), dateRange[1].toString()]
+			dateRange: [dateRange[0].toString(), dateRange[1].toString()],
+			UserKey
 		});
+
 		completedLeads = leads.completedLeads.map((lead) => ({
 			...lead,
 			createdAt: new Date(lead.createdAt),
@@ -54,7 +63,10 @@
 	onDestroy(() => clearInterval(interval));
 
 	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;
-	afterUpdate(() => window.history.replaceState(history.state, '', `?type=${tab === 1 ? 'queued' : 'completed'}`));
+	afterUpdate(() => {
+		$page.url.searchParams.set('type', tab === 1 ? 'queued' : 'completed');
+		window.history.replaceState(history.state, '', $page.url.toString());
+	});
 </script>
 
 <div class="container mx-auto">

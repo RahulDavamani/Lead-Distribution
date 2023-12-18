@@ -153,35 +153,67 @@ export const leadRouter = router({
 			await upsertLead(ProspectKey, 'LEAD RESPONDED', true, UserId);
 		}),
 
-	getQueued: procedure.query(async () => {
-		const queuedLeads = (
-			await Promise.all(
-				(
-					await prisma.ldLead.findMany({
-						where: { isCompleted: false },
-						include: { history: true }
-					})
-				).map(async (lead) => {
-					const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
-					return { ...lead, ...leadDetails };
-				})
-			)
-		).sort((a, b) => (a.ProspectId ?? 0) - (b.ProspectId ?? 0));
+	getQueued: procedure
+		.input(z.object({ UserKey: z.string().min(1).optional() }))
+		.query(async ({ input: { UserKey } }) => {
+			const UserId = UserKey
+				? Number(
+						(
+							await prisma.users
+								.findFirst({ where: { UserKey }, select: { VonageAgentId: true } })
+								.catch(prismaErrorHandler)
+						)?.VonageAgentId
+				  )
+				: undefined;
 
-		return { queuedLeads };
-	}),
+			const queuedLeads = (
+				await Promise.all(
+					(
+						await prisma.ldLead.findMany({
+							where: { isCompleted: false, attempts: UserId ? { some: { UserId } } : undefined },
+							include: { history: true }
+						})
+					).map(async (lead) => {
+						const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
+						return { ...lead, ...leadDetails };
+					})
+				)
+			).sort((a, b) => (a.ProspectId ?? 0) - (b.ProspectId ?? 0));
+
+			return { queuedLeads };
+		}),
 
 	getCompleted: procedure
-		.input(z.object({ dateRange: z.array(z.string()).length(2) }))
-		.query(async ({ input: { dateRange } }) => {
+		.input(
+			z.object({
+				dateRange: z.array(z.string()).length(2),
+				UserKey: z.string().min(1).optional()
+			})
+		)
+		.query(async ({ input: { dateRange, UserKey } }) => {
 			const startDate = new Date(dateRange[0]);
 			const endDate = new Date(dateRange[1]);
 			endDate.setDate(endDate.getDate() + 1);
+
+			const UserId = UserKey
+				? Number(
+						(
+							await prisma.users
+								.findFirst({ where: { UserKey }, select: { VonageAgentId: true } })
+								.catch(prismaErrorHandler)
+						)?.VonageAgentId
+				  )
+				: undefined;
+
 			const completedLeads = (
 				await Promise.all(
 					(
 						await prisma.ldLead.findMany({
-							where: { isCompleted: true, updatedAt: { gte: startDate, lte: endDate } },
+							where: {
+								isCompleted: true,
+								updatedAt: { gte: startDate, lte: endDate },
+								UserId
+							},
 							include: { history: true }
 						})
 					).map(async (lead) => {

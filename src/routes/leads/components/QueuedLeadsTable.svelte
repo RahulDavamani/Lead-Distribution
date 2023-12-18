@@ -6,6 +6,7 @@
 	import type { LdLeadHistory } from '@prisma/client';
 	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
+	import { auth } from '../../../stores/auth.store';
 
 	export let queuedLeads: PageData['queuedLeads'];
 	let viewHistory: LdLeadHistory[] | undefined;
@@ -39,7 +40,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, ruleUserId }}
+			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, ruleUserId }, i}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
@@ -54,12 +55,12 @@
 						{secondsToMinsSec(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
-						<div class="flex justify-center gap-2">
+						<div class="flex justify-center items-center gap-2">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
 								<Icon icon="mdi:history" width={16} />
 							</button>
 							<button
-								class="btn btn-xs btn-success h-fit py-1 flex gap-2"
+								class="btn btn-xs btn-success {i !== 0 && !auth.isSupervisor() && 'btn-disabled'} h-fit py-1 flex gap-2"
 								on:click={() => (window.location.href = `/view-lead?ProspectKey=${ProspectKey}&UserId=${ruleUserId}`)}
 							>
 								<Icon icon="mdi:arrow-right" width={16} />
