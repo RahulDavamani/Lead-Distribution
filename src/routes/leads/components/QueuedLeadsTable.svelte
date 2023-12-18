@@ -29,8 +29,9 @@
 				<th>Vonage GUID</th>
 				<th>Created On</th>
 				<th>Updated On</th>
+				<th>Customer Name</th>
+				<th>Customer Address</th>
 				<th>Affiliate</th>
-				<th>Customer</th>
 				<th>Rule</th>
 				<th>Status</th>
 				<th>Time Elapsed</th>
@@ -38,14 +39,15 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerName, ruleName, status, history, ruleUserId }}
+			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, ruleUserId }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
+					<td>{customerDetails.Name}</td>
+					<td>{customerDetails.Address}</td>
 					<td>{companyName}</td>
-					<td>{customerName}</td>
 					<td>{ruleName}</td>
 					<td>{status}</td>
 					<td class="text-center">

@@ -1,3 +1,4 @@
+import { goto } from '$app/navigation';
 import { writable } from 'svelte/store';
 
 export interface UI {
@@ -38,6 +39,12 @@ export const ui = (() => {
 	const setLoader = (loader?: Loader) => update((state) => ({ ...state, loader }));
 	const setTheme = (theme: string) => document.querySelector('html')?.setAttribute('data-theme', theme);
 
+	const navigate = async (url: string) => {
+		ui.setLoader({});
+		await goto(url);
+		ui.setLoader();
+	};
+
 	const showToast = (toast: Toast) => {
 		update((state) => {
 			clearInterval(state.toastInterval);
@@ -62,6 +69,7 @@ export const ui = (() => {
 		update,
 		setLoader,
 		setTheme,
+		navigate,
 		showToast,
 		closeToast
 	};

@@ -8,6 +8,8 @@
 	$: ({ loader } = $ui);
 </script>
 
+<img src="https://bundlepublic.blob.core.windows.net/bundle/bundle_logo.png" alt="Logo" width="150" class="mb-4" />
+
 {#if loader}
 	{@const { title, overlay } = loader}
 	<Loader {title} overlay={overlay ?? true} />

@@ -4,7 +4,7 @@
 	import { page } from '$app/stores';
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 	import { ui } from '../../stores/ui.store';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 
 	export let data;
 	$: ({ rules } = data);
@@ -21,13 +21,13 @@
 	};
 </script>
 
-<div class="container mx-auto my-10">
+<div class="container mx-auto">
 	<div class="flex justify-between items-center">
 		<h1 class="text-3xl font-bold flex items-end gap-2">
 			Rules:
 			<span class="font-normal font-mono text-2xl">({rules.length})</span>
 		</h1>
-		<button class="btn btn-sm btn-success" on:click={() => (window.location.href = '/rules/rule-config')}>
+		<button class="btn btn-sm btn-success" on:click={async () => ui.navigate('/rules/rule-config')}>
 			<Icon icon="mdi:add" width={20} />
 			Add Rule
 		</button>
@@ -77,10 +77,7 @@
 				</div>
 
 				<div class="flex gap-2">
-					<button
-						class="btn btn-sm btn-square btn-info"
-						on:click={() => (window.location.href = `/rules/rule-config?id=${id}`)}
-					>
+					<button class="btn btn-sm btn-square btn-info" on:click={() => ui.navigate(`/rules/rule-config?id=${id}`)}>
 						<Icon icon="mdi:edit" width={20} />
 					</button>
 					<button

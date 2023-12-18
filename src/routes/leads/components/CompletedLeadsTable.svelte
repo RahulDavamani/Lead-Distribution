@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterUpdate } from 'svelte';
+	import { afterUpdate, tick } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { PageData } from '../$types';
@@ -10,7 +10,8 @@
 	export let completedLeads: PageData['completedLeads'];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	afterUpdate(() => {
+	afterUpdate(async () => {
+		await tick();
 		new DataTable('#completedLeadsTable');
 	});
 
@@ -29,8 +30,9 @@
 				<th>Vonage GUID</th>
 				<th>Created On</th>
 				<th>Completed On</th>
+				<th>Customer Name</th>
+				<th>Customer Address</th>
 				<th>Affiliate</th>
-				<th>Customer</th>
 				<th>Rule</th>
 				<th>Operator</th>
 				<th>Status</th>
@@ -39,14 +41,15 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerName, ruleName, operatorName, status, history }}
+			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerDetails, ruleName, operatorName, status, history }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
+					<td>{customerDetails.Name}</td>
+					<td>{customerDetails.Address}</td>
 					<td>{companyName}</td>
-					<td>{customerName}</td>
 					<td>{ruleName}</td>
 					<td>{operatorName}</td>
 					<td>{status}</td>

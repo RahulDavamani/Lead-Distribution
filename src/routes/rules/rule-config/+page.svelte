@@ -8,6 +8,7 @@
 	import GHLContract from './components/GHLContract.svelte';
 	import WaitTimeCR from './components/WaitTimeCR.svelte';
 	import Notification from './components/Notification.svelte';
+	import { ui } from '../../../stores/ui.store';
 
 	export let data;
 	$: ({ rule, operators, affiliates } = data);
@@ -17,9 +18,9 @@
 {#if $ruleConfig.init}
 	{@const { zodErrors } = $ruleConfig}
 
-	<div class="container mx-auto mt-10 mb-20">
+	<div class="container mx-auto mb-20">
 		<div class="flex justify-between items-center mb-6 relative">
-			<button class="btn btn-sm btn-ghost" on:click={() => (window.location.href = '/rules')}>
+			<button class="btn btn-sm btn-ghost" on:click={() => ui.navigate('/rules')}>
 				<Icon icon="mdi:chevron-left" width={22} /> Rules
 			</button>
 			<div class="font-bold text-2xl absolute w-fit mx-auto left-0 right-0">Distribution Rule</div>

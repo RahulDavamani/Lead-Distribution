@@ -12,8 +12,9 @@ import { leadRouter } from './lead.router';
 export const appRouter = router({
 	test: procedure.query(async () => {
 		// const result = await prisma.$queryRaw`select * from Users where Email = 'rahul@xyzies.com'`;
-		await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
-		const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
+		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
+		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
+		// const result = await prisma.ldLead.delete({ where: { ProspectKey: '69510d62-d4ed-4262-8403-71710d04ea87' } });
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',
 		// @Message = 'This is a Alert!',
@@ -33,7 +34,7 @@ export const appRouter = router({
 		// 		})
 		// 		.catch(prismaErrorHandler)
 		// )?.UserKey;
-		return result;
+		// return result;
 	}),
 	rule: ruleRouter,
 	operator: operatorRouter,
