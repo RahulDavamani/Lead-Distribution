@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterUpdate } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { PageData } from '../$types';
@@ -11,7 +11,10 @@
 	export let queuedLeads: PageData['queuedLeads'];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	afterUpdate(() => {
+	onMount(async () => {
+		new DataTable('#queuedLeadsTable', { language: { emptyTable: '', zeroRecords: '' } });
+	});
+	afterUpdate(async () => {
 		new DataTable('#queuedLeadsTable');
 	});
 

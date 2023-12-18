@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterUpdate, tick } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { PageData } from '../$types';
@@ -10,8 +10,10 @@
 	export let completedLeads: PageData['completedLeads'];
 	let viewHistory: LdLeadHistory[] | undefined;
 
+	onMount(async () => {
+		new DataTable('#completedLeadsTable', { language: { emptyTable: '', zeroRecords: '' } });
+	});
 	afterUpdate(async () => {
-		await tick();
 		new DataTable('#completedLeadsTable');
 	});
 

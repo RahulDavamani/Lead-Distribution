@@ -8,6 +8,7 @@
 	import Flatpickr from 'svelte-flatpickr';
 	import { ui } from '../../stores/ui.store';
 	import { auth } from '../../stores/auth.store';
+	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 
 	export let data: PageData;
 	let queuedLeads = data.queuedLeads;
@@ -16,7 +17,7 @@
 	const fetchQueuedLeads = async () => {
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
-		const leads = await trpc($page).lead.getQueued.query({ UserKey });
+		const leads = await trpc($page).lead.getQueued.query({ UserKey }).catch(trpcClientErrorHandler);
 
 		queuedLeads = leads.queuedLeads.map((lead) => ({
 			...lead,
@@ -38,10 +39,12 @@
 
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
-		const leads = await trpc($page).lead.getCompleted.query({
-			dateRange: [dateRange[0].toString(), dateRange[1].toString()],
-			UserKey
-		});
+		const leads = await trpc($page)
+			.lead.getCompleted.query({
+				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
+				UserKey
+			})
+			.catch(trpcClientErrorHandler);
 
 		completedLeads = leads.completedLeads.map((lead) => ({
 			...lead,

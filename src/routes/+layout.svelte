@@ -12,6 +12,7 @@
 	$: ({ loader } = $ui);
 	onMount(() => auth.authenticate());
 	$: error = (() => {
+		if ($page.url.pathname.startsWith('/view-lead')) return;
 		if (!$auth.isAuth) return { code: 401, message: 'Unauthorized' };
 		if ($page.url.pathname.startsWith('/rules') && !auth.isAdmin()) return { code: 403, message: 'Forbidden' };
 	})() as { code: number; message: string } | undefined;

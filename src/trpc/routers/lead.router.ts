@@ -125,13 +125,32 @@ export const sendNotification = async (
 };
 
 export const leadRouter = router({
-	view: procedure.input(z.object({ ProspectKey: z.string().min(1) })).query(async ({ input: { ProspectKey } }) => {
-		const lead = await prisma.ldLead
-			.findFirstOrThrow({ where: { ProspectKey, isCompleted: false } })
-			.catch(prismaErrorHandler);
-		const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
-		return { lead, prospect };
-	}),
+	view: procedure
+		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1).optional() }))
+		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			const UserId = UserKey
+				? Number(
+						(
+							await prisma.users
+								.findFirst({ where: { UserKey }, select: { VonageAgentId: true } })
+								.catch(prismaErrorHandler)
+						)?.VonageAgentId
+				  )
+				: undefined;
+
+			const lead = await prisma.ldLead
+				.findFirst({
+					where: {
+						ProspectKey,
+						isCompleted: false,
+						attempts: UserId ? { some: { UserId } } : undefined
+					}
+				})
+				.catch(prismaErrorHandler);
+			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found' });
+			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+			return { UserId, lead, prospect };
+		}),
 
 	complete: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserId: z.number().min(1) }))
@@ -151,6 +170,14 @@ export const leadRouter = router({
 				prismaErrorHandler
 			);
 			await upsertLead(ProspectKey, 'LEAD RESPONDED', true, UserId);
+			return { ProspectKey };
+		}),
+
+	close: procedure
+		.input(z.object({ ProspectKey: z.string().min(1), UserId: z.number().min(1) }))
+		.query(async ({ input: { ProspectKey, UserId } }) => {
+			await upsertLead(ProspectKey, 'LEAD CLOSED', true, UserId);
+			return { ProspectKey };
 		}),
 
 	getQueued: procedure
@@ -171,7 +198,7 @@ export const leadRouter = router({
 					(
 						await prisma.ldLead.findMany({
 							where: { isCompleted: false, attempts: UserId ? { some: { UserId } } : undefined },
-							include: { history: true }
+							include: { history: { orderBy: { createdAt: 'asc' } } }
 						})
 					).map(async (lead) => {
 						const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
@@ -214,7 +241,7 @@ export const leadRouter = router({
 								updatedAt: { gte: startDate, lte: endDate },
 								UserId
 							},
-							include: { history: true }
+							include: { history: { orderBy: { createdAt: 'asc' } } }
 						})
 					).map(async (lead) => {
 						const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
