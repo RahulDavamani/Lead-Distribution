@@ -5,14 +5,18 @@
 	import Toast from './components/Toast.svelte';
 	import { ui } from '../stores/ui.store';
 	import '../../node_modules/.pnpm/flatpickr@4.6.13/node_modules/flatpickr/dist/flatpickr.css';
-	import { onMount } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 	import { auth } from '../stores/auth.store';
 	import { page } from '$app/stores';
 
 	$: ({ loader } = $ui);
-	onMount(() => auth.authenticate());
+	onMount(async () => {
+		if (!$auth.isAuth) auth.authenticate();
+	});
 	$: error = (() => {
 		if ($page.url.pathname.startsWith('/view-lead')) return;
+		if ($page.url.pathname.startsWith('/lead-distribute')) return;
+		if ($page.url.pathname.startsWith('/test')) return;
 		if (!$auth.isAuth) return { code: 401, message: 'Unauthorized' };
 		if ($page.url.pathname.startsWith('/rules') && !auth.isAdmin()) return { code: 403, message: 'Forbidden' };
 	})() as { code: number; message: string } | undefined;

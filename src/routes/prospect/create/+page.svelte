@@ -3,7 +3,7 @@
 	import FormControl from '../../components/FormControl.svelte';
 
 	let prospect = {
-		LeadID: '12345',
+		LeadID: '',
 		CustomerInfo: {
 			FirstName: '',
 			LastName: '',
@@ -39,11 +39,10 @@
 		const url = 'https://openapi.xyzies.com/LeadProspect/PostLead';
 		const response = await fetch(url, {
 			method: 'POST',
+			mode: 'no-cors',
 			headers: {
-				AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9',
 				'Content-Type': 'application/json',
-				Cookie:
-					'ARRAffinity=176da18497bc474167a1a6cec921cf64cc23be973f0f93dd5e4c2bd8b5c0478c; ARRAffinitySameSite=176da18497bc474167a1a6cec921cf64cc23be973f0f93dd5e4c2bd8b5c0478c'
+				AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9'
 			},
 			body: JSON.stringify(prospect)
 		});
@@ -51,7 +50,7 @@
 		if (response.status === 200) {
 			ui.showToast({ class: 'alert-success', title: 'Lead Prospect Created' });
 			prospect = {
-				LeadID: '12345',
+				LeadID: '',
 				CustomerInfo: {
 					FirstName: '',
 					LastName: '',
@@ -97,10 +96,16 @@
 			<FormControl label="Zip Code">
 				<input type="text" bind:value={prospect.CustomerInfo.ZipCode} class="input input-bordered w-full" />
 			</FormControl>
+
+			<div class="flex items-end">
+				<FormControl classes="mt-4" inputType="In" label="I Agree to the Terms & Conditions">
+					<input type="checkbox" class="checkbox" bind:checked={agreeToTerms} />
+				</FormControl>
+			</div>
+			<FormControl label="Lead ID">
+				<input type="text" bind:value={prospect.LeadID} class="input input-bordered w-full" />
+			</FormControl>
 		</div>
-		<FormControl classes="mt-4" inputType="In" label="I Agree to the Terms & Conditions">
-			<input type="checkbox" class="checkbox" bind:checked={agreeToTerms} />
-		</FormControl>
 
 		<button class="btn btn-primary {!enableSubmit && 'btn-disabled'} w-full mt-6" on:click={submit}>Submit</button>
 	</div>

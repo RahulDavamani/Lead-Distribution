@@ -2,12 +2,15 @@
 	import { afterUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
-	import type { PageData } from '../$types';
 	import type { LdLeadHistory } from '@prisma/client';
 	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
+	import type { inferProcedureOutput } from '@trpc/server';
+	import type { AppRouter } from '../../../trpc/routers/app.router';
 
-	export let completedLeads: PageData['completedLeads'];
+	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
+
+	export let completedLeads: CompletedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
 	onMount(async () => {
@@ -17,10 +20,18 @@
 		new DataTable('#completedLeadsTable');
 	});
 
-	const secondsToMinsSec = (seconds: number): string => {
-		const mins: number = Math.floor(seconds / 60);
-		const remainingSec: number = seconds % 60;
-		return `${mins} mins ${remainingSec} sec`;
+	const convertSecondsToHMS = (seconds: number): string => {
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
+		const remainingSeconds = seconds % 60;
+
+		let formattedTime = '';
+		if (hours > 0) formattedTime += `${hours} hrs`;
+		if (minutes > 0) formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${minutes} mins`;
+		if (remainingSeconds > 0 || formattedTime === '')
+			formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${remainingSeconds} secs`;
+
+		return formattedTime;
 	};
 </script>
 
@@ -56,7 +67,7 @@
 					<td>{operatorName}</td>
 					<td>{status}</td>
 					<td class="text-center">
-						{secondsToMinsSec(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}
+						{convertSecondsToHMS(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
 						<div class="flex justify-center items-center">

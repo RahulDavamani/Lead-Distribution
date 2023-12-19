@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { afterUpdate, onDestroy, onMount, tick } from 'svelte';
-	import type { PageData } from './$types';
+	import { afterUpdate, onDestroy, onMount } from 'svelte';
 	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
 	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
 	import { trpc } from '../../trpc/client';
@@ -9,14 +8,18 @@
 	import { ui } from '../../stores/ui.store';
 	import { auth } from '../../stores/auth.store';
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
+	import type { inferProcedureOutput } from '@trpc/server';
+	import type { AppRouter } from '../../trpc/routers/app.router';
 
-	export let data: PageData;
-	let queuedLeads = data.queuedLeads;
-	let completedLeads = data.completedLeads;
+	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
+	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
+
+	let queuedLeads: QueuedLead[] = [];
+	let completedLeads: CompletedLead[] = [];
 
 	const fetchQueuedLeads = async () => {
 		const isSupervisor = auth.isSupervisor();
-		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
+		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
 		const leads = await trpc($page).lead.getQueued.query({ UserKey }).catch(trpcClientErrorHandler);
 
 		queuedLeads = leads.queuedLeads.map((lead) => ({
@@ -24,7 +27,6 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			ruleUserId: lead.ruleUserId,
 			history: lead.history.map((history) => ({
 				...history,
 				createdAt: new Date(history.createdAt),
@@ -38,7 +40,7 @@
 		ui.setLoader({ title: 'Fetching Completed Leads' });
 
 		const isSupervisor = auth.isSupervisor();
-		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey ?? '';
+		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
 		const leads = await trpc($page)
 			.lead.getCompleted.query({
 				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
@@ -51,7 +53,6 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			ruleUserId: lead.ruleUserId,
 			history: lead.history.map((history) => ({
 				...history,
 				createdAt: new Date(history.createdAt),
@@ -62,7 +63,13 @@
 	};
 
 	let interval: NodeJS.Timeout | undefined;
-	onMount(async () => (interval = setInterval(fetchQueuedLeads, 1000)));
+	onMount(async () => {
+		ui.setLoader({ title: 'Fetching Queued Leads' });
+		await fetchQueuedLeads();
+		await fetchCompletedLeads(dateRange);
+		ui.setLoader();
+		interval = setInterval(fetchQueuedLeads, 1000);
+	});
 	onDestroy(() => clearInterval(interval));
 
 	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;

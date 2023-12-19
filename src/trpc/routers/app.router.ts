@@ -11,14 +11,15 @@ import { leadRouter } from './lead.router';
 
 export const appRouter = router({
 	test: procedure.query(async () => {
-		const result = await prisma.$queryRaw`select * from Users where VonageAgentID = 1013`;
+		// const result = await prisma.$queryRaw`select Email from VonageUsers where UserId = 1013 and Active=1`;
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
-		// const result = await prisma.ldLead.delete({ where: { ProspectKey: '69510d62-d4ed-4262-8403-71710d04ea87' } });
+		await prisma.ldLead.delete({ where: { ProspectKey: 'c38d36ed-dbb0-4c8e-a4b4-63bb36b0bd8c' } });
+		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',
 		// @Message = 'This is a Alert!',
-		// @UserKeys = 'c3a81c29-a0f1-4470-8a70-73d3866d30e9',
+		// @UserKeys = '219610cd-e93e-48b9-9542-e14e4bc40c01',
 		// @ExpireInSeconds = 600,
 		// @HrefURL = 'https://www.google.co.in/',
 		// @ActionBtnTitle = 'Action Button';`;
@@ -34,7 +35,7 @@ export const appRouter = router({
 		// 		})
 		// 		.catch(prismaErrorHandler)
 		// )?.UserKey;
-		return result;
+		// return result;
 	}),
 	rule: ruleRouter,
 	operator: operatorRouter,

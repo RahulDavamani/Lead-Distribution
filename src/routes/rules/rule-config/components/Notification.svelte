@@ -109,7 +109,8 @@
 				<Icon icon="mdi:add-circle" width={24} />
 			</button>
 		</div>
-		<div class="space-y-4 px-2 mb-6">
+
+		<div class="space-y-4 px-2 mb-2">
 			{#each notification.notificationAttempts as { num }, i}
 				<div class="card border-2 p-4">
 					<div class="flex justify-start items-center gap-2 mb-1">
@@ -143,6 +144,13 @@
 			{:else}
 				<div class="text-center">No Attempts</div>
 			{/each}
+		</div>
+
+		<div class="flex justify-end">
+			<div class="alert w-1/3 px-2 py-1 text-xs">
+				<span class="font-semibold">Dynamic Variables:</span>
+				%CustomerFirstName, %CustomerLastName, %Email, %Address, %ZipCode
+			</div>
 		</div>
 
 		<FormControl

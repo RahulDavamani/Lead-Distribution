@@ -2,13 +2,17 @@
 	import { afterUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
-	import type { PageData } from '../$types';
 	import type { LdLeadHistory } from '@prisma/client';
 	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
 	import { auth } from '../../../stores/auth.store';
+	import { ui } from '../../../stores/ui.store';
+	import type { inferProcedureOutput } from '@trpc/server';
+	import type { AppRouter } from '../../../trpc/routers/app.router';
 
-	export let queuedLeads: PageData['queuedLeads'];
+	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
+
+	export let queuedLeads: QueuedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
 	onMount(async () => {
@@ -18,10 +22,18 @@
 		new DataTable('#queuedLeadsTable');
 	});
 
-	const secondsToMinsSec = (seconds: number): string => {
-		const mins: number = Math.floor(seconds / 60);
-		const remainingSec: number = seconds % 60;
-		return `${mins} mins ${remainingSec} sec`;
+	const convertSecondsToHMS = (seconds: number): string => {
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
+		const remainingSeconds = seconds % 60;
+
+		let formattedTime = '';
+		if (hours > 0) formattedTime += `${hours} hrs`;
+		if (minutes > 0) formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${minutes} mins`;
+		if (remainingSeconds > 0 || formattedTime === '')
+			formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${remainingSeconds} secs`;
+
+		return formattedTime;
 	};
 </script>
 
@@ -43,10 +55,17 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, ruleUserId }, i}
+			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history }, i}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
-					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
+					<td
+						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
+						on:click={() => {
+							if (VonageGUID) ui.navigate(`/vonage-call-json?Guid=${VonageGUID}`);
+						}}
+					>
+						{VonageGUID ?? 'N/A'}
+					</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
 					<td>{customerDetails.Name}</td>
@@ -55,7 +74,7 @@
 					<td>{ruleName}</td>
 					<td>{status}</td>
 					<td class="text-center">
-						{secondsToMinsSec(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
+						{convertSecondsToHMS(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
 						<div class="flex justify-center items-center gap-2">
@@ -64,7 +83,12 @@
 							</button>
 							<button
 								class="btn btn-xs btn-success {i !== 0 && !auth.isSupervisor() && 'btn-disabled'} h-fit py-1 flex gap-2"
-								on:click={() => (window.location.href = `/view-lead?ProspectKey=${ProspectKey}&UserId=${ruleUserId}`)}
+								on:click={() =>
+									ui.navigate(
+										`/view-lead?ProspectKey=${ProspectKey}&UserKey=${
+											$auth.user?.UserKey
+										}&IsSupervisor=${auth.isSupervisor()}`
+									)}
 							>
 								<Icon icon="mdi:arrow-right" width={16} />
 							</button>
