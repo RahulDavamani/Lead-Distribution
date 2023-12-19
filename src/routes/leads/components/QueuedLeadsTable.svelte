@@ -61,7 +61,7 @@
 					<td
 						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
 						on:click={() => {
-							if (VonageGUID) ui.navigate(`/vonage-call-json?Guid=${VonageGUID}`);
+							if (VonageGUID) ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`);
 						}}
 					>
 						{VonageGUID ?? 'N/A'}

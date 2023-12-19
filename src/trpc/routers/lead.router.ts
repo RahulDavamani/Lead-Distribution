@@ -216,13 +216,6 @@ export const leadRouter = router({
 			return { completedLeads };
 		}),
 
-	getVonageCallJson: procedure.input(z.object({ Guid: z.string().min(1) })).query(async ({ input: { Guid } }) => {
-		const vonageCall = (await prisma.$queryRaw`Select JsonText from VonageCalls where Guid=${Guid}`.catch(
-			prismaErrorHandler
-		)) as { JsonText: string | null }[];
-		return { vonageCallJson: vonageCall?.[0]?.JsonText ?? undefined };
-	}),
-
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1).optional() }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {

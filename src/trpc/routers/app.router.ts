@@ -5,6 +5,7 @@ import { ruleRouter } from './rule.router';
 import { operatorRouter } from './operator.router';
 import { affiliateRouter } from './affiliate.router';
 import { leadRouter } from './lead.router';
+import { vonageCallRouter } from './vonageCall.router';
 
 // Davamani@yopmail userKey 74bedd5f-c117-474c-90d5-5a13eedd068f
 // rahul@xyzies userKey c3a81c29-a0f1-4470-8a70-73d3866d30e9
@@ -40,7 +41,8 @@ export const appRouter = router({
 	rule: ruleRouter,
 	operator: operatorRouter,
 	affiliate: affiliateRouter,
-	lead: leadRouter
+	lead: leadRouter,
+	vonageCall: vonageCallRouter
 });
 
 export type AppRouter = typeof appRouter;

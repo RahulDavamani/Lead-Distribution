@@ -6,6 +6,6 @@ export const load = async (event) => {
 	if (!Guid) throw error(400, 'Bad Request: Missing params "Guid"');
 
 	const trpc = await createCaller(event);
-	const { vonageCallJson } = await trpc.lead.getVonageCallJson({ Guid });
-	return { vonageCallJson };
+	const { vonageCall, audioUrl } = await trpc.vonageCall.get({ Guid });
+	return { vonageCall, audioUrl };
 };
