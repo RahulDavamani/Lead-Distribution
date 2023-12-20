@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { afterUpdate, beforeUpdate, onMount } from 'svelte';
-	import DataTable from 'datatables.net-dt';
-	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { LdLeadHistory } from '@prisma/client';
 	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
@@ -9,17 +6,16 @@
 	import { ui } from '../../../stores/ui.store';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
+	import { onMount } from 'svelte';
+	import DataTable from 'datatables.net-dt';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
 	export let queuedLeads: QueuedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	beforeUpdate(async () => {
-		new DataTable('#queuedLeadsTable').destroy();
-	});
-	afterUpdate(async () => {
-		new DataTable('#queuedLeadsTable');
+	onMount(() => {
+		if (queuedLeads.length > 0) new DataTable('#queuedLeadsTable');
 	});
 
 	const convertSecondsToHMS = (seconds: number): string => {

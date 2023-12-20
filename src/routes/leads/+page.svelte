@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { afterUpdate, onDestroy, onMount } from 'svelte';
+	import { afterUpdate, onDestroy, onMount, tick } from 'svelte';
 	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
 	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
 	import { trpc } from '../../trpc/client';
@@ -11,6 +11,8 @@
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../trpc/routers/app.router';
 	import Icon from '@iconify/svelte';
+	import DataTable from 'datatables.net-dt';
+	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -22,7 +24,9 @@
 	const fetchQueuedLeads = async () => {
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
-		const leads = await trpc($page).lead.getQueued.query({ UserKey }).catch(trpcClientErrorHandler);
+		const leads = await trpc($page)
+			.lead.getQueued.query({ UserKey })
+			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		queuedLeads = leads.queuedLeads.map((lead) => ({
 			...lead,
@@ -35,9 +39,13 @@
 				updatedAt: new Date(history.updatedAt)
 			}))
 		}));
+		await tick();
+		new DataTable('#queuedLeadsTable');
 	};
 
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
+		if (dateRange.length !== 2) return;
+		new DataTable('#completedLeadsTable').destroy();
 		ui.setLoader({ title: 'Fetching Leads' });
 
 		const isSupervisor = auth.isSupervisor();
@@ -61,6 +69,8 @@
 			}))
 		}));
 		ui.setLoader();
+		await tick();
+		new DataTable('#completedLeadsTable');
 	};
 
 	let interval: NodeJS.Timeout | undefined;

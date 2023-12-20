@@ -1,23 +1,19 @@
 <script lang="ts">
-	import { afterUpdate, beforeUpdate, onMount } from 'svelte';
-	import DataTable from 'datatables.net-dt';
-	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { LdLeadHistory } from '@prisma/client';
 	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { ui } from '../../../stores/ui.store';
+	import { onMount } from 'svelte';
+	import DataTable from 'datatables.net-dt';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	beforeUpdate(async () => {
-		new DataTable('#completedLeadsTable').destroy();
-	});
-	afterUpdate(async () => {
+	onMount(() => {
 		new DataTable('#completedLeadsTable');
 	});
 

@@ -40,7 +40,7 @@ export const trpcClientErrorHandler = <T>(
 	if (callback) callback({ code, message, zodErrors });
 
 	if (stopLoading) ui.update((state) => ({ ...state, loader: undefined }));
-	if (showToast) ui.showToast({ class: 'alert-error', title: `${code}: ${message}` });
+	if (showToast) ui.showToast({ class: 'alert-error', title: `${code ?? 'Error'}: ${message}` });
 
 	throw `${code}: ${message}`;
 };
@@ -57,13 +57,13 @@ export const trpcErrorhandler = <T>(e: unknown): TRPCHandlerError<T> => {
 			const errors = JSON.parse(e.message);
 			if (typeof errors === 'object' && 'path' in errors[0])
 				return {
-					code: e.data.httpStatus,
+					code: e.data?.httpStatus,
 					message: 'Input Validation Error',
 					zodErrors: formatZodErrors<T>(errors)
 				};
 		} catch (_) {
 			return {
-				code: e.data.httpStatus,
+				code: e.data?.httpStatus,
 				message: e.message
 			};
 		}
