@@ -7,6 +7,7 @@
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 	import type { AppRouter } from '../../trpc/routers/app.router';
 	import { onMount } from 'svelte';
+	import Icon from '@iconify/svelte';
 
 	type Lead = inferProcedureOutput<AppRouter['lead']['view']>['lead'];
 	type Prospect = inferProcedureOutput<AppRouter['lead']['view']>['prospect'];
@@ -65,7 +66,8 @@
 	const callLead = async () => {
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Calling Customer' });
-			const UserKey = $auth.user?.UserKey ?? $page.url.searchParams.get('UserKey') ?? '';
+			const keys = $page.url.searchParams.get('keys');
+			const UserKey = $auth.user?.UserKey ?? keys?.split(',')[1] ?? '';
 			await trpc($page)
 				.lead.complete.query({ ProspectKey: prospect.ProspectKey, UserKey })
 				.catch(trpcClientErrorHandler);
@@ -78,7 +80,8 @@
 	const closeLead = async () => {
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Closing Lead' });
-			const UserKey = $auth.user?.UserKey ?? $page.url.searchParams.get('UserKey') ?? '';
+			const keys = $page.url.searchParams.get('keys');
+			const UserKey = $auth.user?.UserKey ?? keys?.split(',')[1] ?? '';
 			await trpc($page).lead.close.query({ ProspectKey: prospect.ProspectKey, UserKey }).catch(trpcClientErrorHandler);
 			ui.showToast({ title: 'Lead Closed Successfully', class: 'alert-success' });
 			ui.setLoader();
@@ -129,7 +132,10 @@
 				</div>
 			</div>
 
-			<button class="btn btn-success w-full mt-8" on:click={callLead}>Call Customer</button>
+			<button class="btn btn-success w-full mt-8" on:click={callLead}>
+				<Icon icon="mdi:phone" width={20} />
+				Call Customer
+			</button>
 
 			{#if auth.isSupervisor()}
 				<div class="divider" />

@@ -10,6 +10,7 @@
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../trpc/routers/app.router';
+	import Icon from '@iconify/svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -37,7 +38,7 @@
 	};
 
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
-		ui.setLoader({ title: 'Fetching Completed Leads' });
+		ui.setLoader({ title: 'Fetching Leads' });
 
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
@@ -64,13 +65,17 @@
 
 	let interval: NodeJS.Timeout | undefined;
 	onMount(async () => {
-		ui.setLoader({ title: 'Fetching Queued Leads' });
+		window.stop();
+		ui.setLoader({ title: 'Fetching Leads' });
 		await fetchQueuedLeads();
 		await fetchCompletedLeads(dateRange);
 		ui.setLoader();
 		interval = setInterval(fetchQueuedLeads, 1000);
 	});
-	onDestroy(() => clearInterval(interval));
+	onDestroy(() => {
+		window.stop();
+		clearInterval(interval);
+	});
 
 	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;
 	afterUpdate(() => {
@@ -103,6 +108,9 @@
 				/>
 			{/if}
 		</h1>
+		<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => fetchCompletedLeads(dateRange)}>
+			<Icon icon="mdi:refresh" class="text-info" width={22} />
+		</button>
 		<button class="btn btn-sm {tab === 1 ? 'btn-success' : 'btn-warning'}" on:click={() => (tab = tab === 1 ? 2 : 1)}>
 			{tab === 1 ? 'View Completed Leads' : 'View Queued Leads'}
 		</button>

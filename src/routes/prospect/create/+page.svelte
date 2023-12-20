@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { ui } from '../../../stores/ui.store';
+	import { trpc } from '../../../trpc/client';
+	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
+	import type { ProspectInput } from '../../../zod/prospectInput.schema';
 	import FormControl from '../../components/FormControl.svelte';
 
-	let prospect = {
+	let prospect: ProspectInput = {
 		LeadID: '',
 		CustomerInfo: {
 			FirstName: '',
@@ -36,38 +40,23 @@
 	})();
 	const submit = async () => {
 		ui.setLoader({ title: 'Creating Lead Prospect' });
-		const url = 'https://openapi.xyzies.com/LeadProspect/PostLead';
-		const response = await fetch(url, {
-			method: 'POST',
-			mode: 'no-cors',
-			headers: {
-				'Content-Type': 'application/json',
-				AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9'
-			},
-			body: JSON.stringify(prospect)
-		});
-
-		if (response.status === 200) {
-			ui.showToast({ class: 'alert-success', title: 'Lead Prospect Created' });
-			prospect = {
-				LeadID: '',
-				CustomerInfo: {
-					FirstName: '',
-					LastName: '',
-					Email: '',
-					Phone: '',
-					Address: '',
-					ZipCode: ''
-				},
-				TrustedFormCertUrl: 'TrustedFormCertUrl.com',
-				ConsentToContact: '',
-				AcceptedTerms: ''
-			};
-		} else ui.showToast({ class: 'alert-error', title: 'Failed to Create Lead Prospect' });
+		await trpc($page).lead.postLeadProspect.query({ prospect }).catch(trpcClientErrorHandler);
+		ui.showToast({ class: 'alert-success', title: 'Lead Prospect Created' });
 		ui.setLoader();
-
-		const data = await response.json();
-		console.log(data);
+		prospect = {
+			LeadID: '',
+			CustomerInfo: {
+				FirstName: '',
+				LastName: '',
+				Email: '',
+				Phone: '',
+				Address: '',
+				ZipCode: ''
+			},
+			TrustedFormCertUrl: 'TrustedFormCertUrl.com',
+			ConsentToContact: '',
+			AcceptedTerms: ''
+		};
 	};
 </script>
 

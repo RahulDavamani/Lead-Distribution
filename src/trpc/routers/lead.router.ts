@@ -7,6 +7,7 @@ import type { Operator } from '../../zod/operator.schema';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler';
 import type { Rule } from '../../zod/rule.schema';
 import { env } from '$env/dynamic/private';
+import { prospectInputSchema } from '../../zod/prospectInput.schema';
 
 export const getLeadDetails = async (ProspectKey: string, UserId: number | null) => {
 	const prospect = await prisma.leadProspect.findFirst({ where: { ProspectKey } }).catch(prismaErrorHandler);
@@ -354,7 +355,7 @@ export const leadRouter = router({
 				const { notificationAttempts, supervisorUserId, supervisorTextTemplate } = rule.notification;
 				await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
 				const availableOperators =
-					(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and ISNULL(a.calls,0)=0 and ISNULL(a.semiLive,0)=0 and StatusSince > dateadd(hour,-1,getdate())`.catch(
+					(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and ISNULL(calls,0)=0 and ISNULL(semiLive,0)=0 and StatusSince > dateadd(hour,-1,getdate())`.catch(
 						prismaErrorHandler
 					)) as {
 						AgentId: number;
@@ -383,16 +384,44 @@ export const leadRouter = router({
 					if (isLeadCompleted) break;
 				}
 				if (noOperatorFound) upsertLead(ProspectKey, `NO OPERATOR FOUND`);
-				else upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
+				else {
+					const isLeadCompleted = await checkLeadCompleted(ProspectKey);
+					if (isLeadCompleted) return;
+					upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
+				}
 
-				const isLeadCompleted = await checkLeadCompleted(ProspectKey);
-				if (!isLeadCompleted && supervisorUserId) {
+				if (supervisorUserId) {
 					// Send Notification to Supervisor
 					await triggerNotification(ProspectKey, supervisorUserId, supervisorTextTemplate);
+					await prisma.ldLeadAttempts
+						.create({
+							data: {
+								leadId: lead.id,
+								attemptId: null,
+								UserId: supervisorUserId
+							}
+						})
+						.catch(prismaErrorHandler);
 					await upsertLead(ProspectKey, `LEAD ESCALATED TO SUPERVISOR`);
 				}
 			}
 
 			return { ProspectKey };
+		}),
+
+	postLeadProspect: procedure
+		.input(z.object({ prospect: prospectInputSchema }))
+		.query(async ({ input: { prospect } }) => {
+			const url = 'https://openapi.xyzies.com/LeadProspect/PostLead';
+			const res = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9'
+				},
+				body: JSON.stringify(prospect)
+			});
+			if (res.status !== 200) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Bad Request' });
+			return;
 		})
 });

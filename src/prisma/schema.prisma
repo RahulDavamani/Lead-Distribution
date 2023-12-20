@@ -5390,6 +5390,7 @@ model ImportSpectrumInstallDisconnects {
    TransId                                  String?   @db.VarChar(50)
    Xumo_Flag                                Boolean?  @map("Xumo Flag")
    Xumo___Total_Device___Time_of_Sale_Count Int?      @map("Xumo - Total Device - Time of Sale Count")
+   ProviderKey                              String?   @default(dbgenerated("06F693AD-9EE8-488C-BD70-98472403196F"), map: "DF__ImportSpe__Provi__306744C3") @db.UniqueIdentifier
 
    @@ignore
 }
@@ -5410,7 +5411,7 @@ model ImportSpectrumMobileActivation {
    Date___Sales_Enter_Date                     DateTime? @map("Date - Sales Enter Date") @db.Date
    Fiscal_Month                                String?   @map("Fiscal Month") @db.VarChar(50)
    Legacy_MSO                                  String?   @map("Legacy MSO") @db.VarChar(10)
-   Sale_Type                                   String?   @map("Sale Type") @db.VarChar(20)
+   Sale_Type                                   String?   @map("Sale Type") @db.NVarChar(100)
    Store                                       String?   @db.VarChar(50)
    Agent                                       String?   @db.VarChar(15)
    SVC_Unit___Address_Line_1                   String?   @map("SVC Unit - Address Line 1") @db.VarChar(255)
@@ -5529,6 +5530,7 @@ model ImportSpectrumPaymentSFTP {
    Total_Bounty_Amount    Float?    @map("Total Bounty Amount")
    Mobile_PSU_Bounty_Rate Float?    @map("Mobile PSU Bounty Rate")
    OriginalAccount        String?   @db.VarChar(50)
+   ProviderKey            String    @db.UniqueIdentifier
 
    @@ignore
 }
@@ -7382,6 +7384,7 @@ model Pages {
    ProviderKey       String?   @db.UniqueIdentifier
    MenuDescription   String?   @db.NVarChar(Max)
    IsAdminMenu       Boolean?  @default(false, map: "DF__Pages__IsAdminMe__797DF6D1")
+   IsGenTKN          Boolean?  @default(false, map: "DF__Pages__IsGenTKN__2E7EFC51")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -8443,6 +8446,7 @@ model SpectrumAccountPsu {
    ProviderProductNameLatest String?   @db.VarChar(100)
    MobileLinesSold           Int?
    SourceInsert              String?   @db.VarChar(20)
+   ProviderKey               String?   @default(dbgenerated("06F693AD-9EE8-488C-BD70-98472403196F"), map: "DF__SpectrumA__Provi__2D8AD818") @db.UniqueIdentifier
 
    @@id([Account, PSU], map: "pk_AccountPsu")
 }
@@ -13050,6 +13054,15 @@ model UserRecentLogin {
    ValidTo    DateTime
 }
 
+model VonageCallMaster {
+   VSeq                 Int       @default(autoincrement())
+   LogOn                DateTime? @default(now(), map: "DF__VonageCal__LogOn__474AAA1B") @db.DateTime
+   VonageGUID           String    @id(map: "PK__VonageCa__9CAF0D92E69F71A4") @db.UniqueIdentifier
+   IsRecordingAvailable Boolean?
+   RecordingCheckedOn   DateTime? @db.DateTime
+   RecordingUploadedOn  DateTime? @db.DateTime
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -13130,7 +13143,7 @@ model LdLead {
    status      String
    isCompleted Boolean
 
-   VonageGUID String? @db.UniqueIdentifier
+   VonageGUID String? @db.NVarChar(100)
 
    attempts LdLeadAttempts[]
    history  LdLeadHistory[]
@@ -13142,9 +13155,9 @@ model LdLeadAttempts {
    updatedAt DateTime @updatedAt
 
    leadId    String
-   lead      LdLead                    @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-   attemptId String
-   attempt   LdRuleNotificationAttempt @relation(fields: [attemptId], references: [id])
+   lead      LdLead                     @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   attemptId String?
+   attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
    UserId    Int
 
    @@unique([leadId, UserId])

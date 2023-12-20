@@ -12,10 +12,25 @@ import { vonageCallRouter } from './vonageCall.router';
 
 export const appRouter = router({
 	test: procedure.query(async () => {
+		// const prospect = await prisma.leadProspect.findMany({ where: { Email: 'test_dev@gmail.com' } });
+		// console.log(prospect);
+		// const ProspectKey = 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149';
+		// const UserKey = '5a36aa41-73e1-44f7-b71b-f5bceeaff626';
+		// const UserId = UserKey
+		// 	? Number((await prisma.users.findFirst({ where: { UserKey }, select: { VonageAgentId: true } }))?.VonageAgentId)
+		// 	: undefined;
+		// const lead = await prisma.ldLead.findFirst({
+		// 	where: {
+		// 		ProspectKey,
+		// 		isCompleted: false
+		// 	},
+		// 	include: { attempts: true }
+		// });
+		// console.log(lead);
 		// const result = await prisma.$queryRaw`select Email from VonageUsers where UserId = 1013 and Active=1`;
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
-		await prisma.ldLead.delete({ where: { ProspectKey: 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149' } });
+		// await prisma.ldLead.delete({ where: { ProspectKey: 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149' } });
 		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',
