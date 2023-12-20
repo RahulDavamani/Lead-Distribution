@@ -21,8 +21,6 @@ export const auth = (() => {
 	// Methods
 	const authenticate = async () => {
 		ui.setLoader({ title: 'Authenticating...' });
-		const { isAuth } = get(auth);
-		if (isAuth) return;
 
 		const $page = get(page);
 		const token = $page.url.searchParams.get('BPT');

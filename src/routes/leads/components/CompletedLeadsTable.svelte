@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterUpdate, onMount } from 'svelte';
+	import { afterUpdate, beforeUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { LdLeadHistory } from '@prisma/client';
@@ -7,14 +7,15 @@
 	import Icon from '@iconify/svelte';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
+	import { ui } from '../../../stores/ui.store';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	onMount(async () => {
-		new DataTable('#completedLeadsTable', { language: { emptyTable: '', zeroRecords: '' } });
+	beforeUpdate(async () => {
+		new DataTable('#completedLeadsTable').destroy();
 	});
 	afterUpdate(async () => {
 		new DataTable('#completedLeadsTable');
@@ -57,7 +58,14 @@
 			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerDetails, ruleName, operatorName, status, history }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
-					<td class="text-center">{VonageGUID ?? 'N/A'}</td>
+					<td
+						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
+						on:click={() => {
+							if (VonageGUID) ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`);
+						}}
+					>
+						{VonageGUID ?? 'N/A'}
+					</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
 					<td>{customerDetails.Name}</td>
@@ -72,7 +80,7 @@
 					<td>
 						<div class="flex justify-center items-center">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
-								<Icon icon="mdi:history" width={16} />
+								<Icon icon="mdi:history" width={18} />
 							</button>
 						</div>
 					</td>

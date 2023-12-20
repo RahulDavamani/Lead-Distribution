@@ -17,12 +17,12 @@
 
 	const fetchLead = async () => {
 		ui.setLoader({ title: 'Fetching Lead' });
-		const ProspectKey = $page.url.searchParams.get('ProspectKey');
-		if (!ProspectKey) {
-			ui.setLoader;
+		const keys = $page.url.searchParams.get('keys');
+		if (!keys || keys.split(',').length !== 2) {
+			ui.setLoader();
 			return ($ui.alertModal = {
 				title: 'Error',
-				body: 'Bad Request: Missing params "ProspectKey"',
+				body: 'Bad Request: Missing params "keys"',
 				actions: [
 					{
 						name: 'Retry',
@@ -34,31 +34,11 @@
 				]
 			});
 		}
+		const ProspectKey = keys.split(',')[0];
 
 		let UserKey: string | undefined;
-		if ($auth.user?.UserKey) {
-			UserKey = auth.isSupervisor() ? undefined : $auth.user?.UserKey;
-		} else {
-			const queryUserKey = $page.url.searchParams.get('UserKey');
-			if (!queryUserKey) {
-				ui.setLoader;
-				return ($ui.alertModal = {
-					title: 'Error',
-					body: 'Bad Request: Missing params "UserKey"',
-					actions: [
-						{
-							name: 'Retry',
-							class: 'btn-primary',
-							onClick: () => {
-								fetchLead();
-							}
-						}
-					]
-				});
-			}
-
-			UserKey = queryUserKey;
-		}
+		if ($auth.user?.UserKey) UserKey = auth.isSupervisor() ? undefined : $auth.user?.UserKey;
+		else UserKey = keys.split(',')[1];
 
 		const data = await trpc($page).lead.view.query({ ProspectKey, UserKey }).catch(trpcClientErrorHandler);
 		lead = {

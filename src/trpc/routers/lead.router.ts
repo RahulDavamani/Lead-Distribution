@@ -77,9 +77,6 @@ export const sendOperatorNotification = async (
 			prismaErrorHandler
 		)) as Operator[]
 	)[0].Name;
-	console.log(`SENDING NOTIFICATION: ATTEMPT ${attempt.num} SENT TO OPERATOR ${operatorName}`);
-	console.log(`${operator.UserId} - ${operatorName}`);
-	console.log(`${env.BASE_URL}/view-lead?ProspectKey=${ProspectKey}&UserId=${operator.UserId}`);
 
 	await upsertLead(
 		ProspectKey,
@@ -138,7 +135,7 @@ export const triggerNotification = async (ProspectKey: string, UserId: number, t
 	   @Message = ${message},
 	   @UserKeys = ${UserKey},
 	   @ExpireInSeconds = 600,
-	   @HrefURL = ${`${env.BASE_URL}/view-lead?ProspectKey=${ProspectKey}&UserKey=${UserKey}`},
+	   @HrefURL = ${`${env.BASE_URL}/view-lead?keys=${ProspectKey},${UserKey}`},
 	   @ActionBtnTitle = 'View Lead';`.catch(prismaErrorHandler);
 };
 
@@ -357,7 +354,7 @@ export const leadRouter = router({
 				const { notificationAttempts, supervisorUserId, supervisorTextTemplate } = rule.notification;
 				await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
 				const availableOperators =
-					(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and StatusSince > dateadd(hour,-1,getdate())`.catch(
+					(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and ISNULL(a.calls,0)=0 and ISNULL(a.semiLive,0)=0 and StatusSince > dateadd(hour,-1,getdate())`.catch(
 						prismaErrorHandler
 					)) as {
 						AgentId: number;

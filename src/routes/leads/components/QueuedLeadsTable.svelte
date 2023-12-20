@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterUpdate, onMount } from 'svelte';
+	import { afterUpdate, beforeUpdate, onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import type { LdLeadHistory } from '@prisma/client';
@@ -15,8 +15,8 @@
 	export let queuedLeads: QueuedLead[];
 	let viewHistory: LdLeadHistory[] | undefined;
 
-	onMount(async () => {
-		new DataTable('#queuedLeadsTable', { language: { emptyTable: '', zeroRecords: '' } });
+	beforeUpdate(async () => {
+		new DataTable('#queuedLeadsTable').destroy();
 	});
 	afterUpdate(async () => {
 		new DataTable('#queuedLeadsTable');
@@ -78,19 +78,19 @@
 					</td>
 					<td>
 						<div class="flex justify-center items-center gap-2">
-							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
-								<Icon icon="mdi:history" width={16} />
+							<button class="btn btn-xs btn-primary h-fit py-1 animate-none" on:click={() => (viewHistory = history)}>
+								<Icon icon="mdi:history" width={18} />
 							</button>
 							<button
-								class="btn btn-xs btn-success {i !== 0 && !auth.isSupervisor() && 'btn-disabled'} h-fit py-1 flex gap-2"
+								class="btn btn-xs btn-success {i !== 0 &&
+									!auth.isSupervisor() &&
+									'btn-disabled'} h-fit py-1 flex gap-2 animate-none"
 								on:click={() =>
 									ui.navigate(
-										`/view-lead?ProspectKey=${ProspectKey}&UserKey=${
-											$auth.user?.UserKey
-										}&IsSupervisor=${auth.isSupervisor()}`
+										`/view-lead?keys=${ProspectKey},${$auth.user?.UserKey}&IsSupervisor=${auth.isSupervisor()}`
 									)}
 							>
-								<Icon icon="mdi:arrow-right" width={16} />
+								<Icon icon="mdi:arrow-right" width={18} />
 							</button>
 						</div>
 					</td>

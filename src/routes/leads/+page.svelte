@@ -16,6 +16,7 @@
 
 	let queuedLeads: QueuedLead[] = [];
 	let completedLeads: CompletedLead[] = [];
+	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 
 	const fetchQueuedLeads = async () => {
 		const isSupervisor = auth.isSupervisor();
@@ -35,7 +36,6 @@
 		}));
 	};
 
-	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
 		ui.setLoader({ title: 'Fetching Completed Leads' });
 

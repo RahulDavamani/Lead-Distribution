@@ -1,7 +1,8 @@
 <script lang="ts">
 	export let data;
 	$: ({ vonageCall, audioUrl } = data);
-	$: console.log(data);
+	$: console.log(data.audioUrl);
+	$: console.log(data.vonageCall);
 </script>
 
 <div class="container mx-auto card border py-4 px-6 mb-20">
