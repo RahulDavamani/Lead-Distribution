@@ -62,6 +62,10 @@ export const leadRouter = router({
 	complete: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			const lead = await prisma.ldLead
+				.findFirst({ where: { ProspectKey }, select: { isCompleted: true } })
+				.catch(prismaErrorHandler);
+			if (!lead || lead.isCompleted) throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed' });
 			const UserId = await getUserId(UserKey);
 
 			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
