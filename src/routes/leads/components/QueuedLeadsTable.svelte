@@ -14,7 +14,7 @@
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
 	export let queuedLeads: QueuedLead[];
-	let viewHistory: LdLeadHistory[] | undefined;
+	export let leadHistoryModelId: string | undefined;
 
 	onMount(() => {
 		if (queuedLeads.length > 0) new DataTable('#queuedLeadsTable');
@@ -64,7 +64,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, isProgress }, i}
+			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, isProgress }, i}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
@@ -86,32 +86,34 @@
 						{convertSecondsToHMS(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
-						{#if auth.isSupervisor()}
-							<button
-								class="btn btn-sm btn-warning mb-2 {isProgress && 'btn-disabled'} text-xs w-24"
-								on:click={() => requeue(ProspectKey)}
-							>
-								{isProgress ? 'In Progress' : 'Requeue'}
-							</button>
-						{/if}
-						<div class="flex justify-center items-center gap-2">
-							<button
-								class="btn btn-xs btn-primary h-fit py-1 animate-none flex-grow"
-								on:click={() => (viewHistory = history)}
-							>
-								<Icon icon="mdi:history" width={18} />
-							</button>
-							<button
-								class="btn btn-xs btn-success {i !== 0 &&
-									!auth.isSupervisor() &&
-									'btn-disabled'} h-fit py-1 flex gap-2 animate-none flex-grow"
-								on:click={() =>
-									ui.navigate(
-										`/view-lead?keys=${ProspectKey},${$auth.user?.UserKey}&IsSupervisor=${auth.isSupervisor()}`
-									)}
-							>
-								<Icon icon="mdi:arrow-right" width={18} />
-							</button>
+						<div class="flex flex-col justify-center">
+							{#if auth.isSupervisor()}
+								<button
+									class="btn btn-sm btn-warning mb-2 {isProgress && 'btn-disabled'} text-xs w-24"
+									on:click={() => requeue(ProspectKey)}
+								>
+									{isProgress ? 'In Progress' : 'Requeue'}
+								</button>
+							{/if}
+							<div class="flex justify-center items-center gap-2">
+								<button
+									class="btn btn-xs btn-primary h-fit py-1 animate-none flex-grow"
+									on:click={() => (leadHistoryModelId = id)}
+								>
+									<Icon icon="mdi:history" width={18} />
+								</button>
+								<button
+									class="btn btn-xs btn-success {i !== 0 &&
+										!auth.isSupervisor() &&
+										'btn-disabled'} h-fit py-1 flex gap-2 animate-none flex-grow"
+									on:click={() =>
+										ui.navigate(
+											`/view-lead?keys=${ProspectKey},${$auth.user?.UserKey}&IsSupervisor=${auth.isSupervisor()}`
+										)}
+								>
+									<Icon icon="mdi:arrow-right" width={18} />
+								</button>
+							</div>
 						</div>
 					</td>
 				</tr>
@@ -119,5 +121,3 @@
 		</tbody>
 	</table>
 </div>
-
-<LeadHistoryModal {viewHistory} />

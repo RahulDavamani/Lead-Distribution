@@ -33,6 +33,7 @@ export const getLeadDetails = async (ProspectKey: string, UserId: number | null)
 		},
 		companyName: affiliates[0]?.CompanyName ?? 'N/A',
 		operatorName: operators[0]?.Name ?? 'N/A',
+		ruleId: rule?.id,
 		ruleName: rule?.name ?? 'N/A'
 	};
 };
@@ -45,8 +46,7 @@ export const getQueuedProcedure = procedure
 			await Promise.all(
 				(
 					await prisma.ldLead.findMany({
-						where: { isCompleted: false, attempts: UserId ? { some: { UserId } } : undefined },
-						include: { history: { orderBy: { createdAt: 'asc' } } }
+						where: { isCompleted: false, attempts: UserId ? { some: { UserId } } : undefined }
 					})
 				).map(async (lead) => {
 					const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
@@ -79,8 +79,7 @@ export const getCompletedProcedure = procedure
 							isCompleted: true,
 							updatedAt: { gte: startDate, lte: endDate },
 							UserId
-						},
-						include: { history: { orderBy: { createdAt: 'asc' } } }
+						}
 					})
 				).map(async (lead) => {
 					const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);

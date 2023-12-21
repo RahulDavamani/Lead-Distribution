@@ -6,6 +6,7 @@ import type { Rule } from '../../../../zod/rule.schema';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
 import { getOperatorName } from './getOperatorName';
+import { generateNotificationMessage } from './generateNotificationMessage';
 
 export const getAvailableOperators = async () => {
 	await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
@@ -23,27 +24,8 @@ export const triggerNotification = async (
 	textTemplate: string,
 	attempt?: NonNullable<Rule['notification']>['notificationAttempts'][number]
 ) => {
-	// Get Prospect
-	const prospect = await prisma.leadProspect
-		.findFirstOrThrow({
-			where: { ProspectKey },
-			select: {
-				CustomerFirstName: true,
-				CustomerLastName: true,
-				Email: true,
-				Address: true,
-				ZipCode: true
-			}
-		})
-		.catch(prismaErrorHandler);
-
 	// Generate Message
-	let message = textTemplate;
-	message = message.replace(/%CustomerFirstName/g, prospect.CustomerFirstName || '');
-	message = message.replace(/%CustomerLastName/g, prospect.CustomerLastName || '');
-	message = message.replace(/%Email/g, prospect.Email || '');
-	message = message.replace(/%Address/g, prospect.Address || '');
-	message = message.replace(/%ZipCode/g, prospect.ZipCode || '');
+	const message = await generateNotificationMessage(ProspectKey, textTemplate);
 
 	const Email = (
 		(await prisma.$queryRaw`select Email from VonageUsers where UserId = ${UserId} and Active=1`.catch(
@@ -74,7 +56,8 @@ export const triggerNotification = async (
 			data: {
 				leadId,
 				attemptId: attempt?.id ?? null,
-				UserId: UserId
+				UserId: UserId,
+				message
 			}
 		})
 		.catch(prismaErrorHandler);

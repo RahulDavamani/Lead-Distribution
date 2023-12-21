@@ -13,6 +13,7 @@
 	import Icon from '@iconify/svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
+	import LeadHistoryModal from './components/LeadHistoryModal.svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -20,6 +21,7 @@
 	let queuedLeads: QueuedLead[] = [];
 	let completedLeads: CompletedLead[] = [];
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
+	let leadHistoryModelId: string | undefined;
 
 	const fetchQueuedLeads = async () => {
 		const count = queuedLeads.length;
@@ -34,11 +36,7 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			history: lead.history.map((history) => ({
-				...history,
-				createdAt: new Date(history.createdAt),
-				updatedAt: new Date(history.updatedAt)
-			}))
+			ruleId: lead.ruleId
 		}));
 		if (count !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
 		await tick();
@@ -64,11 +62,7 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			history: lead.history.map((history) => ({
-				...history,
-				createdAt: new Date(history.createdAt),
-				updatedAt: new Date(history.updatedAt)
-			}))
+			ruleId: lead.ruleId
 		}));
 		ui.setLoader();
 		await tick();
@@ -143,8 +137,10 @@
 	<div class="divider mt-1" />
 
 	{#if tab === 1}
-		<QueuedLeadsTable {queuedLeads} />
+		<QueuedLeadsTable {queuedLeads} bind:leadHistoryModelId />
 	{:else}
-		<CompletedLeadsTable {completedLeads} />
+		<CompletedLeadsTable {completedLeads} bind:leadHistoryModelId />
 	{/if}
 </div>
+
+<LeadHistoryModal bind:id={leadHistoryModelId} />

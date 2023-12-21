@@ -14,6 +14,31 @@ export const leadRouter = router({
 	distribute: distributeProcedure,
 	redistribute: redistributeProcedure,
 
+	getHistoryAndAttempts: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
+		const lead = await prisma.ldLead
+			.findUniqueOrThrow({
+				where: { id },
+				select: {
+					ProspectKey: true,
+					history: { orderBy: { createdAt: 'asc' } },
+					attempts: { orderBy: { createdAt: 'asc' } }
+				}
+			})
+			.catch(prismaErrorHandler);
+
+		const attempts = [];
+
+		for (const attempt of lead.attempts) {
+			const operators = (await prisma.$queryRaw`select Name from VonageUsers where UserId = ${attempt.UserId}`.catch(
+				prismaErrorHandler
+			)) as { Name: string | null }[];
+
+			attempts.push({ ...attempt, name: operators[0].Name });
+		}
+
+		return { history: lead.history, attempts };
+	}),
+
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1).optional() }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {

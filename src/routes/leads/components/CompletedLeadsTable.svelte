@@ -11,7 +11,7 @@
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
-	let viewHistory: LdLeadHistory[] | undefined;
+	export let leadHistoryModelId: string | undefined;
 
 	onMount(() => {
 		new DataTable('#completedLeadsTable');
@@ -51,7 +51,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerDetails, ruleName, operatorName, status, history }}
+			{#each completedLeads as { id, ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerDetails, ruleName, operatorName, status }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
@@ -75,7 +75,7 @@
 					</td>
 					<td>
 						<div class="flex justify-center items-center">
-							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (viewHistory = history)}>
+							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadHistoryModelId = id)}>
 								<Icon icon="mdi:history" width={18} />
 							</button>
 						</div>
@@ -85,4 +85,3 @@
 		</tbody>
 	</table>
 </div>
-<LeadHistoryModal {viewHistory} />

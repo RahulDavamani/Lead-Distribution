@@ -13161,6 +13161,7 @@ model LdLeadAttempts {
    attemptId String?
    attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
    UserId    Int
+   message   String
 }
 
 model LdLeadHistory {
