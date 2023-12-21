@@ -8,6 +8,8 @@
 	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
+	import { trpc } from '../../../trpc/client';
+	import { page } from '$app/stores';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
@@ -31,6 +33,17 @@
 
 		return formattedTime;
 	};
+
+	const requeue = async (ProspectKey: string) => {
+		ui.setLoader({ title: 'Requeueing Lead' });
+		const interval = setInterval(() => {
+			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isProgress) {
+				ui.setLoader();
+				clearInterval(interval);
+			}
+		}, 500);
+		if ($auth.user?.UserKey) await trpc($page).lead.redistribute.query({ ProspectKey, UserKey: $auth.user.UserKey });
+	};
 </script>
 
 <div class="overflow-x-auto">
@@ -51,7 +64,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history }, i}
+			{#each queuedLeads as { ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, history, isProgress }, i}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
@@ -73,14 +86,25 @@
 						{convertSecondsToHMS(Math.floor((new Date().getTime() - createdAt.getTime()) / 1000))}
 					</td>
 					<td>
+						{#if auth.isSupervisor()}
+							<button
+								class="btn btn-sm btn-warning mb-2 {isProgress && 'btn-disabled'} text-xs w-24"
+								on:click={() => requeue(ProspectKey)}
+							>
+								{isProgress ? 'In Progress' : 'Requeue'}
+							</button>
+						{/if}
 						<div class="flex justify-center items-center gap-2">
-							<button class="btn btn-xs btn-primary h-fit py-1 animate-none" on:click={() => (viewHistory = history)}>
+							<button
+								class="btn btn-xs btn-primary h-fit py-1 animate-none flex-grow"
+								on:click={() => (viewHistory = history)}
+							>
 								<Icon icon="mdi:history" width={18} />
 							</button>
 							<button
 								class="btn btn-xs btn-success {i !== 0 &&
 									!auth.isSupervisor() &&
-									'btn-disabled'} h-fit py-1 flex gap-2 animate-none"
+									'btn-disabled'} h-fit py-1 flex gap-2 animate-none flex-grow"
 								on:click={() =>
 									ui.navigate(
 										`/view-lead?keys=${ProspectKey},${$auth.user?.UserKey}&IsSupervisor=${auth.isSupervisor()}`

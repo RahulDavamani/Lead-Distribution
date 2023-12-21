@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import type { Rule } from '../../../../zod/rule.schema';
 import { procedure } from '../../../server';
-import { env } from '$env/dynamic/private';
 import { TRPCError } from '@trpc/server';
 import { waitFor } from '$lib/waitFor';
 import { upsertLead } from '../helpers/upsertLead';
 import { getOperatorName } from '../helpers/getOperatorName';
+import { getUserId } from '../helpers/getUserId';
+import { sendNotifications } from '../helpers/sendNotifications';
 
 export const checkLeadCompleted = async (ProspectKey: string) => {
 	return (
@@ -24,86 +24,6 @@ export const getGHLStatus = async (ProspectKey: string) => {
 	};
 	const ghlStatus = ghlData?.contact?.customFields?.find((cf) => cf.id === '5DyNSCM7X3blCAWJSteM')?.value;
 	return ghlStatus ?? 'GHL STATUS: Not Found';
-};
-
-export const getAvailableOperators = async () => {
-	await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
-	const availableOperators =
-		(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and ISNULL(calls,0)=0 and ISNULL(semiLive,0)=0 and StatusSince > dateadd(hour,-1,getdate())`.catch(
-			prismaErrorHandler
-		)) as { AgentId: number }[];
-	return availableOperators;
-};
-
-export const sendNotification = async (
-	ProspectKey: string,
-	leadId: string,
-	UserId: number,
-	textTemplate: string,
-	attempt?: NonNullable<Rule['notification']>['notificationAttempts'][number]
-) => {
-	// Get Prospect
-	const prospect = await prisma.leadProspect
-		.findFirstOrThrow({
-			where: { ProspectKey },
-			select: {
-				CustomerFirstName: true,
-				CustomerLastName: true,
-				Email: true,
-				Address: true,
-				ZipCode: true
-			}
-		})
-		.catch(prismaErrorHandler);
-
-	// Generate Message
-	let message = textTemplate;
-	message = message.replace(/%CustomerFirstName/g, prospect.CustomerFirstName || '');
-	message = message.replace(/%CustomerLastName/g, prospect.CustomerLastName || '');
-	message = message.replace(/%Email/g, prospect.Email || '');
-	message = message.replace(/%Address/g, prospect.Address || '');
-	message = message.replace(/%ZipCode/g, prospect.ZipCode || '');
-
-	const Email = (
-		(await prisma.$queryRaw`select Email from VonageUsers where UserId = ${UserId} and Active=1`.catch(
-			prismaErrorHandler
-		)) as { Email: string }[]
-	)[0].Email;
-	const UserKey = (
-		await prisma.users
-			.findFirst({
-				where: { Email },
-				select: { UserKey: true }
-			})
-			.catch(prismaErrorHandler)
-	)?.UserKey;
-
-	// Send Notification
-	await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
-	   @Title = 'Lead Received',
-	   @Message = ${message},
-	   @UserKeys = ${UserKey},
-	   @ExpireInSeconds = 600,
-	   @HrefURL = ${`${env.BASE_URL}/view-lead?keys=${ProspectKey},${UserKey}`},
-	   @ActionBtnTitle = 'View Lead';`.catch(prismaErrorHandler);
-
-	// Create Lead Attempt
-	await prisma.ldLeadAttempts
-		.create({
-			data: {
-				leadId,
-				attemptId: attempt?.id ?? null,
-				UserId: UserId
-			}
-		})
-		.catch(prismaErrorHandler);
-
-	// Update Lead Status
-	const Name = await getOperatorName(UserId);
-	const status = attempt
-		? `ATTEMPT ${attempt.num} SENT TO OPERATOR "${UserId}: ${Name}"`
-		: `LEAD ESCALATED TO SUPERVISOR "${UserId}: ${Name}"`;
-	await upsertLead(ProspectKey, status);
 };
 
 export const distributeProcedure = procedure
@@ -149,7 +69,7 @@ export const distributeProcedure = procedure
 
 		// If Customer Reply, Complete Lead
 		if (ghlStatus === 'Text Received') {
-			await upsertLead(ProspectKey, 'CUSTOMER REPLIED', true);
+			await upsertLead(ProspectKey, 'CUSTOMER REPLIED', false, true);
 			return;
 		}
 
@@ -157,51 +77,40 @@ export const distributeProcedure = procedure
 		const isLeadCompleted = await checkLeadCompleted(ProspectKey);
 		if (isLeadCompleted) return;
 
-		// Else Send Notification to Operator
-		if (rule.notification) {
-			const { notificationAttempts, supervisorUserId, supervisorTextTemplate } = rule.notification;
-			const availableOperators = await getAvailableOperators();
+		// Else Send Notification to Operators
+		sendNotifications(ProspectKey, lead.id, rule);
 
-			const completedAttempts: { attemptId: string; UserId: number }[] = [];
+		return { ProspectKey };
+	});
 
-			let noOperatorFound = false;
-			for (const attempt of notificationAttempts) {
-				// Get Operator
-				const operator = rule.operators.find(
-					({ UserId }) =>
-						availableOperators.map(({ AgentId }) => AgentId).includes(UserId) &&
-						!completedAttempts.map(({ UserId }) => UserId).includes(UserId)
-				);
+export const redistributeProcedure = procedure
+	.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
+	.query(async ({ input: { ProspectKey, UserKey } }) => {
+		// Find Prospect
+		const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+		const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+		if (lead.isCompleted || lead.isProgress)
+			throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
+		const UserId = (await getUserId(UserKey)) as number;
 
-				// No Operator Found
-				if (!operator) {
-					noOperatorFound = attempt.num === 1;
-					break;
-				}
-				if (attempt.num === 1) await upsertLead(ProspectKey, 'SENDING NOTIFICATION TO OPERATORS');
+		// Find Rule for Company
+		const rule = await prisma.ldRule
+			.findFirst({
+				where: { affiliates: { some: { CompanyKey: prospect.CompanyKey ?? '' } } },
+				include: { notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } }, operators: true }
+			})
+			.catch(prismaErrorHandler);
 
-				// Send Notification to Operator
-				await sendNotification(ProspectKey, lead.id, operator.UserId, attempt.textTemplate, attempt);
-				completedAttempts.push({ attemptId: attempt.id, UserId: operator.UserId });
-				await waitFor(attempt.waitTime);
+		// No Rule found
+		if (!rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 
-				// Check if Lead is already completed
-				const isLeadCompleted = await checkLeadCompleted(ProspectKey);
-				if (isLeadCompleted) break;
-			}
+		// Create Lead Requeue
+		await prisma.ldLeadRequeue.create({ data: { leadId: lead.id, UserId } }).catch(prismaErrorHandler);
+		const Name = await getOperatorName(UserId);
+		await upsertLead(ProspectKey, `LEAD REQUEUED BY "${UserId}: ${Name}"`, true);
 
-			if (noOperatorFound) upsertLead(ProspectKey, `NO OPERATOR FOUND`);
-			else {
-				const isLeadCompleted = await checkLeadCompleted(ProspectKey);
-				if (isLeadCompleted) return;
-				upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
-			}
-
-			// Send Notification to Supervisor
-			if (supervisorUserId) {
-				await sendNotification(ProspectKey, lead.id, supervisorUserId, supervisorTextTemplate);
-			}
-		}
+		// Send Notification to Operators
+		sendNotifications(ProspectKey, lead.id, rule);
 
 		return { ProspectKey };
 	});

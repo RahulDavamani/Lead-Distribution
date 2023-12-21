@@ -3,7 +3,7 @@ import { procedure, router } from '../../server';
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import { prospectInputSchema } from '../../../zod/prospectInput.schema';
-import { distributeProcedure } from './procedures/distribute.procedure';
+import { distributeProcedure, redistributeProcedure } from './procedures/distribute.procedure';
 import { upsertLead } from './helpers/upsertLead';
 import { getCompletedProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';
 import { getUserId } from './helpers/getUserId';
@@ -12,6 +12,7 @@ export const leadRouter = router({
 	getQueued: getQueuedProcedure,
 	getCompleted: getCompletedProcedure,
 	distribute: distributeProcedure,
+	redistribute: redistributeProcedure,
 
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1).optional() }))
@@ -52,7 +53,7 @@ export const leadRouter = router({
 			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${UserId},${outBoundCall}`.catch(
 				prismaErrorHandler
 			);
-			await upsertLead(ProspectKey, 'LEAD RESPONDED', true, UserId);
+			await upsertLead(ProspectKey, 'LEAD RESPONDED', false, true, UserId);
 			return { ProspectKey };
 		}),
 
@@ -61,7 +62,7 @@ export const leadRouter = router({
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
 			const UserId = await getUserId(UserKey);
 
-			await upsertLead(ProspectKey, 'LEAD CLOSED', true, UserId);
+			await upsertLead(ProspectKey, 'LEAD CLOSED', false, true, UserId);
 			return { ProspectKey };
 		}),
 

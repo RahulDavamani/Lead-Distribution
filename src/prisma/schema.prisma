@@ -13141,12 +13141,14 @@ model LdLead {
    ProspectKey String  @unique
    UserId      Int?
    status      String
+   isProgress  Boolean
    isCompleted Boolean
 
    VonageGUID String? @db.NVarChar(100)
 
    attempts LdLeadAttempts[]
    history  LdLeadHistory[]
+   requeues LdLeadRequeue[]
 }
 
 model LdLeadAttempts {
@@ -13159,8 +13161,6 @@ model LdLeadAttempts {
    attemptId String?
    attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
    UserId    Int
-
-   @@unique([leadId, UserId])
 }
 
 model LdLeadHistory {
@@ -13169,6 +13169,17 @@ model LdLeadHistory {
    updatedAt DateTime @updatedAt
 
    status String
+
+   leadId String
+   lead   LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model LdLeadRequeue {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   UserId Int
 
    leadId String
    lead   LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
