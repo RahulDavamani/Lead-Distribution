@@ -65,7 +65,8 @@ export const leadRouter = router({
 			const lead = await prisma.ldLead
 				.findFirst({ where: { ProspectKey }, select: { isCompleted: true } })
 				.catch(prismaErrorHandler);
-			if (!lead || lead.isCompleted) throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed' });
+			if (!lead || lead.isCompleted)
+				throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed/closed' });
 			const UserId = await getUserId(UserKey);
 
 			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
@@ -89,8 +90,13 @@ export const leadRouter = router({
 	close: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
-			const UserId = await getUserId(UserKey);
+			const lead = await prisma.ldLead
+				.findFirst({ where: { ProspectKey }, select: { isCompleted: true } })
+				.catch(prismaErrorHandler);
+			if (!lead || lead.isCompleted)
+				throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed/closed' });
 
+			const UserId = await getUserId(UserKey);
 			await upsertLead(ProspectKey, 'LEAD CLOSED', false, true, UserId);
 			return { ProspectKey };
 		}),
