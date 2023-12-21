@@ -87,13 +87,21 @@
 				<input type="text" bind:value={prospect.CustomerInfo.ZipCode} class="input input-bordered w-full" />
 			</FormControl>
 
-			<div class="flex items-end">
-				<FormControl classes="mt-4" inputType="In" label="I Agree to the Terms & Conditions">
-					<input type="checkbox" class="checkbox" bind:checked={agreeToTerms} />
-				</FormControl>
-			</div>
+			<FormControl label="Trusted Form Certificate URL">
+				<input
+					type="text"
+					bind:value={prospect.TrustedFormCertUrl}
+					class="input input-bordered w-full cursor-pointer"
+					readonly
+				/>
+			</FormControl>
 			<FormControl label="Lead ID">
 				<input type="text" bind:value={prospect.LeadID} class="input input-bordered w-full" />
+			</FormControl>
+		</div>
+		<div class="flex items-end">
+			<FormControl classes="mt-4" inputType="In" label="I Agree to the Terms & Conditions">
+				<input type="checkbox" class="checkbox" bind:checked={agreeToTerms} />
 			</FormControl>
 		</div>
 

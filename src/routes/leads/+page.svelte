@@ -24,7 +24,7 @@
 	let leadHistoryModelId: string | undefined;
 
 	const fetchQueuedLeads = async () => {
-		const count = queuedLeads.length;
+		const oldQueuedLeads = queuedLeads;
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
 		const leads = await trpc($page)
@@ -38,9 +38,16 @@
 			ProspectId: lead.ProspectId,
 			ruleId: lead.ruleId
 		}));
-		if (count !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
+		if (oldQueuedLeads.length !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
 		await tick();
 		new DataTable('#queuedLeadsTable');
+
+		const missingLead = oldQueuedLeads.find((lead) => !queuedLeads.find((lead2) => lead2.id === lead.id));
+		if (missingLead) {
+			await fetchCompletedLeads(dateRange);
+			if (completedLeads.find((lead) => lead.id === missingLead.id))
+				ui.showToast({ title: `${missingLead.ProspectId}: Lead has been Closed/Completed`, class: 'alert-success' });
+		}
 	};
 
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
