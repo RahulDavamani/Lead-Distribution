@@ -4,7 +4,7 @@ import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { ruleRouter } from './rule.router';
 import { operatorRouter } from './operator.router';
 import { affiliateRouter } from './affiliate.router';
-import { leadRouter } from './lead.router';
+import { leadRouter } from './lead/lead.router';
 import { vonageCallRouter } from './vonageCall.router';
 
 // Davamani@yopmail userKey 74bedd5f-c117-474c-90d5-5a13eedd068f

@@ -38,6 +38,7 @@
 			return false;
 		return true;
 	})();
+
 	const submit = async () => {
 		ui.setLoader({ title: 'Creating Lead Prospect' });
 		await trpc($page).lead.postLeadProspect.query({ prospect }).catch(trpcClientErrorHandler);
@@ -62,7 +63,7 @@
 
 <div class="flex h-screen justify-center items-center">
 	<div class="card border max-w-5xl w-full p-4 px-6">
-		<div class="text-3xl font-bold">Create Lead Prospect</div>
+		<div class="text-3xl font-bold">Submit Prospect</div>
 		<div class="divider mt-2" />
 		<div class="grid grid-cols-2 gap-x-6">
 			<FormControl label="First Name">

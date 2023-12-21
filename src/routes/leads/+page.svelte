@@ -57,7 +57,7 @@
 				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
 				UserKey
 			})
-			.catch(trpcClientErrorHandler);
+			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		completedLeads = leads.completedLeads.map((lead) => ({
 			...lead,
@@ -78,16 +78,29 @@
 	let interval: NodeJS.Timeout | undefined;
 	onMount(async () => {
 		window.stop();
+
 		ui.setLoader({ title: 'Fetching Leads' });
 		await fetchQueuedLeads();
 		await fetchCompletedLeads(dateRange);
 		ui.setLoader();
+
 		interval = setInterval(fetchQueuedLeads, 1000);
 	});
+
 	onDestroy(() => {
 		window.stop();
 		clearInterval(interval);
 	});
+
+	const reloadLeads = async () => {
+		ui.setLoader({ title: 'Fetching Leads' });
+		window.stop();
+		clearInterval(interval);
+		await fetchQueuedLeads();
+		await fetchCompletedLeads(dateRange);
+		interval = setInterval(fetchQueuedLeads, 1000);
+		ui.setLoader();
+	};
 
 	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;
 	afterUpdate(() => {
@@ -120,7 +133,7 @@
 				/>
 			{/if}
 		</h1>
-		<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => fetchCompletedLeads(dateRange)}>
+		<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={reloadLeads}>
 			<Icon icon="mdi:refresh" class="text-info" width={22} />
 		</button>
 		<button class="btn btn-sm {tab === 1 ? 'btn-success' : 'btn-warning'}" on:click={() => (tab = tab === 1 ? 2 : 1)}>
