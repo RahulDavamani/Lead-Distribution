@@ -22,6 +22,7 @@
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 
 	const fetchQueuedLeads = async () => {
+		const count = queuedLeads.length;
 		const isSupervisor = auth.isSupervisor();
 		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
 		const leads = await trpc($page)
@@ -39,6 +40,7 @@
 				updatedAt: new Date(history.updatedAt)
 			}))
 		}));
+		if (count !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
 		await tick();
 		new DataTable('#queuedLeadsTable');
 	};

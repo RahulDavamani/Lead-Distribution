@@ -328,24 +328,21 @@ export const leadRouter = router({
 			await waitFor(rule.waitTimeForCustomerResponse ?? 0);
 
 			// Check GHL for Customer Reply
-			const ghlResponse =
-				(await prisma.$queryRaw`Exec [p_GHL_GetProspect] '2CA47291-CC4C-4ABB-80A8-CAC5AD1D2443'`.catch(
-					prismaErrorHandler
-				)) as { Response?: string }[];
+			const ghlResponse = (await prisma.$queryRaw`Exec [p_GHL_GetProspect] ${ProspectKey}`.catch(
+				prismaErrorHandler
+			)) as { Response?: string }[];
 
 			const ghlData = JSON.parse(ghlResponse?.[0]?.Response ?? 'undefined') as {
-				contact?: { customFields?: { value: string }[] };
+				contact?: { customFields?: { id: string; value: string }[] };
 			};
 
-			const customerReplied: boolean =
-				ghlData?.contact?.customFields?.map((field: { value: string }) => field.value)?.includes('Text Received') ??
-				false;
+			const ghlStatus =
+				ghlData?.contact?.customFields?.find((cf) => cf.id === '5DyNSCM7X3blCAWJSteM')?.value ?? 'GHL Status not found';
+			const customerReplied = ghlStatus === 'Text Received';
+			await upsertLead(ProspectKey, ghlStatus, customerReplied);
 
 			// If Customer Reply, Complete Lead
-			if (customerReplied) {
-				await upsertLead(lead.id, 'CUSTOMER REPLIED', true);
-				return;
-			}
+			if (customerReplied) return;
 
 			const isLeadCompleted = await checkLeadCompleted(ProspectKey);
 			if (isLeadCompleted) return;
