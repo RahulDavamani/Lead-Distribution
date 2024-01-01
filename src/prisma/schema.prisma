@@ -13185,3 +13185,12 @@ model LdLeadRequeue {
    leadId String
    lead   LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
+
+model LdLeadToken {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ProspectKey String
+   UserKey     String
+}

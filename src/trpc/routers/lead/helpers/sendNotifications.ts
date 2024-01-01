@@ -34,12 +34,20 @@ export const triggerNotification = async (
 	)[0].Email;
 	const UserKey = (
 		await prisma.users
-			.findFirst({
+			.findFirstOrThrow({
 				where: { Email },
 				select: { UserKey: true }
 			})
 			.catch(prismaErrorHandler)
 	)?.UserKey;
+
+	// Generate Token
+	const { id: token } = await prisma.ldLeadToken
+		.create({
+			data: { ProspectKey, UserKey },
+			select: { id: true }
+		})
+		.catch(prismaErrorHandler);
 
 	// Send Notification
 	await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
@@ -47,7 +55,7 @@ export const triggerNotification = async (
 	   @Message = ${message},
 	   @UserKeys = ${UserKey},
 	   @ExpireInSeconds = 600,
-	   @HrefURL = ${`${env.BASE_URL}/view-lead?keys=${ProspectKey},${UserKey}`},
+	   @HrefURL = ${`${env.BASE_URL}/view-lead?token=${token}`},
 	   @ActionBtnTitle = 'View Lead';`.catch(prismaErrorHandler);
 
 	// Create Lead Attempt

@@ -31,6 +31,7 @@ export const appRouter = router({
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
 		await prisma.ldLead.delete({ where: { ProspectKey: 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149' } });
+		// console.log(await prisma.ldLeadToken.findMany());
 		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 		// @Title = 'Alert',

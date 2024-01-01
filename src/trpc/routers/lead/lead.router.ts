@@ -39,6 +39,18 @@ export const leadRouter = router({
 		return { history: lead.history, attempts };
 	}),
 
+	validateToken: procedure.input(z.object({ token: z.string().min(1) })).query(async ({ input: { token } }) => {
+		const { createdAt, ProspectKey, UserKey } = await prisma.ldLeadToken
+			.findUniqueOrThrow({ where: { id: token } })
+			.catch(prismaErrorHandler);
+		await prisma.ldLeadToken.delete({ where: { id: token } }).catch(prismaErrorHandler);
+
+		if (createdAt < new Date(Date.now() - 1000 * 60 * 60 * 24))
+			throw new TRPCError({ code: 'BAD_REQUEST', message: 'Token expired' });
+
+		return { ProspectKey, UserKey };
+	}),
+
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1).optional() }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {

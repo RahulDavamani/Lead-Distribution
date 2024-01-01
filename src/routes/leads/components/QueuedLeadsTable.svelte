@@ -106,10 +106,7 @@
 									class="btn btn-xs btn-success {i !== 0 &&
 										!auth.isSupervisor() &&
 										'btn-disabled'} h-fit py-1 flex gap-2 animate-none flex-grow"
-									on:click={() =>
-										ui.navigate(
-											`/view-lead?keys=${ProspectKey},${$auth.user?.UserKey}&IsSupervisor=${auth.isSupervisor()}`
-										)}
+									on:click={() => ui.navigate(`/view-lead?ProspectKey=${ProspectKey}`)}
 								>
 									<Icon icon="mdi:arrow-right" width={18} />
 								</button>

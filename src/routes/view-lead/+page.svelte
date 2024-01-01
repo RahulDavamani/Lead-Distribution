@@ -14,32 +14,36 @@
 
 	let lead: Lead | undefined;
 	let prospect: Prospect | undefined;
+	let UserKey: string | undefined;
 	let closeStatus: string | undefined;
 
 	const fetchLead = async () => {
 		ui.setLoader({ title: 'Fetching Lead' });
-		const keys = $page.url.searchParams.get('keys');
-		if (!keys || keys.split(',').length !== 2) {
-			ui.setLoader();
-			return ($ui.alertModal = {
-				title: 'Error',
-				body: 'Bad Request: Missing params "keys"',
-				actions: [
-					{
-						name: 'Retry',
-						class: 'btn-primary',
-						onClick: () => {
-							fetchLead();
-						}
-					}
-				]
-			});
-		}
-		const ProspectKey = keys.split(',')[0];
 
-		let UserKey: string | undefined;
-		if ($auth.user?.UserKey) UserKey = auth.isSupervisor() ? undefined : $auth.user?.UserKey;
-		else UserKey = keys.split(',')[1];
+		let ProspectKey: string;
+		if ($auth.isAuth) {
+			ProspectKey = $page.url.searchParams.get('ProspectKey') ?? '';
+			UserKey = auth.isSupervisor() ? undefined : $auth.user?.UserKey;
+		} else {
+			const token = $page.url.searchParams.get('token');
+			if (!token)
+				return ($ui.alertModal = {
+					title: 'Error',
+					body: 'Bad Request: Missing params "token"',
+					actions: [
+						{
+							name: 'Retry',
+							class: 'btn-primary',
+							onClick: () => {
+								fetchLead();
+							}
+						}
+					]
+				});
+			const data = await trpc($page).lead.validateToken.query({ token }).catch(trpcClientErrorHandler);
+			ProspectKey = data.ProspectKey;
+			UserKey = data.UserKey;
+		}
 
 		const data = await trpc($page).lead.view.query({ ProspectKey, UserKey }).catch(trpcClientErrorHandler);
 		lead = {
@@ -66,10 +70,11 @@
 	const callLead = async () => {
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Calling Customer' });
-			const keys = $page.url.searchParams.get('keys');
-			const UserKey = $auth.user?.UserKey ?? keys?.split(',')[1] ?? '';
 			await trpc($page)
-				.lead.complete.query({ ProspectKey: prospect.ProspectKey, UserKey })
+				.lead.complete.query({
+					ProspectKey: prospect.ProspectKey,
+					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
+				})
 				.catch(trpcClientErrorHandler);
 			ui.showToast({ title: 'Lead Completed Successfully', class: 'alert-success' });
 			ui.setLoader();
@@ -80,9 +85,12 @@
 	const closeLead = async () => {
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Closing Lead' });
-			const keys = $page.url.searchParams.get('keys');
-			const UserKey = $auth.user?.UserKey ?? keys?.split(',')[1] ?? '';
-			await trpc($page).lead.close.query({ ProspectKey: prospect.ProspectKey, UserKey }).catch(trpcClientErrorHandler);
+			await trpc($page)
+				.lead.close.query({
+					ProspectKey: prospect.ProspectKey,
+					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
+				})
+				.catch(trpcClientErrorHandler);
 			ui.showToast({ title: 'Lead Closed Successfully', class: 'alert-success' });
 			ui.setLoader();
 			ui.navigate('/leads');

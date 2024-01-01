@@ -29,12 +29,20 @@ export const ruleRouter = router({
 			})
 			.catch(prismaErrorHandler);
 
-		const allLeads = await prisma.ldLead
-			.findMany({ select: { ProspectKey: true, isCompleted: true } })
-			.catch(prismaErrorHandler);
-
 		const rules = [];
 		for (const rule of ldRules) {
+			const CompanyKeys = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
+			const ProspectKeys: string[] = [];
+			for (const CompanyKey of CompanyKeys) {
+				const keys = (await prisma.leadProspect.findMany({ where: { CompanyKey } })).map(
+					({ ProspectKey }) => ProspectKey
+				);
+				ProspectKeys.push(...keys);
+			}
+
+			const allLeads = await prisma.ldLead
+				.findMany({ where: { ProspectKey: { in: ProspectKeys } }, select: { ProspectKey: true, isCompleted: true } })
+				.catch(prismaErrorHandler);
 			const affiliates = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
 			const leads = allLeads.filter(async ({ ProspectKey }) => {
 				const prospect = await prisma.leadProspect
