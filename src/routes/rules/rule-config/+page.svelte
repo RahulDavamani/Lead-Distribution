@@ -8,6 +8,7 @@
 	import WaitTimeCR from './components/WaitTimeCR.svelte';
 	import Notification from './components/Notification.svelte';
 	import { ui } from '../../../stores/ui.store';
+	import DispositionNotes from './components/DispositionNotes.svelte';
 
 	export let data;
 	$: ({ rule, operators, affiliates } = data);
@@ -43,10 +44,21 @@
 			</div>
 		</div>
 
-		<!-- Rule Name & Description -->
-		<FormControl label="Rule Name" error={zodErrors?.name}>
-			<input type="text" placeholder="Type here" class="input input-bordered" bind:value={$ruleConfig.rule.name} />
-		</FormControl>
+		<!-- Rule Name & IsActive -->
+		<div class="flex items-end">
+			<FormControl classes="w-full" label="Rule Name" error={zodErrors?.name}>
+				<input type="text" placeholder="Type here" class="input input-bordered" bind:value={$ruleConfig.rule.name} />
+			</FormControl>
+
+			<div class="form-control mx-10">
+				<label class="label cursor-pointer gap-3">
+					<span class="font-semibold">Active</span>
+					<input type="checkbox" class="toggle toggle-success" bind:checked={$ruleConfig.rule.isActive} />
+				</label>
+			</div>
+		</div>
+
+		<!-- Description -->
 		<FormControl label="Description" error={zodErrors?.description}>
 			<textarea placeholder="Type here" class="textarea textarea-bordered" bind:value={$ruleConfig.rule.description} />
 		</FormControl>
@@ -88,5 +100,8 @@
 		<div class="divider" />
 
 		<Notification />
+		<div class="divider" />
+
+		<DispositionNotes />
 	</div>
 {/if}

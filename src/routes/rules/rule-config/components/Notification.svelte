@@ -54,7 +54,7 @@
 <FormControl
 	inputType="In"
 	label="Notification"
-	labelClasses="font-semibold"
+	labelClasses="font-semibold text-lg"
 	secLabel="(if no reply from Customer)"
 	secLabelClasses="text-sm"
 >

@@ -6,7 +6,7 @@ import { prospectInputSchema } from '../../../zod/prospectInput.schema';
 import { distributeProcedure, redistributeProcedure } from './procedures/distribute.procedure';
 import { upsertLead } from './helpers/upsertLead';
 import { getCompletedProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';
-import { getUserId } from './helpers/getUserId';
+import { getUserId } from './helpers/getUserValues';
 
 export const leadRouter = router({
 	getQueued: getQueuedProcedure,
@@ -83,16 +83,16 @@ export const leadRouter = router({
 
 			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
 			if (!prospect) throw new TRPCError({ code: 'NOT_FOUND', message: 'Prospect not found' });
-			const outBoundCall = (
+			const outboundCallNumber = (
 				await prisma.ldRule
 					.findFirstOrThrow({
 						where: { affiliates: { some: { CompanyKey: prospect.CompanyKey ?? '' } } },
-						select: { outBoundCall: true }
+						select: { outboundCallNumber: true }
 					})
 					.catch(prismaErrorHandler)
-			).outBoundCall;
+			).outboundCallNumber;
 
-			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${UserId},${outBoundCall}`.catch(
+			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${UserId},${outboundCallNumber}`.catch(
 				prismaErrorHandler
 			);
 			await upsertLead(ProspectKey, 'LEAD RESPONDED', false, true, UserId);

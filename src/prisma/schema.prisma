@@ -3811,6 +3811,7 @@ model ImportAlticeOptimumPayment {
    Customer            String?   @db.VarChar(20)
    Addy                String?   @db.VarChar(255)
    InstallConfirmation BigInt?
+   Account__           String?   @map("Account #") @db.VarChar(12)
 
    @@ignore
 }
@@ -3851,6 +3852,7 @@ model ImportAlticeOrders {
    WSTAT                   String?   @db.VarChar(10)
    CLUSTER_CODE            String?   @db.VarChar(10)
    InstallConfirmation     BigInt?
+   AccountDerived          String?   @db.VarChar(12)
 
    @@ignore
 }
@@ -3880,6 +3882,7 @@ model ImportAlticeSuddenlinkPayment {
    Customer            String?   @db.VarChar(20)
    Addy                String?   @db.VarChar(255)
    InstallConfirmation BigInt?
+   Account__           String?   @map("Account #") @db.VarChar(12)
 
    @@ignore
 }
@@ -13068,6 +13071,7 @@ model LdRule {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
+   isActive    Boolean
    name        String
    description String
 
@@ -13075,9 +13079,10 @@ model LdRule {
    smsTemplate                 String
    waitTimeForCustomerResponse Int?
 
-   notification LdRuleNotification?
-   operators    LdRule_Operator[]
-   affiliates   LdRule_Affiliate[]
+   operators        LdRule_Operator[]
+   affiliates       LdRule_Affiliate[]
+   notification     LdRuleNotification?
+   dispositionNotes LdRuleDispositionNote[]
 }
 
 model LdRule_Operator {
@@ -13128,9 +13133,27 @@ model LdRuleNotificationAttempt {
    textTemplate String
    waitTime     Int
 
-   notification   LdRuleNotification? @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-   notificationId String?
+   notification   LdRuleNotification @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   notificationId String
    leadAttempts   LdLeadAttempts[]
+
+   @@unique([notificationId, num])
+}
+
+model LdRuleDispositionNote {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num         Int
+   notes       String
+   smsTemplate String
+   requeueTime Int
+   ruleId      String
+
+   LdRule LdRule @relation(fields: [ruleId], references: [id])
+
+   @@unique([ruleId, num])
 }
 
 model LdLead {

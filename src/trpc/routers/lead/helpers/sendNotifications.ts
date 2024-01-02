@@ -5,8 +5,8 @@ import { upsertLead } from './upsertLead';
 import type { Rule } from '../../../../zod/rule.schema';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
-import { getOperatorName } from './getOperatorName';
 import { generateNotificationMessage } from './generateNotificationMessage';
+import { getUserKey, getUserName } from './getUserValues';
 
 export const getAvailableOperators = async () => {
 	await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
@@ -24,22 +24,8 @@ export const triggerNotification = async (
 	textTemplate: string,
 	attempt?: NonNullable<Rule['notification']>['notificationAttempts'][number]
 ) => {
-	// Generate Message
+	const UserKey = await getUserKey(UserId);
 	const message = await generateNotificationMessage(ProspectKey, textTemplate);
-
-	const Email = (
-		(await prisma.$queryRaw`select Email from VonageUsers where UserId = ${UserId} and Active=1`.catch(
-			prismaErrorHandler
-		)) as { Email: string }[]
-	)[0].Email;
-	const UserKey = (
-		await prisma.users
-			.findFirstOrThrow({
-				where: { Email },
-				select: { UserKey: true }
-			})
-			.catch(prismaErrorHandler)
-	)?.UserKey;
 
 	// Generate Token
 	const { id: token } = await prisma.ldLeadToken
@@ -49,7 +35,7 @@ export const triggerNotification = async (
 		})
 		.catch(prismaErrorHandler);
 
-	// Send Notification
+	// Trigger Notification
 	await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
 	   @Title = 'Lead Received',
 	   @Message = ${message},
@@ -71,7 +57,7 @@ export const triggerNotification = async (
 		.catch(prismaErrorHandler);
 
 	// Update Lead Status
-	const Name = await getOperatorName(UserId);
+	const Name = await getUserName(UserId);
 	const status = attempt
 		? `ATTEMPT ${attempt.num} SENT TO OPERATOR "${UserId}: ${Name}"`
 		: `LEAD ESCALATED TO SUPERVISOR "${UserId}: ${Name}"`;
@@ -126,7 +112,5 @@ export const sendNotifications = async (
 	}
 
 	// Send Notification to Supervisor
-	if (supervisorUserId) {
-		await triggerNotification(ProspectKey, leadId, supervisorUserId, supervisorTextTemplate);
-	}
+	if (supervisorUserId) await triggerNotification(ProspectKey, leadId, supervisorUserId, supervisorTextTemplate);
 };

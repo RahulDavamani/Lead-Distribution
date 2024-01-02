@@ -3,7 +3,7 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import type { Affiliate } from '../../../../zod/affiliate.schema';
 import type { Operator } from '../../../../zod/operator.schema';
 import { procedure } from '../../../server';
-import { getUserId } from '../helpers/getUserId';
+import { getUserId } from '../helpers/getUserValues';
 
 export const getLeadDetails = async (ProspectKey: string, UserId: number | null) => {
 	const prospect = await prisma.leadProspect.findFirst({ where: { ProspectKey } }).catch(prismaErrorHandler);
@@ -78,7 +78,7 @@ export const getCompletedProcedure = procedure
 						where: {
 							isCompleted: true,
 							updatedAt: { gte: startDate, lte: endDate },
-							UserId
+							attempts: UserId ? { some: { UserId } } : undefined
 						}
 					})
 				).map(async (lead) => {

@@ -54,7 +54,7 @@ export const errorCodes: ErrorCode[] = [
 		prisma: ['P2025']
 	},
 	{
-		http: 404,
+		http: 405,
 		trpc: 'METHOD_NOT_SUPPORTED',
 		prisma: []
 	},

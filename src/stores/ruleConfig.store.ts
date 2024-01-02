@@ -24,14 +24,16 @@ export interface RuleConfig {
 export const ruleConfig = (() => {
 	const newRule: Rule = {
 		id: null,
+		isActive: true,
 		name: '',
 		description: '',
-		outBoundCall: '',
+		outboundCallNumber: '',
+		smsTemplate: '',
 		operators: [],
 		affiliates: [],
-		ghlContactStatus: '',
 		waitTimeForCustomerResponse: null,
-		notification: null
+		notification: null,
+		dispositionNotes: []
 	};
 	const { subscribe, set, update } = writable<RuleConfig>({
 		init: false,

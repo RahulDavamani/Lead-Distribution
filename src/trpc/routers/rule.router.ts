@@ -11,7 +11,8 @@ const getRuleById = async (id: string) =>
 			include: {
 				notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 				affiliates: { select: { CompanyKey: true } },
-				operators: { select: { UserId: true } }
+				operators: { select: { UserId: true } },
+				dispositionNotes: true
 			}
 		})
 		.catch(prismaErrorHandler);
@@ -68,105 +69,88 @@ export const ruleRouter = router({
 
 	saveRule: procedure
 		.input(ruleSchema)
-		.query(
-			async ({
-				input: {
-					id,
-					name,
-					description,
-					outboundCallNumber,
-					smsTemplate,
-					waitTimeForCustomerResponse,
-					notification,
-					operators,
-					affiliates
-				}
-			}) => {
-				const ruleId = (
-					await prisma.ldRule
+		.query(async ({ input: { id, operators, affiliates, notification, dispositionNotes, ...values } }) => {
+			// Upsert Rule
+			const ruleId = (
+				await prisma.ldRule
+					.upsert({
+						where: { id: id ?? '' },
+						create: { ...values },
+						update: { ...values },
+						select: { id: true }
+					})
+					.catch(prismaErrorHandler)
+			).id;
+
+			// Upsert Operators and Affiliates
+			await prisma.ldRule_Operator.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+			await prisma.ldRule_Affiliate.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+
+			await prisma.ldRule_Operator
+				.createMany({
+					data: operators.map(({ UserId }) => ({ ruleId, UserId }))
+				})
+				.catch(prismaErrorHandler);
+			await prisma.ldRule_Affiliate
+				.createMany({
+					data: affiliates.map(({ CompanyKey }) => ({ ruleId, CompanyKey }))
+				})
+				.catch(prismaErrorHandler);
+
+			// Upsert Notification
+			if (notification) {
+				const { id, notificationAttempts, ...values } = notification;
+				const notificationId = (
+					await prisma.ldRuleNotification
 						.upsert({
 							where: { id: id ?? '' },
 							create: {
-								name,
-								description,
-								outboundCallNumber,
-								smsTemplate,
-								waitTimeForCustomerResponse
+								ruleId,
+								...values
 							},
 							update: {
-								name,
-								description,
-								outboundCallNumber,
-								smsTemplate,
-								waitTimeForCustomerResponse
+								ruleId,
+								...values
 							},
 							select: { id: true }
 						})
 						.catch(prismaErrorHandler)
 				).id;
 
-				await prisma.ldRule_Operator.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
-				await prisma.ldRule_Affiliate.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+				// Upsert Notification Attempts
+				const existingNotificationAttempts = await prisma.ldRuleNotificationAttempt.findMany({
+					where: { notificationId },
+					select: { id: true }
+				});
+				const deleteNotificationAttemptsId = existingNotificationAttempts
+					.filter((en) => !notificationAttempts.find((n) => n.id === en.id))
+					.map(({ id }) => id);
 
-				await prisma.ldRule_Operator
-					.createMany({
-						data: operators.map(({ UserId }) => ({ ruleId, UserId }))
-					})
+				await prisma.ldRuleNotificationAttempt
+					.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
 					.catch(prismaErrorHandler);
-				await prisma.ldRule_Affiliate
-					.createMany({
-						data: affiliates.map(({ CompanyKey }) => ({ ruleId, CompanyKey }))
-					})
-					.catch(prismaErrorHandler);
 
-				if (notification) {
-					const { notificationType, supervisorUserId, supervisorTextTemplate, notificationAttempts } = notification;
-					const notificationId = (
-						await prisma.ldRuleNotification
-							.upsert({
-								where: { id: notification.id ?? '' },
-								create: {
-									ruleId,
-									notificationType,
-									supervisorUserId,
-									supervisorTextTemplate
-								},
-								update: {
-									ruleId,
-									notificationType,
-									supervisorUserId,
-									supervisorTextTemplate
-								},
-								select: { id: true }
-							})
-							.catch(prismaErrorHandler)
-					).id;
-
-					const existingNotificationAttempts = await prisma.ldRuleNotificationAttempt.findMany({
-						where: { notificationId },
-						select: { id: true }
+				for (const { id, ...values } of notificationAttempts) {
+					await prisma.ldRuleNotificationAttempt.upsert({
+						where: { id: id ?? '' },
+						create: { notificationId, ...values },
+						update: { ...values }
 					});
-					const deleteNotificationAttemptsId = existingNotificationAttempts
-						.filter((en) => !notificationAttempts.find((n) => n.id === en.id))
-						.map(({ id }) => id);
+				}
+			} else await prisma.ldRuleNotification.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
 
-					await prisma.ldRuleNotificationAttempt
-						.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
-						.catch(prismaErrorHandler);
+			// Upsert Disposition Notes
+			await prisma.ldRuleDispositionNote.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+			await prisma.ldRuleDispositionNote
+				.createMany({
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					data: dispositionNotes.map(({ id, ...values }) => ({ ruleId, ...values }))
+				})
+				.catch(prismaErrorHandler);
 
-					for (const { id, ...values } of notificationAttempts) {
-						await prisma.ldRuleNotificationAttempt.upsert({
-							where: { id: id ?? '' },
-							create: { ...values },
-							update: { ...values }
-						});
-					}
-				} else await prisma.ldRuleNotification.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
-
-				const rule = await getRuleById(ruleId);
-				return { rule };
-			}
-		),
+			const rule = await getRuleById(ruleId);
+			return { rule };
+		}),
 
 	deleteRole: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
 		await prisma.ldRule.delete({ where: { id } }).catch(prismaErrorHandler);
