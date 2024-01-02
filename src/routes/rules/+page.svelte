@@ -4,7 +4,7 @@
 	import { page } from '$app/stores';
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 	import { ui } from '../../stores/ui.store';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data;
 	$: ({ rules } = data);
@@ -39,8 +39,10 @@
 			<div class="card border shadow px-4 py-2 flex flex-row justify-between items-center">
 				<div>
 					<div class="text-lg font-semibold">{name}</div>
-					<div class="text-sm italic max-w-xs break-words">
-						{description}
+					<div class="tooltip tooltip-info tooltip-right cursor-default" data-tip={description}>
+						<div class="text-sm italic max-w-xs whitespace-nowrap text-ellipsis overflow-hidden">
+							{description}
+						</div>
 					</div>
 				</div>
 

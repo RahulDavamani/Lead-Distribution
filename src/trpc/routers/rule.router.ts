@@ -74,8 +74,8 @@ export const ruleRouter = router({
 					id,
 					name,
 					description,
-					outBoundCall,
-					ghlContactStatus,
+					outboundCallNumber,
+					smsTemplate,
 					waitTimeForCustomerResponse,
 					notification,
 					operators,
@@ -89,15 +89,15 @@ export const ruleRouter = router({
 							create: {
 								name,
 								description,
-								outBoundCall,
-								ghlContactStatus,
+								outboundCallNumber,
+								smsTemplate,
 								waitTimeForCustomerResponse
 							},
 							update: {
 								name,
 								description,
-								outBoundCall,
-								ghlContactStatus,
+								outboundCallNumber,
+								smsTemplate,
 								waitTimeForCustomerResponse
 							},
 							select: { id: true }

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type { LdLeadHistory } from '@prisma/client';
-	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
 	import { auth } from '../../../stores/auth.store';
 	import { ui } from '../../../stores/ui.store';

@@ -5,7 +5,6 @@
 	import { ruleConfig } from '../../../stores/ruleConfig.store';
 	import Operators from './components/Operators.svelte';
 	import Affiliates from './components/Affiliates.svelte';
-	import GHLContract from './components/GHLContract.svelte';
 	import WaitTimeCR from './components/WaitTimeCR.svelte';
 	import Notification from './components/Notification.svelte';
 	import { ui } from '../../../stores/ui.store';
@@ -20,10 +19,15 @@
 
 	<div class="container mx-auto mb-20">
 		<div class="flex justify-between items-center mb-6 relative">
+			<!-- Back Button -->
 			<button class="btn btn-sm btn-ghost" on:click={() => ui.navigate('/rules')}>
 				<Icon icon="mdi:chevron-left" width={22} /> Rules
 			</button>
+
+			<!-- Title -->
 			<div class="font-bold text-2xl absolute w-fit mx-auto left-0 right-0">Distribution Rule</div>
+
+			<!-- Save & Delete Buttons -->
 			<div class="space-x-2">
 				<button
 					class="btn btn-sm btn-error {$ruleConfig.rule.id === null && 'btn-disabled'}"
@@ -39,29 +43,45 @@
 			</div>
 		</div>
 
+		<!-- Rule Name & Description -->
 		<FormControl label="Rule Name" error={zodErrors?.name}>
 			<input type="text" placeholder="Type here" class="input input-bordered" bind:value={$ruleConfig.rule.name} />
 		</FormControl>
 		<FormControl label="Description" error={zodErrors?.description}>
 			<textarea placeholder="Type here" class="textarea textarea-bordered" bind:value={$ruleConfig.rule.description} />
 		</FormControl>
-		<FormControl label="Outbound Call Number" error={zodErrors?.outBoundCall}>
-			<input
-				type="text"
-				placeholder="Type here"
-				class="input input-bordered"
-				bind:value={$ruleConfig.rule.outBoundCall}
-			/>
-		</FormControl>
+
+		<!-- Outbound Call Number & SMS Template -->
+		<div class="flex gap-4">
+			<FormControl classes="w-full" label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
+				<input
+					type="text"
+					placeholder="Type here"
+					class="input input-bordered"
+					bind:value={$ruleConfig.rule.outboundCallNumber}
+				/>
+			</FormControl>
+			<FormControl
+				classes="w-full"
+				label="SMS Template"
+				secLabel="(First message upon lead arrival)"
+				secLabelClasses="text-sm"
+				error={zodErrors?.smsTemplate}
+			>
+				<textarea
+					placeholder="Type here"
+					class="textarea textarea-bordered"
+					bind:value={$ruleConfig.rule.smsTemplate}
+					rows={1}
+				/>
+			</FormControl>
+		</div>
 		<div class="divider" />
 
 		<div class="flex gap-4">
 			<Operators />
 			<Affiliates />
 		</div>
-		<div class="divider" />
-
-		<GHLContract />
 		<div class="divider" />
 
 		<WaitTimeCR />

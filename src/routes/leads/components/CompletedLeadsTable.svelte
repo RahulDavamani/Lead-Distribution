@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type { LdLeadHistory } from '@prisma/client';
-	import LeadHistoryModal from './LeadHistoryModal.svelte';
 	import Icon from '@iconify/svelte';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';

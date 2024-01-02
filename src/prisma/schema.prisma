@@ -13071,8 +13071,8 @@ model LdRule {
    name        String
    description String
 
-   outBoundCall                String @default("")
-   ghlContactStatus            String
+   outboundCallNumber          String
+   smsTemplate                 String
    waitTimeForCustomerResponse Int?
 
    notification LdRuleNotification?

@@ -5,8 +5,8 @@ export const ruleSchema = z.object({
 	name: z.string().min(1),
 	description: z.string(),
 
-	outBoundCall: z.string().min(1),
-	ghlContactStatus: z.string().min(1),
+	outboundCallNumber: z.string().min(1),
+	smsTemplate: z.string(),
 	waitTimeForCustomerResponse: z.number().nullable(),
 
 	notification: z
