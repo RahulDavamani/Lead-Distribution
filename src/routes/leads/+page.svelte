@@ -21,7 +21,21 @@
 	let queuedLeads: QueuedLead[] = [];
 	let completedLeads: CompletedLead[] = [];
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
+	let affiliateSelect: string | undefined;
 	let leadHistoryModelId: string | undefined;
+
+	$: affiliates = (() => {
+		let affiliates: { [key: string]: number } = {};
+		if (tab === 1)
+			queuedLeads.forEach(({ companyName }) => {
+				affiliates[companyName] = (affiliates[companyName] ?? 0) + 1;
+			});
+		else
+			completedLeads.forEach(({ companyName }) => {
+				affiliates[companyName] = (affiliates[companyName] ?? 0) + 1;
+			});
+		return affiliates;
+	})();
 
 	const fetchQueuedLeads = async () => {
 		const oldQueuedLeads = queuedLeads;
@@ -111,7 +125,7 @@
 </script>
 
 <div class="container mx-auto">
-	<div class="flex justify-between items-center">
+	<div class="flex justify-between items-end">
 		<h1 class="text-3xl font-bold flex items-end gap-2 flex-grow">
 			{#if tab === 1}
 				Queued Leads:
@@ -119,9 +133,20 @@
 			{:else}
 				Completed Leads:
 				<span class="font-normal font-mono text-2xl">({completedLeads.length})</span>
+			{/if}
+			<select
+				class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
+				bind:value={affiliateSelect}
+			>
+				<option value={undefined}>All Affiliates</option>
+				{#each Object.entries(affiliates) as [companyName, count]}
+					<option value={companyName}>{companyName} ({count})</option>
+				{/each}
+			</select>
+			{#if tab === 2}
 				<Flatpickr
 					placeholder="Choose Date"
-					class="input input-bordered input-sm cursor-pointer font-semibold text-lg text-center max-w-sm w-full ml-3"
+					class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full ml-3"
 					bind:value={dateRange}
 					on:close={() => fetchCompletedLeads(dateRange)}
 					options={{
@@ -144,9 +169,17 @@
 	<div class="divider mt-1" />
 
 	{#if tab === 1}
-		<QueuedLeadsTable {queuedLeads} bind:leadHistoryModelId />
+		<QueuedLeadsTable
+			queuedLeads={queuedLeads.filter(({ companyName }) => (affiliateSelect ? companyName === affiliateSelect : true))}
+			bind:leadHistoryModelId
+		/>
 	{:else}
-		<CompletedLeadsTable {completedLeads} bind:leadHistoryModelId />
+		<CompletedLeadsTable
+			completedLeads={completedLeads.filter(({ companyName }) =>
+				affiliateSelect ? companyName === affiliateSelect : true
+			)}
+			bind:leadHistoryModelId
+		/>
 	{/if}
 </div>
 

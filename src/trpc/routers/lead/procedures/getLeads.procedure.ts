@@ -46,7 +46,10 @@ export const getQueuedProcedure = procedure
 			await Promise.all(
 				(
 					await prisma.ldLead.findMany({
-						where: { isCompleted: false, attempts: UserId ? { some: { UserId } } : undefined }
+						where: {
+							isCompleted: false,
+							OR: UserId ? [{ attempts: { some: { UserId } } }, { UserId }] : undefined
+						}
 					})
 				).map(async (lead) => {
 					const leadDetails = await getLeadDetails(lead.ProspectKey, lead.UserId);
@@ -78,7 +81,7 @@ export const getCompletedProcedure = procedure
 						where: {
 							isCompleted: true,
 							updatedAt: { gte: startDate, lte: endDate },
-							attempts: UserId ? { some: { UserId } } : undefined
+							OR: UserId ? [{ attempts: { some: { UserId } } }, { UserId }] : undefined
 						}
 					})
 				).map(async (lead) => {
