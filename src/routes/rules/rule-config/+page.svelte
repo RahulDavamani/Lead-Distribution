@@ -8,7 +8,7 @@
 	import WaitTimeCR from './components/WaitTimeCR.svelte';
 	import Notification from './components/Notification.svelte';
 	import { ui } from '../../../stores/ui.store';
-	import DispositionNotes from './components/DispositionNotes.svelte';
+	import DispositionRules from './components/DispositionRules.svelte';
 
 	export let data;
 	$: ({ rule, operators, affiliates } = data);
@@ -102,6 +102,6 @@
 		<Notification />
 		<div class="divider" />
 
-		<DispositionNotes />
+		<DispositionRules />
 	</div>
 {/if}

@@ -71,7 +71,7 @@
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Calling Customer' });
 			await trpc($page)
-				.lead.complete.query({
+				.lead.callCustomer.query({
 					ProspectKey: prospect.ProspectKey,
 					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
 				})

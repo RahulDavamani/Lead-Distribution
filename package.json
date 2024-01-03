@@ -21,6 +21,7 @@
 		"@sveltejs/kit": "^1.27.4",
 		"@types/lodash.clonedeep": "^4.5.9",
 		"@types/node": "^20.10.2",
+		"@types/node-schedule": "^2.1.5",
 		"@typescript-eslint/eslint-plugin": "^6.0.0",
 		"@typescript-eslint/parser": "^6.0.0",
 		"autoprefixer": "^10.4.16",
@@ -49,6 +50,7 @@
 		"@trpc/server": "^10.44.1",
 		"datatables.net-dt": "^1.13.8",
 		"lodash.clonedeep": "^4.5.0",
+		"node-schedule": "^2.1.1",
 		"svelte-flatpickr": "^3.3.4",
 		"trpc-sveltekit": "^3.5.22"
 	}

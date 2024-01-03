@@ -32,11 +32,11 @@ export const ruleSchema = z.object({
 		})
 		.nullable(),
 
-	dispositionNotes: z.array(
+	dispositionRules: z.array(
 		z.object({
 			id: z.string().nullable(),
 			num: z.number(),
-			notes: z.string().min(1),
+			dispositions: z.string().min(1),
 			smsTemplate: z.string(),
 			requeueTime: z.number()
 		})

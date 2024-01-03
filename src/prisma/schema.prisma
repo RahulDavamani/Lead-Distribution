@@ -13082,7 +13082,7 @@ model LdRule {
    operators        LdRule_Operator[]
    affiliates       LdRule_Affiliate[]
    notification     LdRuleNotification?
-   dispositionNotes LdRuleDispositionNote[]
+   dispositionRules LdRuleDispositionRule[]
 }
 
 model LdRule_Operator {
@@ -13140,18 +13140,20 @@ model LdRuleNotificationAttempt {
    @@unique([notificationId, num])
 }
 
-model LdRuleDispositionNote {
+model LdRuleDispositionRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num         Int
-   notes       String
-   smsTemplate String
-   requeueTime Int
-   ruleId      String
+   num          Int
+   dispositions String
+   smsTemplate  String
+   requeueTime  Int
+   ruleId       String
 
-   LdRule LdRule @relation(fields: [ruleId], references: [id])
+   rule            LdRule              @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   leadDisposition ldLeadDisposition[]
+   leadRequeue     LdLeadRequeue[]
 
    @@unique([ruleId, num])
 }
@@ -13161,17 +13163,20 @@ model LdLead {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   ProspectKey String  @unique
-   UserId      Int?
-   status      String
-   isProgress  Boolean
-   isCompleted Boolean
+   ProspectKey  String  @unique
+   UserId       Int?
+   status       String
+   isDistribute Boolean
+   isCall       Boolean
+   isCompleted  Boolean
 
    VonageGUID String? @db.NVarChar(100)
 
-   attempts LdLeadAttempts[]
-   history  LdLeadHistory[]
-   requeues LdLeadRequeue[]
+   attempts     LdLeadAttempts[]
+   history      LdLeadHistory[]
+   requeues     LdLeadRequeue[]
+   calls        ldLeadCall[]
+   dispositions ldLeadDisposition[]
 }
 
 model LdLeadAttempts {
@@ -13179,12 +13184,13 @@ model LdLeadAttempts {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   leadId    String
-   lead      LdLead                     @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    attemptId String?
-   attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
    UserId    Int
    message   String
+   leadId    String
+
+   lead    LdLead                     @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   attempt LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
 }
 
 model LdLeadHistory {
@@ -13203,10 +13209,39 @@ model LdLeadRequeue {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
+   UserId            Int?
+   dispositionRuleId String?
+   leadId            String
+
+   dispositionRule LdRuleDispositionRule? @relation(fields: [dispositionRuleId], references: [id])
+   lead            LdLead                 @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model ldLeadCall {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
    UserId Int
 
    leadId String
    lead   LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model ldLeadDisposition {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   dispositionRuleId String?
+   disposition       String
+   message           String
+   leadId            String
+
+   dispositionRule LdRuleDispositionRule? @relation(fields: [dispositionRuleId], references: [id])
+   lead            LdLead                 @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+   @@unique([dispositionRuleId, leadId])
 }
 
 model LdLeadToken {

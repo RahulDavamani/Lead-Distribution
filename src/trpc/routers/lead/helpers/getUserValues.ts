@@ -29,11 +29,11 @@ export const getUserName = async (UserId: number) =>
 		(await prisma.$queryRaw`select Name from VonageUsers where UserId=${UserId} and Active=1`.catch(
 			prismaErrorHandler
 		)) as Operator[]
-	)[0].Name;
+	)?.[0]?.Name ?? 'N/A';
 
 export const getUserEmail = async (UserId: number) =>
 	(
 		(await prisma.$queryRaw`select Email from VonageUsers where UserId=${UserId} and Active=1`.catch(
 			prismaErrorHandler
 		)) as Operator[]
-	)[0].Email;
+	)?.[0]?.Email ?? 'N/A';

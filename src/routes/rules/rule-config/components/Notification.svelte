@@ -4,6 +4,7 @@
 	import FormControl from '../../../components/FormControl.svelte';
 	import { onMount } from 'svelte';
 	import SelectSupervisor from './SelectSupervisor.svelte';
+	import DynamicVariables from './DynamicVariables.svelte';
 
 	$: ({
 		rule: { notification }
@@ -103,21 +104,24 @@
 			</FormControl>
 		</div>
 
-		<div class="flex items-start gap-2 mb-4">
-			<div class="font-semibold">Operation Notification Wait Time:</div>
-			<button class="z-10 text-success" on:click={addNotificationAttempt}>
-				<Icon icon="mdi:add-circle" width={24} />
-			</button>
+		<div class="flex justify-between items-center mb-4">
+			<div class="flex items-start gap-2">
+				<div class="font-semibold">Operation Notification Wait Time:</div>
+				<button class="z-10 text-success" on:click={addNotificationAttempt}>
+					<Icon icon="mdi:add-circle" width={24} />
+				</button>
+			</div>
+			<DynamicVariables />
 		</div>
 
-		<div class="space-y-4 px-2 mb-2">
+		<div class="space-y-4 px-2 mb-4">
 			{#each notification.notificationAttempts as { num }, i}
 				<div class="card border-2 p-4">
 					<div class="flex justify-start items-center gap-2 mb-1">
 						<button on:click={() => deleteNotificationAttempt(num)}>
 							<Icon icon="mdi:close" class="text-error" width="20" />
 						</button>
-						<div class="font-semibold">Attempt {num}</div>
+						<div class="font-semibold">Attempt #{num}</div>
 					</div>
 					<div class="flex gap-10">
 						<FormControl label="Text Template" classes="flex-grow">
@@ -146,12 +150,12 @@
 			{/each}
 		</div>
 
-		<div class="flex justify-end">
+		<!-- <div class="flex justify-end">
 			<div class="alert w-1/3 px-2 py-1 text-xs">
 				<span class="font-semibold">Dynamic Variables:</span>
 				%CustomerFirstName, %CustomerLastName, %Email, %Address, %ZipCode
 			</div>
-		</div>
+		</div> -->
 
 		<FormControl
 			inputType="In"

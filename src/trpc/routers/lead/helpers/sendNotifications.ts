@@ -1,6 +1,6 @@
 import { waitFor } from '$lib/waitFor';
 import type { LdRule, LdRuleNotification, LdRuleNotificationAttempt, LdRule_Operator } from '@prisma/client';
-import { checkLeadCompleted } from '../procedures/distribute.procedure';
+import { checkLeadDistributeCompleted } from '../procedures/distribute.procedure';
 import { upsertLead } from './upsertLead';
 import type { Rule } from '../../../../zod/rule.schema';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
@@ -59,9 +59,9 @@ export const triggerNotification = async (
 	// Update Lead Status
 	const Name = await getUserName(UserId);
 	const status = attempt
-		? `ATTEMPT ${attempt.num} SENT TO OPERATOR "${UserId}: ${Name}"`
+		? `ATTEMPT #${attempt.num} SENT TO OPERATOR "${UserId}: ${Name}"`
 		: `LEAD ESCALATED TO SUPERVISOR "${UserId}: ${Name}"`;
-	await upsertLead(ProspectKey, status, attempt !== undefined);
+	await upsertLead(ProspectKey, status, { isDistribute: attempt !== undefined });
 };
 
 export const sendNotifications = async (
@@ -100,13 +100,13 @@ export const sendNotifications = async (
 		await waitFor(attempt.waitTime);
 
 		// Check if Lead is already completed
-		const isLeadCompleted = await checkLeadCompleted(ProspectKey);
+		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
 		if (isLeadCompleted) break;
 	}
 
 	if (noOperatorFound) upsertLead(ProspectKey, `NO OPERATOR FOUND`);
 	else {
-		const isLeadCompleted = await checkLeadCompleted(ProspectKey);
+		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
 		if (isLeadCompleted) return;
 		upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
 	}

@@ -6,37 +6,53 @@ import { prospectInputSchema } from '../../../zod/prospectInput.schema';
 import { distributeProcedure, redistributeProcedure } from './procedures/distribute.procedure';
 import { upsertLead } from './helpers/upsertLead';
 import { getCompletedProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';
-import { getUserId } from './helpers/getUserValues';
+import { getUserId, getUserName } from './helpers/getUserValues';
+import { getCompanyKey } from './helpers/getCompanyKey';
+import { updateDispositionProcedure } from './procedures/updateDisposition.procedure';
 
 export const leadRouter = router({
 	getQueued: getQueuedProcedure,
 	getCompleted: getCompletedProcedure,
 	distribute: distributeProcedure,
 	redistribute: redistributeProcedure,
+	updateDisposition: updateDispositionProcedure,
 
-	getHistoryAndAttempts: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
+	getLeadDetails: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
 		const lead = await prisma.ldLead
 			.findUniqueOrThrow({
 				where: { id },
 				select: {
 					ProspectKey: true,
 					history: { orderBy: { createdAt: 'asc' } },
-					attempts: { orderBy: { createdAt: 'asc' } }
+					attempts: { orderBy: { createdAt: 'asc' } },
+					calls: { orderBy: { createdAt: 'asc' } },
+					requeues: { orderBy: { createdAt: 'asc' } },
+					dispositions: { orderBy: { createdAt: 'asc' } }
 				}
 			})
 			.catch(prismaErrorHandler);
 
 		const attempts = [];
+		for (const attempt of lead.attempts) attempts.push({ ...attempt, name: await getUserName(attempt.UserId) });
 
-		for (const attempt of lead.attempts) {
-			const operators = (await prisma.$queryRaw`select Name from VonageUsers where UserId = ${attempt.UserId}`.catch(
-				prismaErrorHandler
-			)) as { Name: string | null }[];
+		const calls = [];
+		for (const call of lead.calls) calls.push({ ...call, name: await getUserName(call.UserId) });
 
-			attempts.push({ ...attempt, name: operators[0].Name });
+		const requeues = [];
+		for (const requeue of lead.requeues) {
+			const supervisorName = requeue.UserId ? await getUserName(requeue.UserId) : undefined;
+			const disposition = await prisma.ldRuleDispositionRule
+				.findUnique({ where: { id: requeue.dispositionRuleId ?? '' } })
+				.catch(prismaErrorHandler);
+
+			requeues.push({
+				...requeue,
+				supervisorName,
+				dispositionNum: disposition?.num
+			});
 		}
 
-		return { history: lead.history, attempts };
+		return { ...lead, attempts, calls, requeues };
 	}),
 
 	validateToken: procedure.input(z.object({ token: z.string().min(1) })).query(async ({ input: { token } }) => {
@@ -60,56 +76,78 @@ export const leadRouter = router({
 				.findFirst({
 					where: {
 						ProspectKey,
-						isCompleted: false,
 						attempts: UserId ? { some: { UserId } } : undefined
 					}
 				})
 				.catch(prismaErrorHandler);
 			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found' });
+			if (lead.isCompleted) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead is completed/closed' });
+			if (lead.isCall) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead has been responded' });
+
 			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
 
 			return { lead, prospect };
 		}),
 
-	complete: procedure
+	callCustomer: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			// Check if Lead is Completed/Closed
 			const lead = await prisma.ldLead
-				.findFirst({ where: { ProspectKey }, select: { isCompleted: true } })
+				.findFirst({
+					where: { ProspectKey },
+					select: { id: true, isCompleted: true }
+				})
 				.catch(prismaErrorHandler);
 			if (!lead || lead.isCompleted)
 				throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed/closed' });
-			const UserId = await getUserId(UserKey);
+			const UserId = (await getUserId(UserKey)) as number;
 
-			const prospect = await prisma.leadProspect.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
-			if (!prospect) throw new TRPCError({ code: 'NOT_FOUND', message: 'Prospect not found' });
+			// Find Prospect
+			const CompanyKey = await getCompanyKey(ProspectKey);
+
+			// No Company Key in Prospect
+			if (!CompanyKey) throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
+
+			// Call Customer
 			const outboundCallNumber = (
 				await prisma.ldRule
 					.findFirstOrThrow({
-						where: { affiliates: { some: { CompanyKey: prospect.CompanyKey ?? '' } } },
+						where: { affiliates: { some: { CompanyKey } } },
 						select: { outboundCallNumber: true }
 					})
 					.catch(prismaErrorHandler)
 			).outboundCallNumber;
-
 			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${UserId},${outboundCallNumber}`.catch(
 				prismaErrorHandler
 			);
-			await upsertLead(ProspectKey, 'LEAD RESPONDED', false, true, UserId);
+
+			// Update Lead Status & Create Lead Call
+			const Name = await getUserName(UserId);
+			await upsertLead(ProspectKey, `LEAD RESPONDED BY "${UserId}: ${Name}"`, { isDistribute: false, isCall: true });
+			await prisma.ldLeadCall.create({ data: { leadId: lead.id, UserId } }).catch(prismaErrorHandler);
 			return { ProspectKey };
 		}),
 
 	close: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			// Check if Lead is Completed/Closed
 			const lead = await prisma.ldLead
 				.findFirst({ where: { ProspectKey }, select: { isCompleted: true } })
 				.catch(prismaErrorHandler);
 			if (!lead || lead.isCompleted)
 				throw new TRPCError({ code: 'CONFLICT', message: 'Lead already completed/closed' });
 
-			const UserId = await getUserId(UserKey);
-			await upsertLead(ProspectKey, 'LEAD CLOSED', false, true, UserId);
+			// Update Lead Status
+			const UserId = (await getUserId(UserKey)) as number;
+			const Name = await getUserName(UserId);
+			await upsertLead(ProspectKey, `LEAD CLOSED BY "${UserId}: ${Name}"`, {
+				isDistribute: false,
+				isCall: false,
+				isCompleted: true,
+				UserId
+			});
 			return { ProspectKey };
 		}),
 

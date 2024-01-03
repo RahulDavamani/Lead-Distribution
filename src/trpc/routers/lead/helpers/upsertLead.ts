@@ -1,17 +1,17 @@
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
-export const upsertLead = async (
-	ProspectKey: string,
-	status: string,
-	isProgress: boolean = true,
-	isCompleted: boolean = false,
-	UserId?: number
-) => {
+type Args = {
+	isDistribute?: boolean;
+	isCall?: boolean;
+	isCompleted?: boolean;
+	UserId?: number;
+};
+
+export const upsertLead = async (ProspectKey: string, status: string, args?: Args) => {
 	const lead = await prisma.ldLead
-		.upsert({
+		.update({
 			where: { ProspectKey },
-			create: { ProspectKey, status, isProgress, isCompleted, UserId },
-			update: { ProspectKey, status, isProgress, isCompleted, UserId }
+			data: { status, ...args }
 		})
 		.catch(prismaErrorHandler);
 

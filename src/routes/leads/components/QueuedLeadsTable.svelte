@@ -35,7 +35,7 @@
 	const requeue = async (ProspectKey: string) => {
 		ui.setLoader({ title: 'Requeueing Lead' });
 		const interval = setInterval(() => {
-			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isProgress) {
+			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isDistribute) {
 				ui.setLoader();
 				clearInterval(interval);
 			}
@@ -62,7 +62,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, isProgress }, i}
+			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, isDistribute, isCall }, i}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
@@ -87,23 +87,23 @@
 						<div class="flex flex-col justify-center">
 							{#if auth.isSupervisor()}
 								<button
-									class="btn btn-sm btn-warning mb-2 {isProgress && 'btn-disabled'} text-xs w-24"
+									class="btn btn-sm btn-warning mb-2 {(isDistribute || isCall) && 'btn-disabled'} text-xs min-w-24"
 									on:click={() => requeue(ProspectKey)}
 								>
-									{isProgress ? 'In Progress' : 'Requeue'}
+									{isDistribute ? 'In Progress' : isCall ? 'In Call' : 'Requeue'}
 								</button>
 							{/if}
 							<div class="flex justify-center items-center gap-2">
 								<button
-									class="btn btn-xs btn-primary h-fit py-1 animate-none flex-grow"
+									class="btn btn-xs btn-info h-fit py-0.5 animate-none"
 									on:click={() => (leadHistoryModelId = id)}
 								>
-									<Icon icon="mdi:history" width={18} />
+									<Icon icon="mdi:information-variant" width={20} />
 								</button>
 								<button
-									class="btn btn-xs btn-success {i !== 0 &&
-										!auth.isSupervisor() &&
-										'btn-disabled'} h-fit py-1 flex gap-2 animate-none flex-grow"
+									class="btn btn-xs btn-success
+                           {((i !== 0 && !auth.isSupervisor()) || isCall) && 'btn-disabled'}
+                           h-fit py-1 flex gap-2 animate-none flex-grow"
 									on:click={() => ui.navigate(`/view-lead?ProspectKey=${ProspectKey}`)}
 								>
 									<Icon icon="mdi:arrow-right" width={18} />

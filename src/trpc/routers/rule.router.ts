@@ -12,7 +12,7 @@ const getRuleById = async (id: string) =>
 				notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 				affiliates: { select: { CompanyKey: true } },
 				operators: { select: { UserId: true } },
-				dispositionNotes: true
+				dispositionRules: true
 			}
 		})
 		.catch(prismaErrorHandler);
@@ -69,7 +69,7 @@ export const ruleRouter = router({
 
 	saveRule: procedure
 		.input(ruleSchema)
-		.query(async ({ input: { id, operators, affiliates, notification, dispositionNotes, ...values } }) => {
+		.query(async ({ input: { id, operators, affiliates, notification, dispositionRules, ...values } }) => {
 			// Upsert Rule
 			const ruleId = (
 				await prisma.ldRule
@@ -140,11 +140,11 @@ export const ruleRouter = router({
 			} else await prisma.ldRuleNotification.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
 
 			// Upsert Disposition Notes
-			await prisma.ldRuleDispositionNote.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
-			await prisma.ldRuleDispositionNote
+			await prisma.ldRuleDispositionRule.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+			await prisma.ldRuleDispositionRule
 				.createMany({
 					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					data: dispositionNotes.map(({ id, ...values }) => ({ ruleId, ...values }))
+					data: dispositionRules.map(({ id, ...values }) => ({ ruleId, ...values }))
 				})
 				.catch(prismaErrorHandler);
 
