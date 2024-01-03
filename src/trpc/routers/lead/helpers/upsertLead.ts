@@ -9,9 +9,16 @@ type Args = {
 
 export const upsertLead = async (ProspectKey: string, status: string, args?: Args) => {
 	const lead = await prisma.ldLead
-		.update({
+		.upsert({
 			where: { ProspectKey },
-			data: { status, ...args }
+			create: {
+				ProspectKey,
+				status,
+				isDistribute: args?.isDistribute ?? false,
+				isCall: args?.isCall ?? false,
+				isCompleted: args?.isCompleted ?? false
+			},
+			update: { status, ...args }
 		})
 		.catch(prismaErrorHandler);
 

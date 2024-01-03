@@ -110,17 +110,18 @@ export const leadRouter = router({
 			if (!CompanyKey) throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 
 			// Call Customer
-			const outboundCallNumber = (
-				await prisma.ldRule
-					.findFirstOrThrow({
-						where: { affiliates: { some: { CompanyKey } } },
-						select: { outboundCallNumber: true }
-					})
-					.catch(prismaErrorHandler)
-			).outboundCallNumber;
+			const { isActive, outboundCallNumber } = await prisma.ldRule
+				.findFirstOrThrow({
+					where: { affiliates: { some: { CompanyKey } } },
+					select: { outboundCallNumber: true, isActive: true }
+				})
+				.catch(prismaErrorHandler);
 			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${UserId},${outboundCallNumber}`.catch(
 				prismaErrorHandler
 			);
+
+			if (!isActive)
+				throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 
 			// Update Lead Status & Create Lead Call
 			const Name = await getUserName(UserId);

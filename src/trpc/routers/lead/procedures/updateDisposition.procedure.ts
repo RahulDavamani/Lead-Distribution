@@ -30,7 +30,7 @@ export const updateDispositionProcedure = procedure
 		// Find Rule for Company
 		const rule = await prisma.ldRule
 			.findFirst({
-				where: { affiliates: { some: { CompanyKey } }, isActive: true },
+				where: { affiliates: { some: { CompanyKey } } },
 				include: {
 					notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 					operators: true,
@@ -39,6 +39,8 @@ export const updateDispositionProcedure = procedure
 			})
 			.catch(prismaErrorHandler);
 		if (!rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
+		if (!rule.isActive)
+			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 
 		// Update Disposition
 		const dispositionCount = await prisma.ldLeadDisposition

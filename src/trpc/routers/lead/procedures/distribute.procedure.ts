@@ -57,17 +57,7 @@ export const distributeProcedure = procedure
 		}
 
 		// Create Lead
-		const lead = await prisma.ldLead
-			.create({
-				data: {
-					ProspectKey,
-					status: 'LEAD QUEUED',
-					isDistribute: true,
-					isCall: false,
-					isCompleted: false
-				}
-			})
-			.catch(prismaErrorHandler);
+		const lead = await upsertLead(ProspectKey, 'LEAD QUEUED', { isDistribute: true });
 
 		// Update GHL SMS Template
 		await updateGHLSmsTemplate(ProspectKey, rule.smsTemplate);
@@ -107,12 +97,17 @@ export const redistributeProcedure = procedure
 		const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
 		if (lead.isCompleted || lead.isDistribute || lead.isCall)
 			throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
+
+		// Create Lead Requeue
 		const UserId = (await getUserId(UserKey)) as number;
+		await prisma.ldLeadRequeue.create({ data: { leadId: lead.id, UserId } }).catch(prismaErrorHandler);
+		const Name = await getUserName(UserId);
+		await upsertLead(ProspectKey, `LEAD REQUEUED BY "${UserId}: ${Name}"`, { isDistribute: true });
 
 		// Get CompanyKey
 		const CompanyKey = await getCompanyKey(ProspectKey);
 		if (!CompanyKey) {
-			await upsertLead(ProspectKey, 'AFFILIATE NOT FOUND');
+			await upsertLead(ProspectKey, 'AFFILIATE NOT FOUND', { isDistribute: false });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 		}
 
@@ -126,18 +121,13 @@ export const redistributeProcedure = procedure
 
 		// Rule Not Found / Inactive
 		if (!rule) {
-			await upsertLead(ProspectKey, 'RULE NOT FOUND');
+			await upsertLead(ProspectKey, 'RULE NOT FOUND', { isDistribute: false });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 		if (!rule.isActive) {
-			await upsertLead(ProspectKey, 'RULE IS INACTIVE');
+			await upsertLead(ProspectKey, 'RULE IS INACTIVE', { isDistribute: false });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
-
-		// Create Lead Requeue
-		await prisma.ldLeadRequeue.create({ data: { leadId: lead.id, UserId } }).catch(prismaErrorHandler);
-		const Name = await getUserName(UserId);
-		await upsertLead(ProspectKey, `LEAD REQUEUED BY "${UserId}: ${Name}"`, { isDistribute: true });
 
 		// Send Notification to Operators
 		await sendNotifications(ProspectKey, lead.id, rule);
