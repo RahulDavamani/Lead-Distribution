@@ -40,26 +40,35 @@ export const updateDispositionProcedure = procedure
 			.catch(prismaErrorHandler);
 		if (!rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 
-		// Find Disposition
+		// Update Disposition
 		const dispositionCount = await prisma.ldLeadDisposition
 			.count({ where: { leadId: lead.id } })
 			.catch(prismaErrorHandler);
+		await upsertLead(ProspectKey, `Call Disposition #${dispositionCount + 1}: ${Disposition}`, { isCall: false });
+
+		// Find Disposition Rule
 		const dispositionRule = rule.dispositionRules.find(({ num }) => num === dispositionCount + 1);
-		if (!dispositionRule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Disposition Rule not found' });
-		await upsertLead(ProspectKey, `Call Disposition #${dispositionRule.num}: ${Disposition}`, { isCall: false });
 
 		// Create Lead Disposition
-		const message = await generateNotificationMessage(ProspectKey, dispositionRule.smsTemplate);
+		const message = await generateNotificationMessage(ProspectKey, dispositionRule?.smsTemplate ?? '');
 		await prisma.ldLeadDisposition.create({
 			data: {
 				leadId: lead.id,
-				dispositionRuleId: dispositionRule.id,
+				dispositionRuleId: dispositionRule?.id,
 				disposition: Disposition,
-				message: dispositionRule.dispositions.includes(Disposition)
-					? message
-					: 'Message not sent (Dispositions did not match)'
+				message: dispositionRule
+					? dispositionRule.dispositions.includes(Disposition)
+						? message
+						: 'Message not sent (Lead Completed)'
+					: 'Message not sent (Lead Closed)'
 			}
 		});
+
+		// Close Lead if no Disposition Rule
+		if (!dispositionRule) {
+			await upsertLead(ProspectKey, 'LEAD CLOSED', { isCall: false, isDistribute: false, isCompleted: true });
+			return;
+		}
 
 		// Check if Disposition matches
 		if (!dispositionRule.dispositions.includes(Disposition)) {
@@ -72,7 +81,12 @@ export const updateDispositionProcedure = procedure
 					})
 					.catch(prismaErrorHandler)
 			)[0];
-			await upsertLead(ProspectKey, 'LEAD COMPLETED', { isCompleted: true, UserId });
+			await upsertLead(ProspectKey, 'LEAD COMPLETED', {
+				isCall: false,
+				isDistribute: false,
+				isCompleted: true,
+				UserId
+			});
 			return;
 		}
 
@@ -80,13 +94,12 @@ export const updateDispositionProcedure = procedure
 		await updateGHLSmsTemplate(ProspectKey, dispositionRule.smsTemplate);
 
 		// Schedule Requeue
-		const scheduledTime = new Date(Date.now() + dispositionRule.requeueTime);
+		const scheduledTime = new Date(Date.now() + dispositionRule.requeueTime * 1000);
 		scheduleJob(scheduledTime, async () => {
 			// Check if Lead is already in Queue
 			const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
 			if (lead.isCompleted || lead.isDistribute || lead.isCall)
-				throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
-			if (!lead.isCall) throw new TRPCError({ code: 'CONFLICT', message: 'Lead is not in Call' });
+				throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress or In Call' });
 
 			// Requeue Lead
 			await prisma.ldLeadRequeue

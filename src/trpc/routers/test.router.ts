@@ -20,7 +20,7 @@ export const testRouter = router({
 		// const result = await prisma.$queryRaw`select Email from VonageUsers where UserId = 1013 and Active=1`;
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
-		await prisma.ldLead.delete({ where: { ProspectKey: 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149' } });
+		await prisma.ldLead.delete({ where: { ProspectKey: '91E5EBB8-B82C-43FE-94A3-ED4C0F350EB6' } });
 		// console.log(await prisma.ldLeadToken.findMany());
 		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]

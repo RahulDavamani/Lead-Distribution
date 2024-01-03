@@ -76,6 +76,10 @@ export const distributeProcedure = procedure
 		await upsertLead(ProspectKey, 'WAITING FOR CUSTOMER REPLY');
 		await waitFor(rule.waitTimeForCustomerResponse ?? 0);
 
+		// Check if Lead is already completed
+		let isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
+		if (isLeadCompleted) return;
+
 		// Get GHL Status
 		const ghlStatus = await getGHLStatus(ProspectKey);
 		await upsertLead(ProspectKey, `GHL STATUS: ${ghlStatus}`);
@@ -87,7 +91,7 @@ export const distributeProcedure = procedure
 		}
 
 		// Check if Lead is already completed
-		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
+		isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
 		if (isLeadCompleted) return;
 
 		// Else Send Notification to Operators
