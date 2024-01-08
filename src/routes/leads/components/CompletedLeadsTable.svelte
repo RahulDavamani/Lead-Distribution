@@ -5,6 +5,7 @@
 	import { ui } from '../../../stores/ui.store';
 	import { onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
+	import { getTimeElapsedText } from '$lib/client/DateTime';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
@@ -14,20 +15,6 @@
 	onMount(() => {
 		new DataTable('#completedLeadsTable');
 	});
-
-	const convertSecondsToHMS = (seconds: number): string => {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		let formattedTime = '';
-		if (hours > 0) formattedTime += `${hours} hrs`;
-		if (minutes > 0) formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${minutes} mins`;
-		if (remainingSeconds > 0 || formattedTime === '')
-			formattedTime += `${formattedTime.length > 0 ? ', ' : ''}${remainingSeconds} secs`;
-
-		return formattedTime;
-	};
 </script>
 
 <div class="overflow-x-auto">
@@ -68,9 +55,7 @@
 					<td>{ruleName}</td>
 					<td>{operatorName}</td>
 					<td>{status}</td>
-					<td class="text-center">
-						{convertSecondsToHMS(Math.floor((updatedAt.getTime() - createdAt.getTime()) / 1000))}
-					</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
 					<td>
 						<div class="flex justify-center items-center">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadHistoryModelId = id)}>

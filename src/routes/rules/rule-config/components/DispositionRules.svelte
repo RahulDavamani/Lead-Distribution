@@ -4,9 +4,11 @@
 	import FormControl from '../../../components/FormControl.svelte';
 	import { tick } from 'svelte';
 	import DynamicVariables from './DynamicVariables.svelte';
+	import { timeToText } from '$lib/client/DateTime';
 
 	$: ({
-		rule: { dispositionRules }
+		rule: { dispositionRules },
+		zodErrors
 	} = $ruleConfig);
 
 	const addDispositionNote = () => {
@@ -55,31 +57,39 @@
 				<div class="font-semibold">Call Disposition #{num}</div>
 			</div>
 			<div class="flex gap-6">
-				<FormControl label="Dispositions" classes="flex-grow">
-					<input
-						type="text"
+				<FormControl label="Dispositions" classes="w-full" error={zodErrors?.dispositionRules?.[i]?.dispositions}>
+					<textarea
 						placeholder="Type here"
-						class="input input-sm input-bordered w-full join-item"
+						class="textarea textarea-bordered join-item"
 						bind:value={$ruleConfig.rule.dispositionRules[i].dispositions}
 					/>
 				</FormControl>
-				<FormControl label="SMS Template" classes="flex-grow">
-					<input
-						type="text"
+				<FormControl
+					label="SMS Template"
+					classes="w-full"
+					bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
+					error={zodErrors?.dispositionRules?.[i]?.smsTemplate}
+				>
+					<textarea
 						placeholder="Type here"
-						class="input input-sm input-bordered w-full join-item"
+						class="textarea textarea-bordered join-item"
 						bind:value={$ruleConfig.rule.dispositionRules[i].smsTemplate}
 					/>
 				</FormControl>
-				<FormControl label="Requeue Time" classes="flex-grow">
+				<FormControl
+					label="Requeue Time"
+					classes="max-w-xs w-full"
+					bottomLabel={`Time: ${timeToText($ruleConfig.rule.dispositionRules[i].requeueTime)}`}
+					error={zodErrors?.dispositionRules?.[i]?.requeueTime}
+				>
 					<div class="join">
 						<input
 							type="number"
 							placeholder="Type here"
-							class="input input-sm input-bordered w-full join-item"
+							class="input input-bordered w-full join-item"
 							bind:value={$ruleConfig.rule.dispositionRules[i].requeueTime}
 						/>
-						<div class="btn btn-sm join-item no-animation cursor-default">sec</div>
+						<div class="btn join-item no-animation cursor-default">sec</div>
 					</div>
 				</FormControl>
 			</div>

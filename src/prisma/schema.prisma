@@ -13064,6 +13064,7 @@ model VonageCallMaster {
    IsRecordingAvailable Boolean?
    RecordingCheckedOn   DateTime? @db.DateTime
    RecordingUploadedOn  DateTime? @db.DateTime
+   Disposition          String?   @db.NVarChar(255)
 }
 
 model LdRule {
@@ -13136,8 +13137,6 @@ model LdRuleNotificationAttempt {
    notification   LdRuleNotification @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    notificationId String
    leadAttempts   LdLeadAttempts[]
-
-   @@unique([notificationId, num])
 }
 
 model LdRuleDispositionRule {
@@ -13154,8 +13153,6 @@ model LdRuleDispositionRule {
    rule            LdRule              @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    leadDisposition ldLeadDisposition[]
    leadRequeue     LdLeadRequeue[]
-
-   @@unique([ruleId, num])
 }
 
 model LdLead {

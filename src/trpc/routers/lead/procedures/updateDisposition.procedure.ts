@@ -46,7 +46,7 @@ export const updateDispositionProcedure = procedure
 		const dispositionCount = await prisma.ldLeadDisposition
 			.count({ where: { leadId: lead.id } })
 			.catch(prismaErrorHandler);
-		await upsertLead(ProspectKey, `Call Disposition #${dispositionCount + 1}: ${Disposition}`, { isCall: false });
+		await upsertLead(ProspectKey, `CALL DISPOSITION #${dispositionCount + 1}: ${Disposition}`, { isCall: false });
 
 		// Find Disposition Rule
 		const dispositionRule = rule.dispositionRules.find(({ num }) => num === dispositionCount + 1);

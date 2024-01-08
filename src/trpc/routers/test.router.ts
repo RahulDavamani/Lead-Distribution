@@ -2,6 +2,10 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const UserKey = '5a36aa41-73e1-44f7-b71b-f5bceeaff626';
+		// const result =
+		// 	await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`;
+		// console.log(result);
 		// const prospect = await prisma.leadProspect.findMany({ where: { Email: 'test_dev@gmail.com' } });
 		// console.log(prospect);
 		// const ProspectKey = 'FF9BC1E9-F0DD-4210-8FD4-16D4382FE149';

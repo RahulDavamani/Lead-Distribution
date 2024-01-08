@@ -5,9 +5,11 @@
 	import { onMount } from 'svelte';
 	import SelectSupervisor from './SelectSupervisor.svelte';
 	import DynamicVariables from './DynamicVariables.svelte';
+	import { timeToText } from '$lib/client/DateTime';
 
 	$: ({
-		rule: { notification }
+		rule: { notification },
+		zodErrors
 	} = $ruleConfig);
 
 	let escalateToSupervisor = false;
@@ -124,23 +126,32 @@
 						<div class="font-semibold">Attempt #{num}</div>
 					</div>
 					<div class="flex gap-10">
-						<FormControl label="Text Template" classes="flex-grow">
-							<input
-								type="text"
+						<FormControl
+							label="Notification Message Template"
+							classes="w-full"
+							bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
+							error={zodErrors?.notification?.notificationAttempts?.[i]?.textTemplate}
+						>
+							<textarea
 								placeholder="Type here"
-								class="input input-sm input-bordered w-full join-item"
+								class="textarea textarea-sm textarea-bordered w-full join-item"
 								bind:value={$ruleConfig.rule.notification.notificationAttempts[i].textTemplate}
 							/>
 						</FormControl>
-						<FormControl label="Wait Time" classes="flex-grow">
+						<FormControl
+							label="Wait Time"
+							classes="max-w-xs w-full"
+							bottomLabel={`Time: ${timeToText($ruleConfig.rule.notification.notificationAttempts[i].waitTime)}`}
+							error={zodErrors?.notification?.notificationAttempts?.[i]?.waitTime}
+						>
 							<div class="join">
 								<input
 									type="number"
 									placeholder="Type here"
-									class="input input-sm input-bordered w-full join-item"
+									class="input input-bordered w-full join-item"
 									bind:value={$ruleConfig.rule.notification.notificationAttempts[i].waitTime}
 								/>
-								<div class="btn btn-sm join-item no-animation cursor-default">sec</div>
+								<div class="btn join-item no-animation cursor-default">sec</div>
 							</div>
 						</FormControl>
 					</div>
@@ -168,11 +179,8 @@
 
 		{#if escalateToSupervisor}
 			<div class="flex mt-2">
-				<FormControl classes="w-full px-2" label="Supervisor">
-					<button
-						class="input input-bordered input-sm cursor-pointer text-left"
-						on:click={() => (showSupervisorSelect = true)}
-					>
+				<FormControl classes="w-full max-w-lg px-2" label="Supervisor">
+					<button class="input input-bordered cursor-pointer text-left" on:click={() => (showSupervisorSelect = true)}>
 						{#if supervisor}
 							<span class="font-mono">{$ruleConfig.rule.notification.supervisorUserId}:</span>
 							<span class="font-semibold">{supervisor.Name}</span>
@@ -182,12 +190,16 @@
 						{/if}
 					</button>
 				</FormControl>
-				<FormControl classes="w-full px-2" label="Supervisor Text Template">
-					<input
-						type="text"
+				<FormControl
+					classes="w-full px-2"
+					label="Supervisor Text Template"
+					bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
+				>
+					<textarea
 						placeholder="Type here"
-						class="input input-bordered input-sm"
+						class="textarea textarea-bordered"
 						bind:value={$ruleConfig.rule.notification.supervisorTextTemplate}
+						rows={1}
 					/>
 				</FormControl>
 			</div>

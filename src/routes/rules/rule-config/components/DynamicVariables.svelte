@@ -1,6 +1,18 @@
 <script>
 	import { copyToClipboard } from '$lib/client/copyToClipboard';
 	import Icon from '@iconify/svelte';
+
+	const dynamicVariables = [
+		'CustomerFirstName',
+		'CustomerLastName',
+		'Email',
+		'Address',
+		'ZipCode',
+		'RuleName',
+		'OutboundCallNumber',
+		'LeadCreatedOn',
+		'LeadTimeElapsed'
+	];
 </script>
 
 <div class="dropdown dropdown-top dropdown-end">
@@ -10,54 +22,16 @@
 		<div class="overflow-x-auto">
 			<table class="table table-xs border-b">
 				<tbody>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							CustomerFirstName
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('CustomerFirstName')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							CustomerLastName
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('CustomerLastName')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							Email
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('Email')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							Address
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('Address')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							ZipCode
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('ZipCode')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td class="text-sm flex justify-between items-center">
-							OutboundCallNumber
-							<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard('OutboundCallNumber')}>
-								<Icon icon="mdi:content-copy" width={16} />
-							</button>
-						</td>
-					</tr>
+					{#each dynamicVariables as dv}
+						<tr>
+							<td class="text-sm flex justify-between items-center">
+								{dv}
+								<button class="btn btn-xs btn-ghost text-primary" on:click={() => copyToClipboard(`{{${dv}}}`)}>
+									<Icon icon="mdi:content-copy" width={16} />
+								</button>
+							</td>
+						</tr>
+					{/each}
 				</tbody>
 			</table>
 		</div>

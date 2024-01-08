@@ -28,12 +28,11 @@ export const triggerNotification = async (
 	const message = await generateNotificationMessage(ProspectKey, textTemplate);
 
 	// Generate Token
-	const { id: token } = await prisma.ldLeadToken
-		.create({
-			data: { ProspectKey, UserKey },
-			select: { id: true }
-		})
-		.catch(prismaErrorHandler);
+	const result =
+		(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
+			{ TokenKey: string }
+		];
+	const token = result[0].TokenKey;
 
 	// Trigger Notification
 	await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]
@@ -41,7 +40,7 @@ export const triggerNotification = async (
 	   @Message = ${message},
 	   @UserKeys = ${UserKey},
 	   @ExpireInSeconds = 600,
-	   @HrefURL = ${`${env.BASE_URL}/view-lead?token=${token}`},
+	   @HrefURL = ${`${env.BASE_URL}/leads?BPT=${token}`},
 	   @ActionBtnTitle = 'View Lead';`.catch(prismaErrorHandler);
 
 	// Create Lead Attempt
