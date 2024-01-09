@@ -110,11 +110,14 @@ export const sendNotifications = async (
 		if (isLeadCompleted) break;
 	}
 
-	if (noOperatorFound) upsertLead(ProspectKey, `NO OPERATOR FOUND`);
+	const supervisorCount = rule.supervisors.filter(({ isEscalate }) => isEscalate).length;
+
+	if (noOperatorFound)
+		upsertLead(ProspectKey, `NO OPERATOR FOUND`, supervisorCount === 0 ? { isDistribute: false } : undefined);
 	else {
 		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
 		if (isLeadCompleted) return;
-		upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
+		upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`, supervisorCount === 0 ? { isDistribute: false } : undefined);
 	}
 
 	// Send Notification to Supervisor

@@ -46,7 +46,8 @@ export const distributeProcedure = procedure
 					notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 					operators: true,
 					supervisors: true
-				}
+				},
+				orderBy: { createdAt: 'desc' }
 			})
 			.catch(prismaErrorHandler);
 

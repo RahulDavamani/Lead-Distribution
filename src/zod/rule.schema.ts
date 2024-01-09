@@ -47,7 +47,13 @@ export const ruleSchema = z.object({
 			smsTemplate: z.string(),
 			requeueTime: z.number()
 		})
-	)
+	),
+
+	_count: z
+		.object({
+			leads: z.number()
+		})
+		.optional()
 });
 
 export type Rule = z.infer<typeof ruleSchema>;

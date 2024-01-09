@@ -32,7 +32,8 @@
 			<!-- Save & Delete Buttons -->
 			<div class="space-x-2">
 				<button
-					class="btn btn-sm btn-error {$ruleConfig.rule.id === null && 'btn-disabled'}"
+					class="btn btn-sm btn-error {$ruleConfig.rule.id === null ||
+						($ruleConfig.rule._count.leads !== 0 && 'btn-disabled')}"
 					on:click={ruleConfig.deleteRule}
 				>
 					<Icon icon="mdi:delete-forever" width={22} />
