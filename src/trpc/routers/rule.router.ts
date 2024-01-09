@@ -13,8 +13,7 @@ export const getRuleById = async (id: string) =>
 				affiliates: { select: { CompanyKey: true } },
 				operators: { select: { UserId: true } },
 				supervisors: true,
-				dispositionRules: { orderBy: { num: 'asc' } },
-				_count: { select: { leads: true } }
+				dispositionRules: { orderBy: { num: 'asc' } }
 			}
 		})
 		.catch(prismaErrorHandler);
