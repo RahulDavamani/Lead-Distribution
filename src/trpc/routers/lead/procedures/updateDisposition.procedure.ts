@@ -18,7 +18,12 @@ export const updateDispositionProcedure = procedure
 	)
 	.query(async ({ input: { ProspectKey, Disposition } }) => {
 		// Check if Lead is already in Queue
-		const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+		const lead = await prisma.ldLead
+			.findFirstOrThrow({
+				where: { ProspectKey },
+				include: { rule: { include: { dispositionRules: true } } }
+			})
+			.catch(prismaErrorHandler);
 		if (lead.isCompleted || lead.isDistribute)
 			throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
 		if (!lead.isCall) throw new TRPCError({ code: 'CONFLICT', message: 'Lead is not in Call' });
@@ -27,19 +32,8 @@ export const updateDispositionProcedure = procedure
 		const CompanyKey = await getCompanyKey(ProspectKey);
 		if (!CompanyKey) throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 
-		// Find Rule for Company
-		const rule = await prisma.ldRule
-			.findFirst({
-				where: { affiliates: { some: { CompanyKey } } },
-				include: {
-					notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
-					operators: true,
-					dispositionRules: true
-				}
-			})
-			.catch(prismaErrorHandler);
-		if (!rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
-		if (!rule.isActive)
+		if (!lead.rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
+		if (!lead.rule.isActive)
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 
 		// Update Disposition
@@ -49,7 +43,7 @@ export const updateDispositionProcedure = procedure
 		await upsertLead(ProspectKey, `CALL DISPOSITION #${dispositionCount + 1}: ${Disposition}`, { isCall: false });
 
 		// Find Disposition Rule
-		const dispositionRule = rule.dispositionRules.find(({ num }) => num === dispositionCount + 1);
+		const dispositionRule = lead.rule.dispositionRules.find(({ num }) => num === dispositionCount + 1);
 
 		// Create Lead Disposition
 		const message = await generateNotificationMessage(ProspectKey, dispositionRule?.smsTemplate ?? '');
@@ -99,9 +93,24 @@ export const updateDispositionProcedure = procedure
 		const scheduledTime = new Date(Date.now() + dispositionRule.requeueTime * 1000);
 		scheduleJob(scheduledTime, async () => {
 			// Check if Lead is already in Queue
-			const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+			const lead = await prisma.ldLead
+				.findFirstOrThrow({
+					where: { ProspectKey },
+					include: {
+						rule: {
+							include: {
+								notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
+								operators: true,
+								supervisors: true
+							}
+						}
+					}
+				})
+				.catch(prismaErrorHandler);
+
+			if (!lead || !lead.rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead or Rule not found' });
 			if (lead.isCompleted || lead.isDistribute || lead.isCall)
-				throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress or In Call' });
+				throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
 
 			// Requeue Lead
 			await prisma.ldLeadRequeue
@@ -110,7 +119,7 @@ export const updateDispositionProcedure = procedure
 			await upsertLead(ProspectKey, `LEAD REQUEUED BY CALL DISPOSITION #${dispositionRule.num}`, {
 				isDistribute: true
 			});
-			await sendNotifications(ProspectKey, lead.id, rule);
+			await sendNotifications(ProspectKey, lead.id, lead.rule);
 		});
 
 		// Update Lead Status

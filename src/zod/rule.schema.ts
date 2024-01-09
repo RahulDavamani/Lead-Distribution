@@ -25,12 +25,19 @@ export const ruleSchema = z.object({
 					textTemplate: z.string(),
 					waitTime: z.number()
 				})
-			),
-
-			supervisorUserId: z.number().nullable(),
-			supervisorTextTemplate: z.string()
+			)
 		})
 		.nullable(),
+
+	supervisors: z.array(
+		z.object({
+			id: z.string().nullable(),
+			UserId: z.number(),
+			textTemplate: z.string(),
+			isEscalate: z.boolean(),
+			isRequeue: z.boolean()
+		})
+	),
 
 	dispositionRules: z.array(
 		z.object({

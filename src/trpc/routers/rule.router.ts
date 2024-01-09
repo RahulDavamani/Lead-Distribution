@@ -4,7 +4,7 @@ import { procedure, router } from '../server';
 import { prisma } from '../../prisma/prisma';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler';
 
-const getRuleById = async (id: string) =>
+export const getRuleById = async (id: string) =>
 	await prisma.ldRule
 		.findUnique({
 			where: { id },
@@ -12,52 +12,23 @@ const getRuleById = async (id: string) =>
 				notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 				affiliates: { select: { CompanyKey: true } },
 				operators: { select: { UserId: true } },
-				dispositionRules: true
+				supervisors: true,
+				dispositionRules: { orderBy: { num: 'asc' } }
 			}
 		})
 		.catch(prismaErrorHandler);
 
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
-		const ldRules = await prisma.ldRule
+		const rules = await prisma.ldRule
 			.findMany({
 				include: {
 					_count: true,
 					notification: { select: { id: true, _count: true } },
-					affiliates: { select: { CompanyKey: true } },
-					operators: { select: { UserId: true } }
+					leads: { select: { isCompleted: true } }
 				}
 			})
 			.catch(prismaErrorHandler);
-
-		const rules = [];
-		for (const rule of ldRules) {
-			const CompanyKeys = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
-			const ProspectKeys: string[] = [];
-			for (const CompanyKey of CompanyKeys) {
-				const keys = (await prisma.leadProspect.findMany({ where: { CompanyKey } })).map(
-					({ ProspectKey }) => ProspectKey
-				);
-				ProspectKeys.push(...keys);
-			}
-
-			const allLeads = await prisma.ldLead
-				.findMany({ where: { ProspectKey: { in: ProspectKeys } }, select: { ProspectKey: true, isCompleted: true } })
-				.catch(prismaErrorHandler);
-			const affiliates = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
-			const leads = allLeads.filter(async ({ ProspectKey }) => {
-				const prospect = await prisma.leadProspect
-					.findFirstOrThrow({ where: { ProspectKey } })
-					.catch(prismaErrorHandler);
-				return affiliates.includes(prospect.CompanyKey ?? '');
-			});
-
-			rules.push({
-				...rule,
-				queueLeadsCount: leads.filter((l) => !l.isCompleted).length,
-				completedLeadsCount: leads.filter((l) => l.isCompleted).length
-			});
-		}
 
 		return { rules };
 	}),
@@ -69,7 +40,7 @@ export const ruleRouter = router({
 
 	saveRule: procedure
 		.input(ruleSchema)
-		.query(async ({ input: { id, operators, affiliates, notification, dispositionRules, ...values } }) => {
+		.query(async ({ input: { id, operators, affiliates, notification, supervisors, dispositionRules, ...values } }) => {
 			// Upsert Rule
 			const ruleId = (
 				await prisma.ldRule
@@ -83,19 +54,23 @@ export const ruleRouter = router({
 			).id;
 
 			// Upsert Operators and Affiliates
-			await prisma.ldRule_Operator.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
-			await prisma.ldRule_Affiliate.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+			await Promise.all([
+				await prisma.ldRuleOperator.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler),
+				await prisma.ldRuleAffiliate.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler)
+			]);
 
-			await prisma.ldRule_Operator
-				.createMany({
-					data: operators.map(({ UserId }) => ({ ruleId, UserId }))
-				})
-				.catch(prismaErrorHandler);
-			await prisma.ldRule_Affiliate
-				.createMany({
-					data: affiliates.map(({ CompanyKey }) => ({ ruleId, CompanyKey }))
-				})
-				.catch(prismaErrorHandler);
+			await Promise.all([
+				await prisma.ldRuleOperator
+					.createMany({
+						data: operators.map(({ UserId }) => ({ ruleId, UserId }))
+					})
+					.catch(prismaErrorHandler),
+				await prisma.ldRuleAffiliate
+					.createMany({
+						data: affiliates.map(({ CompanyKey }) => ({ ruleId, CompanyKey }))
+					})
+					.catch(prismaErrorHandler)
+			]);
 
 			// Upsert Notification
 			if (notification) {
@@ -130,23 +105,61 @@ export const ruleRouter = router({
 					.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
 					.catch(prismaErrorHandler);
 
-				for (const { id, ...values } of notificationAttempts) {
-					await prisma.ldRuleNotificationAttempt.upsert({
+				await Promise.all(
+					notificationAttempts.map(async ({ id, ...values }) => {
+						await prisma.ldRuleNotificationAttempt.upsert({
+							where: { id: id ?? '' },
+							create: { notificationId, ...values },
+							update: { ...values }
+						});
+					})
+				);
+			} else await prisma.ldRuleNotification.delete({ where: { ruleId } }).catch(prismaErrorHandler);
+
+			// Upsert Supervisors
+			const existingSupervisors = await prisma.ldRuleSupervisor.findMany({
+				where: { ruleId },
+				select: { id: true }
+			});
+			const deleteSupervisorsId = existingSupervisors
+				.filter((es) => !supervisors.find((s) => s.id === es.id))
+				.map(({ id }) => id);
+
+			await prisma.ldRuleSupervisor
+				.deleteMany({ where: { id: { in: deleteSupervisorsId } } })
+				.catch(prismaErrorHandler);
+			await Promise.all(
+				supervisors.map(async ({ id, ...values }) => {
+					await prisma.ldRuleSupervisor.upsert({
 						where: { id: id ?? '' },
-						create: { notificationId, ...values },
+						create: { ruleId, ...values },
 						update: { ...values }
 					});
-				}
-			} else await prisma.ldRuleNotification.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+				})
+			);
 
 			// Upsert Disposition Notes
-			await prisma.ldRuleDispositionRule.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler);
+			const existingDispositionRules = await prisma.ldRuleDispositionRule.findMany({
+				where: { ruleId },
+				select: { id: true }
+			});
+			const deleteDispositionRulesId = existingDispositionRules
+				.filter((edr) => !dispositionRules.find((dr) => dr.id === edr.id))
+				.map(({ id }) => id);
+
 			await prisma.ldRuleDispositionRule
-				.createMany({
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					data: dispositionRules.map(({ id, ...values }) => ({ ruleId, ...values }))
-				})
+				.deleteMany({ where: { id: { in: deleteDispositionRulesId } } })
 				.catch(prismaErrorHandler);
+
+			await Promise.all(
+				dispositionRules.map(async ({ id, ...values }) => {
+					await prisma.ldRuleDispositionRule.upsert({
+						where: { id: id ?? '' },
+						create: { ruleId, ...values },
+						update: { ...values }
+					});
+				})
+			);
 
 			const rule = await getRuleById(ruleId);
 			return { rule };

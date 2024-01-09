@@ -1,5 +1,11 @@
 import { waitFor } from '$lib/waitFor';
-import type { LdRule, LdRuleNotification, LdRuleNotificationAttempt, LdRule_Operator } from '@prisma/client';
+import type {
+	LdRule,
+	LdRuleNotification,
+	LdRuleNotificationAttempt,
+	LdRuleOperator,
+	LdRuleSupervisor
+} from '@prisma/client';
 import { checkLeadDistributeCompleted } from '../procedures/distribute.procedure';
 import { upsertLead } from './upsertLead';
 import type { Rule } from '../../../../zod/rule.schema';
@@ -68,11 +74,12 @@ export const sendNotifications = async (
 	leadId: string,
 	rule: LdRule & {
 		notification: (LdRuleNotification & { notificationAttempts: LdRuleNotificationAttempt[] }) | null;
-		operators: LdRule_Operator[];
+		operators: LdRuleOperator[];
+		supervisors: LdRuleSupervisor[];
 	}
 ) => {
 	if (!rule.notification) return;
-	const { notificationAttempts, supervisorUserId, supervisorTextTemplate } = rule.notification;
+	const { notificationAttempts } = rule.notification;
 	const availableOperators = await getAvailableOperators();
 
 	const completedAttempts: { attemptId: string; UserId: number }[] = [];
@@ -111,5 +118,10 @@ export const sendNotifications = async (
 	}
 
 	// Send Notification to Supervisor
-	if (supervisorUserId) await triggerNotification(ProspectKey, leadId, supervisorUserId, supervisorTextTemplate);
+	await Promise.all(
+		rule.supervisors.map(async ({ UserId, textTemplate, isEscalate }) => {
+			if (!isEscalate) return;
+			await triggerNotification(ProspectKey, leadId, UserId, textTemplate);
+		})
+	);
 };

@@ -13,7 +13,11 @@
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
 	export let queuedLeads: QueuedLead[];
-	export let leadHistoryModelId: string | undefined;
+	export let leadDetailsModelId: string | undefined;
+	$: ({
+		user: { UserKey },
+		roleType
+	} = $auth);
 
 	onMount(() => {
 		if (queuedLeads.length > 0) new DataTable('#queuedLeadsTable');
@@ -27,7 +31,7 @@
 				clearInterval(interval);
 			}
 		}, 500);
-		if ($auth.user?.UserKey) await trpc($page).lead.redistribute.query({ ProspectKey, UserKey: $auth.user.UserKey });
+		await trpc($page).lead.redistribute.query({ ProspectKey, UserKey });
 	};
 
 	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isCall);
@@ -51,43 +55,56 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, companyName, customerDetails, ruleName, status, isDistribute, isCall }, i}
-				{@const disableViewLead = (i !== agentFirstLead && !auth.isSupervisor()) || isCall}
+			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, CustomerName, CustomerAddress, CompanyName, status, rule, isDistribute, isCall, latestCallUserKey }, i}
+				{@const disableViewLead =
+					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUserKey !== UserKey) ||
+					(isCall ? latestCallUserKey !== UserKey : false)}
+				{@const canRequeue = roleType === 'ADMIN' || (roleType === 'SUPERVISOR' && rule?.supervisors[0].isRequeue)}
+				{@const statusBtnDisable = roleType === 'AGENT' ? isCall : isDistribute || isCall ? true : !canRequeue}
+				{@const statusBtnText =
+					roleType === 'AGENT'
+						? isCall
+							? 'In Call'
+							: 'Available'
+						: isDistribute
+						  ? 'In Progress'
+						  : isCall
+						    ? 'In Call'
+						    : 'Requeue'}
+				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
+
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
 						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
-						on:click={() => {
-							if (VonageGUID) ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`);
-						}}
+						on:click={() => VonageGUID && ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`)}
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
-					<td>{customerDetails.Name}</td>
-					<td>{customerDetails.Address}</td>
-					<td>{companyName}</td>
-					<td>{ruleName}</td>
+					<td>{CustomerName ?? 'N/A'}</td>
+					<td>{CustomerAddress ?? 'N/A'}</td>
+					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{rule?.name ?? 'N/A'}</td>
 					<td>{status}</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
 					<td>
 						<div class="flex flex-col justify-center">
 							<!-- Status Btn -->
-							{#if auth.isSupervisor()}
-								<button
-									class="btn btn-sm btn-warning mb-2 {(isDistribute || isCall) && 'btn-disabled'} text-xs min-w-24"
-									on:click={() => requeue(ProspectKey)}
-								>
-									{isDistribute ? 'In Progress' : isCall ? 'In Call' : 'Requeue'}
-								</button>
-							{/if}
+							<button
+								class="btn btn-sm {roleType === 'AGENT' ? 'btn-success' : 'btn-warning'} mb-2
+                        {statusBtnDisable && 'btn-disabled'} text-xs min-w-24"
+								on:click={statusBtnClick}
+							>
+								{statusBtnText}
+							</button>
 
 							<div class="flex justify-center items-center gap-2">
 								<!-- Lead Details Btn -->
 								<button
 									class="btn btn-xs btn-info h-fit py-0.5 animate-none"
-									on:click={() => (leadHistoryModelId = id)}
+									on:click={() => (leadDetailsModelId = id)}
 								>
 									<Icon icon="mdi:information-variant" width={20} />
 								</button>

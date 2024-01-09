@@ -3,7 +3,7 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const generateNotificationMessage = async (ProspectKey: string, textTemplate: string) => {
 	// Get Prospect
-	const { CompanyKey, CustomerFirstName, CustomerLastName, Email, Address, ZipCode } = await prisma.leadProspect
+	const { CustomerFirstName, CustomerLastName, Email, Address, ZipCode } = await prisma.leadProspect
 		.findFirstOrThrow({
 			where: { ProspectKey },
 			select: {
@@ -18,16 +18,12 @@ export const generateNotificationMessage = async (ProspectKey: string, textTempl
 		.catch(prismaErrorHandler);
 
 	// Get Rule
-	const { name, outboundCallNumber } = await prisma.ldRule.findFirstOrThrow({
-		where: { affiliates: { some: { CompanyKey: CompanyKey ?? '' } } },
-		select: { name: true, outboundCallNumber: true }
-	});
 
 	// Get Lead
-	const { createdAt } = await prisma.ldLead
+	const { createdAt, rule } = await prisma.ldLead
 		.findUniqueOrThrow({
 			where: { ProspectKey },
-			select: { createdAt: true }
+			select: { createdAt: true, rule: { select: { name: true, outboundCallNumber: true } } }
 		})
 		.catch(prismaErrorHandler);
 
@@ -40,8 +36,8 @@ export const generateNotificationMessage = async (ProspectKey: string, textTempl
 		.replaceAll('{{Email}}', Email ?? '')
 		.replaceAll('{{Address}}', Address ?? '')
 		.replaceAll('{{ZipCode}}', ZipCode ?? '')
-		.replaceAll('{{RuleName}}', name ?? '')
-		.replaceAll('{{OutboundCallNumber}}', outboundCallNumber ?? '')
+		.replaceAll('{{RuleName}}', rule?.name ?? '')
+		.replaceAll('{{OutboundCallNumber}}', rule?.outboundCallNumber ?? '')
 		.replaceAll('{{LeadCreatedOn}}', createdAt.toLocaleString() ?? '')
 		.replaceAll('{{LeadTimeElapsed}}', timeElapsed ?? '');
 

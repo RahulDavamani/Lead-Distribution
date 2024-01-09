@@ -4835,6 +4835,9 @@ model ImportConfig {
    ProcedureNameSync       String?   @db.VarChar(255)
    ExponentialCheckColumns String?   @db.VarChar(1000)
    AccountField            String?   @db.VarChar(100)
+   ProviderKey             String?   @db.UniqueIdentifier
+   IsActive                Boolean?
+   ImportDescription       String?   @db.VarChar(Max)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -5256,6 +5259,13 @@ model ImportFrontierPayment {
    Equipment                   String?   @db.VarChar(200)
    Order_Stage                 String?   @map("Order Stage") @db.VarChar(100)
    Order_Stage_Desc            String?   @map("Order Stage Desc") @db.VarChar(255)
+   SSN_ITIN_Provided_Y_N       String?   @map("SSN ITIN Provided Y N") @db.VarChar(15)
+   Active_Service_Y_N          String?   @map("Active Service Y N") @db.VarChar(15)
+   Same_Customer_Match_Y_N     String?   @map("Same Customer Match Y N") @db.VarChar(15)
+   Pending_Disconnect_Y_N      String?   @map("Pending Disconnect Y N") @db.VarChar(15)
+   Pending_Disconnect_Due_Date DateTime? @map("Pending Disconnect Due Date") @db.Date
+   Self_Install_Capable        String?   @map("Self Install Capable") @db.VarChar(15)
+   Self_Install_Selected       String?   @map("Self Install Selected") @db.VarChar(15)
 
    @@ignore
 }
@@ -13080,13 +13090,15 @@ model LdRule {
    smsTemplate                 String
    waitTimeForCustomerResponse Int?
 
-   operators        LdRule_Operator[]
-   affiliates       LdRule_Affiliate[]
+   operators        LdRuleOperator[]
+   affiliates       LdRuleAffiliate[]
    notification     LdRuleNotification?
+   supervisors      LdRuleSupervisor[]
    dispositionRules LdRuleDispositionRule[]
+   leads            LdLead[]
 }
 
-model LdRule_Operator {
+model LdRuleOperator {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13098,7 +13110,7 @@ model LdRule_Operator {
    @@unique([ruleId, UserId])
 }
 
-model LdRule_Affiliate {
+model LdRuleAffiliate {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13118,9 +13130,6 @@ model LdRuleNotification {
    notificationType     String
    notificationAttempts LdRuleNotificationAttempt[]
 
-   supervisorUserId       Int?
-   supervisorTextTemplate String
-
    ruleId String @unique
    rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
@@ -13137,6 +13146,22 @@ model LdRuleNotificationAttempt {
    notification   LdRuleNotification @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
    notificationId String
    leadAttempts   LdLeadAttempts[]
+}
+
+model LdRuleSupervisor {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   UserId       Int
+   textTemplate String
+   isEscalate   Boolean
+   isRequeue    Boolean
+
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+   @@unique([ruleId, UserId])
 }
 
 model LdRuleDispositionRule {
@@ -13166,8 +13191,11 @@ model LdLead {
    isDistribute Boolean
    isCall       Boolean
    isCompleted  Boolean
+   closeStatus  String?
+   VonageGUID   String? @db.NVarChar(100)
 
-   VonageGUID String? @db.NVarChar(100)
+   ruleId String?
+   rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
    attempts     LdLeadAttempts[]
    history      LdLeadHistory[]
@@ -13239,13 +13267,4 @@ model ldLeadDisposition {
    lead            LdLead                 @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
    @@unique([dispositionRuleId, leadId])
-}
-
-model LdLeadToken {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
-
-   ProspectKey String
-   UserKey     String
 }

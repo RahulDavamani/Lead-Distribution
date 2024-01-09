@@ -12,18 +12,6 @@
 		zodErrors
 	} = $ruleConfig);
 
-	let escalateToSupervisor = false;
-	let showSupervisorSelect = false;
-	onMount(() => {
-		escalateToSupervisor = $ruleConfig.rule.notification?.supervisorUserId !== null;
-	});
-
-	$: if ($ruleConfig.rule.notification && $ruleConfig.rule.notification.supervisorUserId === null)
-		$ruleConfig.rule.notification.supervisorTextTemplate = '';
-	$: supervisor = $ruleConfig.operators.find(
-		({ UserId }) => UserId === $ruleConfig.rule.notification?.supervisorUserId && UserId
-	);
-
 	const addNotificationAttempt = () => {
 		if ($ruleConfig.rule.notification && notification)
 			$ruleConfig.rule.notification.notificationAttempts = [
@@ -70,9 +58,7 @@
 				$ruleConfig.rule.notification = {
 					id: null,
 					notificationType: 'one',
-					notificationAttempts: [],
-					supervisorUserId: null,
-					supervisorTextTemplate: ''
+					notificationAttempts: []
 				};
 			else $ruleConfig.rule.notification = null;
 		}}
@@ -160,51 +146,5 @@
 				<div class="text-center">No Attempts</div>
 			{/each}
 		</div>
-
-		<!-- <div class="flex justify-end">
-			<div class="alert w-1/3 px-2 py-1 text-xs">
-				<span class="font-semibold">Dynamic Variables:</span>
-				%CustomerFirstName, %CustomerLastName, %Email, %Address, %ZipCode
-			</div>
-		</div> -->
-
-		<FormControl
-			inputType="In"
-			label="Escalate to Supervisor"
-			labelClasses="font-semibold"
-			secLabel="(if no pick from Operator)"
-		>
-			<input type="checkbox" class="checkbox" bind:checked={escalateToSupervisor} />
-		</FormControl>
-
-		{#if escalateToSupervisor}
-			<div class="flex mt-2">
-				<FormControl classes="w-full max-w-lg px-2" label="Supervisor">
-					<button class="input input-bordered cursor-pointer text-left" on:click={() => (showSupervisorSelect = true)}>
-						{#if supervisor}
-							<span class="font-mono">{$ruleConfig.rule.notification.supervisorUserId}:</span>
-							<span class="font-semibold">{supervisor.Name}</span>
-							<span class="italic"> - {supervisor.Email}</span>
-						{:else}
-							<span class="opacity-80">Select here</span>
-						{/if}
-					</button>
-				</FormControl>
-				<FormControl
-					classes="w-full px-2"
-					label="Supervisor Text Template"
-					bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
-				>
-					<textarea
-						placeholder="Type here"
-						class="textarea textarea-bordered"
-						bind:value={$ruleConfig.rule.notification.supervisorTextTemplate}
-						rows={1}
-					/>
-				</FormControl>
-			</div>
-		{/if}
 	</div>
 {/if}
-
-<SelectSupervisor bind:showModal={showSupervisorSelect} />

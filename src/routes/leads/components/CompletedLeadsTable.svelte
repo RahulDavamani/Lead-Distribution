@@ -10,7 +10,7 @@
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
-	export let leadHistoryModelId: string | undefined;
+	export let leadDetailsModelId: string | undefined;
 
 	onMount(() => {
 		new DataTable('#completedLeadsTable');
@@ -36,7 +36,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { id, ProspectId, VonageGUID, createdAt, updatedAt, companyName, customerDetails, ruleName, operatorName, status }}
+			{#each completedLeads as { id, ProspectId, VonageGUID, createdAt, updatedAt, CustomerName, CustomerAddress, CompanyName, operatorName, status, rule }}
 				<tr class="hover">
 					<td class="text-center">{ProspectId}</td>
 					<td
@@ -49,17 +49,17 @@
 					</td>
 					<td>{createdAt.toLocaleString()}</td>
 					<td>{updatedAt.toLocaleString()}</td>
-					<td>{customerDetails.Name}</td>
-					<td>{customerDetails.Address}</td>
-					<td>{companyName}</td>
-					<td>{ruleName}</td>
-					<td>{operatorName}</td>
+					<td>{CustomerName ?? 'N/A'}</td>
+					<td>{CustomerAddress ?? 'N/A'}</td>
+					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{rule?.name ?? 'N/A'}</td>
+					<td>{operatorName ?? 'N/A'}</td>
 					<td>{status}</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
 					<td>
 						<div class="flex justify-center items-center">
-							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadHistoryModelId = id)}>
-								<Icon icon="mdi:history" width={18} />
+							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
+								<Icon icon="mdi:information-variant" width={18} />
 							</button>
 						</div>
 					</td>

@@ -20,32 +20,27 @@
 	const fetchLead = async () => {
 		ui.setLoader({ title: 'Fetching Lead' });
 
-		let ProspectKey: string;
-		if ($auth.isAuth) {
-			ProspectKey = $page.url.searchParams.get('ProspectKey') ?? '';
-			UserKey = auth.isSupervisor() ? undefined : $auth.user?.UserKey;
-		} else {
-			const token = $page.url.searchParams.get('token');
-			if (!token)
-				return ($ui.alertModal = {
-					title: 'Error',
-					body: 'Bad Request: Missing params "token"',
-					actions: [
-						{
-							name: 'Retry',
-							class: 'btn-primary',
-							onClick: () => {
-								fetchLead();
-							}
+		let ProspectKey = $page.url.searchParams.get('ProspectKey') ?? '';
+		if (!ProspectKey)
+			return ($ui.alertModal = {
+				title: 'Error',
+				body: 'Bad Request: Missing params "ProspectKey"',
+				actions: [
+					{
+						name: 'Retry',
+						class: 'btn-primary',
+						onClick: () => {
+							fetchLead();
 						}
-					]
-				});
-			const data = await trpc($page).lead.validateToken.query({ token }).catch(trpcClientErrorHandler);
-			ProspectKey = data.ProspectKey;
-			UserKey = data.UserKey;
-		}
+					}
+				]
+			});
 
-		const data = await trpc($page).lead.view.query({ ProspectKey, UserKey }).catch(trpcClientErrorHandler);
+		const {
+			user: { UserKey },
+			roleType
+		} = $auth;
+		const data = await trpc($page).lead.view.query({ ProspectKey, UserKey, roleType }).catch(trpcClientErrorHandler);
 		lead = {
 			...data.lead,
 			createdAt: new Date(data.lead.createdAt),
@@ -83,12 +78,13 @@
 	};
 
 	const closeLead = async () => {
-		if (lead && prospect) {
+		if (lead && prospect && closeStatus) {
 			ui.setLoader({ title: 'Closing Lead' });
 			await trpc($page)
 				.lead.close.query({
 					ProspectKey: prospect.ProspectKey,
-					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
+					UserKey: UserKey ?? $auth.user?.UserKey ?? '',
+					closeStatus
 				})
 				.catch(trpcClientErrorHandler);
 			ui.showToast({ title: 'Lead Closed Successfully', class: 'alert-success' });
@@ -145,7 +141,7 @@
 				Call Customer
 			</button>
 
-			{#if auth.isSupervisor()}
+			{#if $auth.roleType !== 'AGENT'}
 				<div class="divider" />
 				<div class="flex gap-6">
 					<select class="select select-bordered w-full" bind:value={closeStatus}>

@@ -13,7 +13,7 @@
 	import Icon from '@iconify/svelte';
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
-	import LeadHistoryModal from './components/LeadHistoryModal.svelte';
+	import LeadDetailsModal from './components/LeadDetailsModal.svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -22,27 +22,29 @@
 	let completedLeads: CompletedLead[] = [];
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 	let affiliateSelect: string | undefined;
-	let leadHistoryModelId: string | undefined;
+	let leadDetailsModelId: string | undefined;
 
 	$: affiliates = (() => {
 		let affiliates: { [key: string]: number } = {};
 		if (tab === 1)
-			queuedLeads.forEach(({ companyName }) => {
-				affiliates[companyName] = (affiliates[companyName] ?? 0) + 1;
-			});
+			queuedLeads.forEach(
+				({ CompanyName }) => CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
+			);
 		else
-			completedLeads.forEach(({ companyName }) => {
-				affiliates[companyName] = (affiliates[companyName] ?? 0) + 1;
-			});
+			completedLeads.forEach(
+				({ CompanyName }) => CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
+			);
 		return affiliates;
 	})();
 
 	const fetchQueuedLeads = async () => {
 		const oldQueuedLeads = queuedLeads;
-		const isSupervisor = auth.isSupervisor();
-		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
+		const {
+			user: { UserKey },
+			roleType
+		} = $auth;
 		const leads = await trpc($page)
-			.lead.getQueued.query({ UserKey })
+			.lead.getQueued.query({ UserKey, roleType })
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		queuedLeads = leads.queuedLeads.map((lead) => ({
@@ -50,7 +52,8 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			ruleId: lead.ruleId
+			ruleId: lead.ruleId,
+			operatorName: lead.operatorName
 		}));
 		if (oldQueuedLeads.length !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
 		await tick();
@@ -69,12 +72,15 @@
 		new DataTable('#completedLeadsTable').destroy();
 		ui.setLoader({ title: 'Fetching Leads' });
 
-		const isSupervisor = auth.isSupervisor();
-		const UserKey = isSupervisor ? undefined : $auth.user?.UserKey;
+		const {
+			user: { UserKey },
+			roleType
+		} = $auth;
 		const leads = await trpc($page)
 			.lead.getCompleted.query({
 				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
-				UserKey
+				UserKey,
+				roleType
 			})
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
@@ -83,7 +89,8 @@
 			createdAt: new Date(lead.createdAt),
 			updatedAt: new Date(lead.updatedAt),
 			ProspectId: lead.ProspectId,
-			ruleId: lead.ruleId
+			ruleId: lead.ruleId,
+			operatorName: lead.operatorName
 		}));
 		ui.setLoader();
 		await tick();
@@ -170,17 +177,17 @@
 
 	{#if tab === 1}
 		<QueuedLeadsTable
-			queuedLeads={queuedLeads.filter(({ companyName }) => (affiliateSelect ? companyName === affiliateSelect : true))}
-			bind:leadHistoryModelId
+			queuedLeads={queuedLeads.filter(({ CompanyName }) => (affiliateSelect ? CompanyName === affiliateSelect : true))}
+			bind:leadDetailsModelId
 		/>
 	{:else}
 		<CompletedLeadsTable
-			completedLeads={completedLeads.filter(({ companyName }) =>
-				affiliateSelect ? companyName === affiliateSelect : true
+			completedLeads={completedLeads.filter(({ CompanyName }) =>
+				affiliateSelect ? CompanyName === affiliateSelect : true
 			)}
-			bind:leadHistoryModelId
+			bind:leadDetailsModelId
 		/>
 	{/if}
 </div>
 
-<LeadHistoryModal bind:id={leadHistoryModelId} />
+<LeadDetailsModal bind:id={leadDetailsModelId} />

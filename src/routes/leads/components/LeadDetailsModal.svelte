@@ -20,14 +20,16 @@
 				updatedAt: new Date(updatedAt),
 				...values
 			})),
-			attempts: lead.attempts.map(({ createdAt, updatedAt, ...values }) => ({
+			attempts: lead.attempts.map(({ createdAt, updatedAt, name, ...values }) => ({
 				createdAt: new Date(createdAt),
 				updatedAt: new Date(updatedAt),
+				name,
 				...values
 			})),
-			calls: lead.calls.map(({ createdAt, updatedAt, ...values }) => ({
+			calls: lead.calls.map(({ createdAt, updatedAt, name, ...values }) => ({
 				createdAt: new Date(createdAt),
 				updatedAt: new Date(updatedAt),
+				name,
 				...values
 			})),
 			requeues: lead.requeues.map(({ createdAt, updatedAt, supervisorName, dispositionNum, ...values }) => ({

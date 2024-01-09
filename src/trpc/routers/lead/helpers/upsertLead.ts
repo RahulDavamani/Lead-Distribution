@@ -1,10 +1,12 @@
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 type Args = {
+	ruleId?: string;
 	isDistribute?: boolean;
 	isCall?: boolean;
 	isCompleted?: boolean;
 	UserId?: number;
+	closeStatus?: string;
 };
 
 export const upsertLead = async (ProspectKey: string, status: string, args?: Args) => {
@@ -14,9 +16,11 @@ export const upsertLead = async (ProspectKey: string, status: string, args?: Arg
 			create: {
 				ProspectKey,
 				status,
+				ruleId: args?.ruleId ?? null,
 				isDistribute: args?.isDistribute ?? false,
 				isCall: args?.isCall ?? false,
-				isCompleted: args?.isCompleted ?? false
+				isCompleted: args?.isCompleted ?? false,
+				closeStatus: args?.closeStatus ?? null
 			},
 			update: { status, ...args }
 		})

@@ -13,7 +13,7 @@
 	$: ({ loader } = $ui);
 	let init = false;
 	onMount(async () => {
-		if (!$auth.isAuth) await auth.authenticate();
+		if (!$auth) await auth.authenticate();
 		init = true;
 	});
 
@@ -22,8 +22,9 @@
 		if ($page.url.pathname.startsWith('/view-lead')) return;
 		if ($page.url.pathname.startsWith('/lead-distribute')) return;
 		if ($page.url.pathname.startsWith('/test')) return;
-		if (!$auth.isAuth) return { code: 401, message: 'Unauthorized' };
-		if ($page.url.pathname.startsWith('/rules') && !auth.isAdmin()) return { code: 403, message: 'Forbidden' };
+		if (!$auth) return { code: 401, message: 'Unauthorized' };
+		if ($page.url.pathname.startsWith('/rules') && $auth.roleType !== 'ADMIN')
+			return { code: 403, message: 'Forbidden' };
 	})() as { code: number; message: string } | undefined;
 </script>
 

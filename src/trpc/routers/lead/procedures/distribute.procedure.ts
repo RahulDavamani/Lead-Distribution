@@ -42,7 +42,11 @@ export const distributeProcedure = procedure
 		const rule = await prisma.ldRule
 			.findFirst({
 				where: { affiliates: { some: { CompanyKey } } },
-				include: { notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } }, operators: true }
+				include: {
+					notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
+					operators: true,
+					supervisors: true
+				}
 			})
 			.catch(prismaErrorHandler);
 
@@ -52,23 +56,23 @@ export const distributeProcedure = procedure
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 		if (!rule.isActive) {
-			await upsertLead(ProspectKey, 'RULE IS INACTIVE');
+			await upsertLead(ProspectKey, 'RULE IS INACTIVE', { ruleId: rule.id });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 
 		// Create Lead
-		const lead = await upsertLead(ProspectKey, 'LEAD QUEUED', { isDistribute: true });
+		const lead = await upsertLead(ProspectKey, 'LEAD QUEUED', { ruleId: rule.id, isDistribute: true });
 
 		// Update GHL SMS Template
 		await updateGHLSmsTemplate(ProspectKey, rule.smsTemplate);
+		await upsertLead(ProspectKey, 'SMS SENT TO CUSTOMER');
 
 		// Wait for Customer Reply
 		await upsertLead(ProspectKey, 'WAITING FOR CUSTOMER REPLY');
 		await waitFor(rule.waitTimeForCustomerResponse ?? 0);
 
 		// Check if Lead is already completed
-		let isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
-		if (isLeadCompleted) return;
+		if (await checkLeadDistributeCompleted(ProspectKey)) return;
 
 		// Get GHL Status
 		const ghlStatus = await getGHLStatus(ProspectKey);
@@ -81,8 +85,7 @@ export const distributeProcedure = procedure
 		}
 
 		// Check if Lead is already completed
-		isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
-		if (isLeadCompleted) return;
+		if (await checkLeadDistributeCompleted(ProspectKey)) return;
 
 		// Else Send Notification to Operators
 		await sendNotifications(ProspectKey, lead.id, rule);
@@ -94,7 +97,20 @@ export const redistributeProcedure = procedure
 	.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 	.query(async ({ input: { ProspectKey, UserKey } }) => {
 		// Check if Lead is already in Queue
-		const lead = await prisma.ldLead.findFirstOrThrow({ where: { ProspectKey } }).catch(prismaErrorHandler);
+		const lead = await prisma.ldLead
+			.findFirstOrThrow({
+				where: { ProspectKey },
+				include: {
+					rule: {
+						include: {
+							notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
+							operators: true,
+							supervisors: true
+						}
+					}
+				}
+			})
+			.catch(prismaErrorHandler);
 		if (lead.isCompleted || lead.isDistribute || lead.isCall)
 			throw new TRPCError({ code: 'CONFLICT', message: 'Lead is Completed or In Progress' });
 
@@ -111,26 +127,18 @@ export const redistributeProcedure = procedure
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 		}
 
-		// Find Rule for Company
-		const rule = await prisma.ldRule
-			.findFirst({
-				where: { affiliates: { some: { CompanyKey } } },
-				include: { notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } }, operators: true }
-			})
-			.catch(prismaErrorHandler);
-
 		// Rule Not Found / Inactive
-		if (!rule) {
+		if (!lead.rule) {
 			await upsertLead(ProspectKey, 'RULE NOT FOUND', { isDistribute: false });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
-		if (!rule.isActive) {
+		if (!lead.rule.isActive) {
 			await upsertLead(ProspectKey, 'RULE IS INACTIVE', { isDistribute: false });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 
 		// Send Notification to Operators
-		await sendNotifications(ProspectKey, lead.id, rule);
+		await sendNotifications(ProspectKey, lead.id, lead.rule);
 
 		return { ProspectKey };
 	});

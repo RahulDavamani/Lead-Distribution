@@ -9,6 +9,7 @@
 	import Notification from './components/Notification.svelte';
 	import { ui } from '../../../stores/ui.store';
 	import DispositionRules from './components/DispositionRules.svelte';
+	import Supervisors from './components/Supervisors.svelte';
 
 	export let data;
 	$: ({ rule, operators, affiliates } = data);
@@ -100,6 +101,9 @@
 		<div class="divider" />
 
 		<Notification />
+		<div class="divider" />
+
+		<Supervisors />
 		<div class="divider" />
 
 		<DispositionRules />

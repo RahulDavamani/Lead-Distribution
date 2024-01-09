@@ -1,22 +1,23 @@
 import { page } from '$app/stores';
 import { get, writable } from 'svelte/store';
 import { ui } from './ui.store';
+import { z } from 'zod';
 
 export interface Auth {
-	isAuth: boolean;
-	token?: string;
-	user?: {
+	token: string;
+	roleType: RoleType;
+	user: {
 		Message: string;
 		UserKey: string;
 		CompanyKey: string;
 		userRole: { ID: number; Role: string }[];
 	};
 }
+export const roleTypeSchema = z.literal('ADMIN').or(z.literal('SUPERVISOR').or(z.literal('AGENT')));
+export type RoleType = z.infer<typeof roleTypeSchema>;
 
 export const auth = (() => {
-	const { subscribe, set, update } = writable<Auth>({
-		isAuth: false
-	});
+	const { subscribe, set, update } = writable<Auth>();
 
 	// Methods
 	const authenticate = async () => {
@@ -37,11 +38,16 @@ export const auth = (() => {
 
 			if (res.status === 200) {
 				const user = (await res.json()) as Auth['user'];
-				set({ isAuth: true, token, user });
+
+				const roleType = user?.userRole.find(({ ID }) => [5, 9].includes(ID))
+					? 'ADMIN'
+					: user?.userRole.find(({ ID }) => [41, 43, 44].includes(ID))
+					  ? 'SUPERVISOR'
+					  : 'AGENT';
+				set({ token, user, roleType });
 			}
 		}
 		// set({
-		// 	isAuth: true,
 		// 	token: 'abc',
 		// 	user: {
 		// 		Message: 'Success',
@@ -53,29 +59,16 @@ export const auth = (() => {
 		// 				Role: 'Agent'
 		// 			}
 		// 		]
-		// 	}
+		// 	},
+		// 	roleType: 'ADMIN'
 		// });
 		ui.setLoader();
-	};
-
-	const isAdmin = () => {
-		const { user } = get(auth);
-		if (!user) return false;
-		return user.userRole.find(({ ID }) => [5, 9].includes(ID)) !== undefined;
-	};
-
-	const isSupervisor = () => {
-		const { user } = get(auth);
-		if (!user) return false;
-		return user.userRole.find(({ ID }) => [5, 9, 41, 42, 43, 44].includes(ID)) !== undefined;
 	};
 
 	return {
 		subscribe,
 		set,
 		update,
-		authenticate,
-		isAdmin,
-		isSupervisor
+		authenticate
 	};
 })();

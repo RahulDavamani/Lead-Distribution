@@ -33,6 +33,7 @@ export const ruleConfig = (() => {
 		affiliates: [],
 		waitTimeForCustomerResponse: null,
 		notification: null,
+		supervisors: [],
 		dispositionRules: []
 	};
 	const { subscribe, set, update } = writable<RuleConfig>({
