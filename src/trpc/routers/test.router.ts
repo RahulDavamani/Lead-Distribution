@@ -2,7 +2,7 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		// await prisma.ldLead.deleteMany({ where: { isCompleted: false } });
+		await prisma.ldLead.updateMany({ where: { isCompleted: false }, data: { isDistribute: false } });
 		// console.log(await getProspectDetails('E139170E-7DEF-4C7B-87B3-520DA8A36D73'));
 		// const UserKey = '5a36aa41-73e1-44f7-b71b-f5bceeaff626';
 		// const result =
@@ -26,7 +26,7 @@ export const testRouter = router({
 		// const result = await prisma.$queryRaw`select Email from VonageUsers where UserId = 1013 and Active=1`;
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
-		await prisma.ldLead.delete({ where: { ProspectKey: '91E5EBB8-B82C-43FE-94A3-ED4C0F350EB6' } });
+		// await prisma.ldLead.delete({ where: { ProspectKey: '91E5EBB8-B82C-43FE-94A3-ED4C0F350EB6' } });
 		// console.log(await prisma.ldLeadToken.findMany());
 		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]

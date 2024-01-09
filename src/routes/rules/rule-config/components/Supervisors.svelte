@@ -40,7 +40,7 @@
 			</div>
 
 			<FormControl
-				label="SMS Template"
+				label="Notification Message Template"
 				classes="w-full"
 				bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
 				error={zodErrors?.supervisors?.[i]?.textTemplate}
