@@ -4,10 +4,10 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { TRPCError } from '@trpc/server';
 import { getCompanyKey } from '../helpers/getCompanyKey';
 import { upsertLead } from '../helpers/upsertLead';
-import { generateNotificationMessage } from '../helpers/generateNotificationMessage';
+import { generateMessage } from '../helpers/generateMessage';
 import { sendNotifications } from '../helpers/sendNotifications';
 import { scheduleJob } from 'node-schedule';
-import { updateGHLSmsTemplate } from '../helpers/ghl';
+import { updateGHLTemplates } from '../helpers/ghl';
 
 export const updateDispositionProcedure = procedure
 	.input(
@@ -46,7 +46,7 @@ export const updateDispositionProcedure = procedure
 		const dispositionRule = lead.rule.dispositionRules.find(({ num }) => num === dispositionCount + 1);
 
 		// Create Lead Disposition
-		const message = await generateNotificationMessage(ProspectKey, dispositionRule?.smsTemplate ?? '');
+		const message = await generateMessage(ProspectKey, dispositionRule?.smsTemplate ?? '');
 		await prisma.ldLeadDisposition.create({
 			data: {
 				leadId: lead.id,
@@ -63,6 +63,10 @@ export const updateDispositionProcedure = procedure
 		// Close Lead if no Disposition Rule
 		if (!dispositionRule) {
 			await upsertLead(ProspectKey, 'LEAD CLOSED', { isCall: false, isDistribute: false, isCompleted: true });
+			await updateGHLTemplates(ProspectKey, {
+				vonage_guid: lead.VonageGUID ?? '',
+				vonage_disposition: Disposition
+			});
 			return;
 		}
 
@@ -83,11 +87,15 @@ export const updateDispositionProcedure = procedure
 				isCompleted: true,
 				UserId
 			});
+			await updateGHLTemplates(ProspectKey, {
+				vonage_guid: lead.VonageGUID ?? '',
+				vonage_disposition: Disposition
+			});
 			return;
 		}
 
 		// Update GHL SMS Template
-		await updateGHLSmsTemplate(ProspectKey, dispositionRule.smsTemplate);
+		await updateGHLTemplates(ProspectKey, { bundlesmstemplate: message });
 
 		// Schedule Requeue
 		const scheduledTime = new Date(Date.now() + dispositionRule.requeueTime * 1000);
@@ -119,7 +127,7 @@ export const updateDispositionProcedure = procedure
 			await upsertLead(ProspectKey, `LEAD REQUEUED BY CALL DISPOSITION #${dispositionRule.num}`, {
 				isDistribute: true
 			});
-			await sendNotifications(ProspectKey, lead.id, lead.rule);
+			await sendNotifications(`Call Disposition #${dispositionRule.num}`, ProspectKey, lead.id, lead.rule);
 		});
 
 		// Update Lead Status

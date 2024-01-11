@@ -3,6 +3,7 @@
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import AddSupervisor from './AddSupervisor.svelte';
 	import FormControl from '../../../components/FormControl.svelte';
+	import Variables from './Variables.svelte';
 
 	let showModal = false;
 	$: ({ rule, zodErrors, operators } = $ruleConfig);
@@ -40,16 +41,22 @@
 			</div>
 
 			<FormControl
-				label="SMS Template"
-				classes="w-full"
+				label="Notification Message Template"
 				bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
 				error={zodErrors?.supervisors?.[i]?.textTemplate}
 			>
-				<textarea
-					placeholder="Type here"
-					class="textarea textarea-bordered"
-					bind:value={$ruleConfig.rule.supervisors[i].textTemplate}
-				/>
+				<div class="join">
+					<textarea
+						placeholder="Type here"
+						class="textarea textarea-bordered join-item w-full"
+						bind:value={$ruleConfig.rule.supervisors[i].textTemplate}
+						rows={1}
+					/>
+					<Variables
+						variables={['NotificationType']}
+						insertVariable={(v) => ($ruleConfig.rule.supervisors[i].textTemplate += v)}
+					/>
+				</div>
 			</FormControl>
 
 			<div class="flex gap-4">

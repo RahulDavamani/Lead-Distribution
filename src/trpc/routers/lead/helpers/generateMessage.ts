@@ -1,7 +1,9 @@
 import { getTimeElapsedText } from '$lib/client/DateTime';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
-export const generateNotificationMessage = async (ProspectKey: string, textTemplate: string) => {
+type Variables = { [key: string]: string };
+
+export const generateMessage = async (ProspectKey: string, textTemplate: string, variables?: Variables) => {
 	// Get Prospect
 	const { CustomerFirstName, CustomerLastName, Email, Address, ZipCode } = await prisma.leadProspect
 		.findFirstOrThrow({
@@ -17,8 +19,6 @@ export const generateNotificationMessage = async (ProspectKey: string, textTempl
 		})
 		.catch(prismaErrorHandler);
 
-	// Get Rule
-
 	// Get Lead
 	const { createdAt, rule } = await prisma.ldLead
 		.findUniqueOrThrow({
@@ -29,17 +29,22 @@ export const generateNotificationMessage = async (ProspectKey: string, textTempl
 
 	const timeElapsed = getTimeElapsedText(createdAt, new Date());
 
+	const allVariables: Variables = {
+		CustomerFirstName: CustomerFirstName ?? '',
+		CustomerLastName: CustomerLastName ?? '',
+		Email: Email ?? '',
+		Address: Address ?? '',
+		ZipCode: ZipCode ?? '',
+		RuleName: rule?.name ?? '',
+		OutboundCallNumber: rule?.outboundCallNumber ?? '',
+		LeadCreatedOn: createdAt.toLocaleString() ?? '',
+		LeadTimeElapsed: timeElapsed ?? '',
+		...variables
+	};
+
 	// Generate Message
-	const message = textTemplate
-		.replaceAll('{{CustomerFirstName}}', CustomerFirstName ?? '')
-		.replaceAll('{{CustomerLastName}}', CustomerLastName ?? '')
-		.replaceAll('{{Email}}', Email ?? '')
-		.replaceAll('{{Address}}', Address ?? '')
-		.replaceAll('{{ZipCode}}', ZipCode ?? '')
-		.replaceAll('{{RuleName}}', rule?.name ?? '')
-		.replaceAll('{{OutboundCallNumber}}', rule?.outboundCallNumber ?? '')
-		.replaceAll('{{LeadCreatedOn}}', createdAt.toLocaleString() ?? '')
-		.replaceAll('{{LeadTimeElapsed}}', timeElapsed ?? '');
+	let message = textTemplate;
+	for (const [key, value] of Object.entries(allVariables ?? {})) message = message.replaceAll(`{{${key}}}`, value);
 
 	return message;
 };

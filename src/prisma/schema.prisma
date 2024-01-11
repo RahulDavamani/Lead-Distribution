@@ -4894,29 +4894,33 @@ model ImportConsolidatedInstalls {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportConsolidatedPayment {
-   ImportId           Int
-   CreatedOn          DateTime  @default(now(), map: "DF__ImportCon__Creat__4E6BDD9F") @db.DateTime
-   Sales_Partner      String?   @map("Sales Partner") @db.VarChar(50)
-   Sale_Format        String?   @map("Sale Format") @db.VarChar(100)
-   Sales_Rep          String?   @map("Sales Rep") @db.VarChar(150)
-   Submission_Date    DateTime? @map("Submission Date") @db.Date
-   Customer_Name      String?   @map("Customer Name") @db.VarChar(150)
-   Service_Address    String?   @map("Service Address") @db.VarChar(255)
-   City               String?   @db.VarChar(100)
-   State              String?   @db.VarChar(100)
-   Zip                String?   @db.VarChar(50)
-   Order_Type         String?   @map("Order Type") @db.VarChar(50)
-   Requested_Services String?   @map("Requested Services") @db.VarChar(100)
-   Status_Change_Date DateTime? @map("Status Change Date") @db.Date
-   Sales_Status       String?   @map("Sales Status") @db.VarChar(100)
-   Install_Status     String?   @map("Install Status") @db.VarChar(100)
-   Fidium_Promo       String?   @map("Fidium Promo") @db.VarChar(255)
-   ORD_Number         String?   @map("ORD Number") @db.VarChar(100)
-   Install_Date       DateTime? @map("Install Date") @db.Date
-   Commission_Staus   String?   @map("Commission Staus") @db.VarChar(50)
-   Pay_Date           DateTime? @map("Pay Date") @db.Date
-   Amount             Decimal?  @db.Decimal(10, 2)
-   Notes              String?   @db.VarChar(255)
+   ImportId             Int
+   CreatedOn            DateTime  @default(now(), map: "DF__ImportCon__Creat__4E6BDD9F") @db.DateTime
+   Sales_Partner        String?   @map("Sales Partner") @db.VarChar(50)
+   Sale_Format          String?   @map("Sale Format") @db.VarChar(100)
+   Sales_Rep            String?   @map("Sales Rep") @db.VarChar(150)
+   Submission_Date      DateTime? @map("Submission Date") @db.Date
+   Customer_Name        String?   @map("Customer Name") @db.VarChar(150)
+   Service_Address      String?   @map("Service Address") @db.VarChar(255)
+   City                 String?   @db.VarChar(100)
+   State                String?   @db.VarChar(100)
+   Zip                  String?   @db.VarChar(50)
+   Order_Type           String?   @map("Order Type") @db.VarChar(50)
+   Requested_Services   String?   @map("Requested Services") @db.VarChar(100)
+   Status_Change_Date   DateTime? @map("Status Change Date") @db.Date
+   Sales_Status         String?   @map("Sales Status") @db.VarChar(100)
+   Install_Status       String?   @map("Install Status") @db.VarChar(100)
+   Fidium_Promo         String?   @map("Fidium Promo") @db.VarChar(255)
+   ORD_Number           String?   @map("ORD Number") @db.VarChar(100)
+   Install_Date         DateTime? @map("Install Date") @db.Date
+   Commission_Staus     String?   @map("Commission Staus") @db.VarChar(50)
+   Pay_Date             DateTime? @map("Pay Date") @db.Date
+   Amount               Decimal?  @db.Decimal(10, 2)
+   Notes                String?   @db.VarChar(255)
+   ORDER_NUMBER_Derived String?   @db.VarChar(50)
+   ProductKey           String?   @db.UniqueIdentifier
+   Status               String?   @db.VarChar(50)
+   StatusKey            String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -5096,47 +5100,54 @@ model ImportEarthlinkInstalls {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportEarthlinkPayment {
-   Seq                          Int       @default(autoincrement())
-   ImportId                     Int
-   CreatedOn                    DateTime? @default(now(), map: "DF__ImportEar__Creat__469E3CA0") @db.DateTime
-   CALENDAR_DATE_KEY            String?   @db.VarChar(50)
-   COMM_TYPE                    String?   @db.VarChar(100)
-   PARTNER_NAME                 String?   @db.VarChar(100)
-   USER_NAME                    String?   @db.VarChar(100)
-   BOUNTY_DESC                  String?   @db.VarChar(255)
-   PRODUCT_NAME                 String?   @db.VarChar(50)
-   CURRENT_SERVICE_PLAN         String?   @db.VarChar(50)
-   FINANCE_REPORTING_GROUP_NAME String?   @db.VarChar(255)
-   START_DATE                   DateTime? @db.Date
-   SERVICE_BILLING_START_DATE   DateTime? @db.Date
-   ELIGIBLE_DATE                DateTime? @db.Date
-   BOUNTY_END_DATE              DateTime? @db.Date
-   SVC_LAST_INACTIVATION_DATE   DateTime? @db.Date
-   IS_ELIGIBLE_IND              String?   @db.VarChar(20)
-   BOUNTY_TYPE                  String?   @db.VarChar(50)
-   BOUNTY_RATE                  Decimal?  @db.Decimal(10, 2)
-   MIDAS_SERVICE_LEVEL          String?   @db.VarChar(50)
-   CURRENT_SUBSCRIBER_DETL_KEY  String?   @db.VarChar(50)
-   PROMOTION_KEY                String?   @db.VarChar(50)
-   SRC_SYS_SERVICE_CTRLNUM      String?   @db.VarChar(50)
-   PARTNER_KEY                  String?   @db.VarChar(50)
-   PARTNER_CODE                 String?   @db.VarChar(50)
-   SRC_SYS_PRIMARY_SERV_CTRLNUM String?   @db.VarChar(50)
-   RUN_DATE                     DateTime? @db.DateTime
-   MULTI                        String?   @db.VarChar(30)
-   PARTNER_AGENT                String?   @db.VarChar(50)
-   STATE                        String?   @db.VarChar(100)
-   STORE_ID                     String?   @db.VarChar(100)
-   VENDOR_ID                    String?   @db.VarChar(50)
-   SPEED_SOLD                   String?   @db.VarChar(50)
-   PARENT_PARTNER_NAME          String?   @db.VarChar(50)
-   PROMOTION_NAME               String?   @db.VarChar(255)
-   PRODUCT_TYPE                 String?   @db.VarChar(100)
-   SERVICE_INSTALL_DATE         DateTime? @db.DateTime
-   ACCOUNT_STATUS               String?   @db.VarChar(100)
-   ACCOUNT_INACT_REASON         String?   @db.VarChar(255)
-   AR_BALANCE                   Decimal?  @db.Decimal(10, 2)
-   BOUNTY_GP_GL                 String?   @db.VarChar(150)
+   Seq                                   Int       @default(autoincrement())
+   ImportId                              Int
+   CreatedOn                             DateTime? @default(now(), map: "DF__ImportEar__Creat__469E3CA0") @db.DateTime
+   CALENDAR_DATE_KEY                     String?   @db.VarChar(50)
+   COMM_TYPE                             String?   @db.VarChar(100)
+   PARTNER_NAME                          String?   @db.VarChar(100)
+   USER_NAME                             String?   @db.VarChar(100)
+   BOUNTY_DESC                           String?   @db.VarChar(255)
+   PRODUCT_NAME                          String?   @db.VarChar(50)
+   CURRENT_SERVICE_PLAN                  String?   @db.VarChar(50)
+   FINANCE_REPORTING_GROUP_NAME          String?   @db.VarChar(255)
+   START_DATE                            DateTime? @db.Date
+   SERVICE_BILLING_START_DATE            DateTime? @db.Date
+   ELIGIBLE_DATE                         DateTime? @db.Date
+   BOUNTY_END_DATE                       DateTime? @db.Date
+   SVC_LAST_INACTIVATION_DATE            DateTime? @db.Date
+   IS_ELIGIBLE_IND                       String?   @db.VarChar(20)
+   BOUNTY_TYPE                           String?   @db.VarChar(50)
+   BOUNTY_RATE                           Decimal?  @db.Decimal(10, 2)
+   MIDAS_SERVICE_LEVEL                   String?   @db.VarChar(50)
+   CURRENT_SUBSCRIBER_DETL_KEY           String?   @db.VarChar(50)
+   PROMOTION_KEY                         String?   @db.VarChar(50)
+   SRC_SYS_SERVICE_CTRLNUM               String?   @db.VarChar(50)
+   PARTNER_KEY                           String?   @db.VarChar(50)
+   PARTNER_CODE                          String?   @db.VarChar(50)
+   SRC_SYS_PRIMARY_SERV_CTRLNUM          String?   @db.VarChar(50)
+   RUN_DATE                              DateTime? @db.DateTime
+   MULTI                                 String?   @db.VarChar(30)
+   PARTNER_AGENT                         String?   @db.VarChar(50)
+   STATE                                 String?   @db.VarChar(100)
+   STORE_ID                              String?   @db.VarChar(100)
+   VENDOR_ID                             String?   @db.VarChar(50)
+   SPEED_SOLD                            String?   @db.VarChar(50)
+   PARENT_PARTNER_NAME                   String?   @db.VarChar(50)
+   PROMOTION_NAME                        String?   @db.VarChar(255)
+   PRODUCT_TYPE                          String?   @db.VarChar(100)
+   SERVICE_INSTALL_DATE                  DateTime? @db.DateTime
+   ACCOUNT_STATUS                        String?   @db.VarChar(100)
+   ACCOUNT_INACT_REASON                  String?   @db.VarChar(255)
+   AR_BALANCE                            Decimal?  @db.Decimal(10, 2)
+   BOUNTY_GP_GL                          String?   @db.VarChar(150)
+   Product_Type_Hierarchy___Product_Type String?   @map("Product Type Hierarchy - Product Type") @db.VarChar(100)
+   Service_Install_Date                  DateTime? @map("Service Install Date") @db.Date
+   Service_Signup_Date                   DateTime? @map("Service Signup Date") @db.Date
+   Unum                                  String?   @db.VarChar(50)
+   Vendor_Account_Number                 String?   @map("Vendor Account Number") @db.VarChar(50)
+   Account_Number                        String?   @map("Account Number") @db.VarChar(50)
+   Is_Blended_Bounty_Rate                String?   @map("Is Blended Bounty Rate") @db.VarChar(15)
 
    @@ignore
 }
@@ -11927,6 +11938,8 @@ model ProviderCalendar {
    CloseTransactionSP  String?   @db.VarChar(255)
    ClosePaymentSP      String?   @db.VarChar(255)
    ClosePeriodSP       String?   @db.VarChar(255)
+
+   @@unique([ProviderKey, CalendarKey], map: "UK_09E155ED1245")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -13067,6 +13080,61 @@ model UserRecentLogin {
    ValidTo    DateTime
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ImportDirecTvPayment {
+   Seq                                   Int       @default(autoincrement())
+   ImportId                              Int?
+   CreatedOn                             DateTime? @default(now(), map: "DF__ImportDir__Creat__74A76077") @db.DateTime
+   Period_Name                           String?   @map("Period Name") @db.VarChar(100)
+   Business_Channel                      String?   @map("Business Channel") @db.VarChar(255)
+   Master_Dealer_ID                      String?   @map("Master Dealer ID") @db.VarChar(15)
+   Master_Dealer_Name                    String?   @map("Master Dealer Name") @db.VarChar(255)
+   Dealer_Code                           String?   @map("Dealer Code") @db.VarChar(20)
+   Dealer_Name                           String?   @map("Dealer Name") @db.VarChar(255)
+   Order_ID                              String?   @map("Order ID") @db.VarChar(50)
+   Order_Subline                         String?   @map("Order Subline") @db.VarChar(50)
+   BAN                                   String?   @db.VarChar(50)
+   Evergent_Cust_ID                      String?   @map("Evergent Cust_ID") @db.VarChar(50)
+   Phone_Number                          String?   @map("Phone Number") @db.VarChar(25)
+   New_Phone_Number                      String?   @map("New Phone Number") @db.VarChar(25)
+   Customer                              String?   @db.VarChar(255)
+   Customer_Type                         String?   @map("Customer Type") @db.VarChar(255)
+   FAN                                   String?   @db.VarChar(255)
+   Zip                                   String?   @db.VarChar(50)
+   Product_Sys_ISD                       DateTime? @map("Product Sys ISD") @db.Date
+   Product_Sys_ISD2                      DateTime? @map("Product Sys ISD2") @db.Date
+   Action_Date                           DateTime? @map("Action Date") @db.Date
+   Action_Date_2                         DateTime? @map("Action Date 2") @db.Date
+   Live_Days                             Int?      @map("Live Days")
+   Product_Type                          String?   @map("Product Type") @db.VarChar(255)
+   Product_Subcategory_Name              String?   @map("Product Subcategory Name") @db.VarChar(50)
+   Product_Code                          String?   @map("Product Code") @db.VarChar(100)
+   Product_Name                          String?   @map("Product Name") @db.VarChar(255)
+   MRC                                   Int?
+   Ref_Prod_Code                         String?   @map("Ref Prod Code") @db.VarChar(255)
+   Device_Type                           String?   @map("Device Type") @db.VarChar(255)
+   Device_Subcategory_Name               String?   @map("Device Subcategory Name") @db.VarChar(255)
+   IMEI___Access_Card_ID___Serial_Number String?   @map("IMEI / Access Card ID / Serial Number") @db.VarChar(255)
+   Installed_Tuner__Device_Count         String?   @map("Installed Tuner/ Device Count") @db.VarChar(100)
+   Installment_ID                        String?   @map("Installment ID") @db.VarChar(255)
+   Schedule_Type                         String?   @map("Schedule Type") @db.VarChar(255)
+   Term                                  String?   @db.VarChar(255)
+   CRL                                   String?   @db.VarChar(25)
+   Earning_Code                          String?   @map("Earning Code") @db.VarChar(255)
+   Earning_Type                          String?   @map("Earning Type") @db.VarChar(255)
+   Payment_Name                          String?   @map("Payment Name") @db.VarChar(255)
+   Payment___Non___Pay_Description       String?   @map("Payment / Non - Pay Description") @db.VarChar(255)
+   IS_Adjusted                           String?   @map("IS Adjusted") @db.VarChar(25)
+   Adjustment_Description                String?   @map("Adjustment Description") @db.VarChar(255)
+   Case___SPIF_ID                        String?   @map("Case #/SPIF ID") @db.VarChar(255)
+   Comments                              String?   @db.VarChar(510)
+   Non_Pay                               String?   @map("Non-Pay") @db.VarChar(25)
+   Value                                 Decimal?  @db.Decimal(10, 2)
+   Type                                  String?   @db.VarChar(100)
+
+   @@ignore
+}
+
 model VonageCallMaster {
    VSeq                 Int       @default(autoincrement())
    LogOn                DateTime? @default(now(), map: "DF__VonageCal__LogOn__474AAA1B") @db.DateTime
@@ -13087,6 +13155,7 @@ model LdRule {
    description String
 
    outboundCallNumber          String
+   ghlPostData                 String
    smsTemplate                 String
    waitTimeForCustomerResponse Int?
 

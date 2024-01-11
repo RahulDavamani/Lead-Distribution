@@ -7,7 +7,8 @@ import { upsertLead } from '../helpers/upsertLead';
 import { sendNotifications } from '../helpers/sendNotifications';
 import { getUserId, getUserName } from '../helpers/getUserValues';
 import { getCompanyKey } from '../helpers/getCompanyKey';
-import { getGHLStatus, updateGHLSmsTemplate } from '../helpers/ghl';
+import { getGHLStatus, postGHLData, updateGHLTemplates } from '../helpers/ghl';
+import { generateMessage } from '../helpers/generateMessage';
 
 export const checkLeadDistributeCompleted = async (ProspectKey: string) => {
 	return !(
@@ -46,7 +47,8 @@ export const distributeProcedure = procedure
 					notification: { include: { notificationAttempts: { orderBy: { num: 'asc' } } } },
 					operators: true,
 					supervisors: true
-				}
+				},
+				orderBy: { createdAt: 'desc' }
 			})
 			.catch(prismaErrorHandler);
 
@@ -63,8 +65,12 @@ export const distributeProcedure = procedure
 		// Create Lead
 		const lead = await upsertLead(ProspectKey, 'LEAD QUEUED', { ruleId: rule.id, isDistribute: true });
 
+		// Post GHL Data
+		await postGHLData(ProspectKey, rule.ghlPostData);
+
 		// Update GHL SMS Template
-		await updateGHLSmsTemplate(ProspectKey, rule.smsTemplate);
+		const message = await generateMessage(ProspectKey, rule.smsTemplate);
+		await updateGHLTemplates(ProspectKey, { bundlesmstemplate: message });
 		await upsertLead(ProspectKey, 'SMS SENT TO CUSTOMER');
 
 		// Wait for Customer Reply
@@ -88,7 +94,7 @@ export const distributeProcedure = procedure
 		if (await checkLeadDistributeCompleted(ProspectKey)) return;
 
 		// Else Send Notification to Operators
-		await sendNotifications(ProspectKey, lead.id, rule);
+		await sendNotifications('Initial Operation Notification', ProspectKey, lead.id, rule);
 
 		return { ProspectKey };
 	});
@@ -138,7 +144,7 @@ export const redistributeProcedure = procedure
 		}
 
 		// Send Notification to Operators
-		await sendNotifications(ProspectKey, lead.id, lead.rule);
+		await sendNotifications('Requeue Operation Notification', ProspectKey, lead.id, lead.rule);
 
 		return { ProspectKey };
 	});

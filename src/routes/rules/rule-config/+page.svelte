@@ -10,10 +10,14 @@
 	import { ui } from '../../../stores/ui.store';
 	import DispositionRules from './components/DispositionRules.svelte';
 	import Supervisors from './components/Supervisors.svelte';
+	import GHLPostData from './components/GHLPostData.svelte';
+	import Variables from './components/Variables.svelte';
 
 	export let data;
 	$: ({ rule, operators, affiliates } = data);
 	onMount(() => ruleConfig.init(rule, operators, affiliates));
+
+	let showModal = false;
 </script>
 
 {#if $ruleConfig.init}
@@ -64,9 +68,9 @@
 			<textarea placeholder="Type here" class="textarea textarea-bordered" bind:value={$ruleConfig.rule.description} />
 		</FormControl>
 
-		<!-- Outbound Call Number & SMS Template -->
 		<div class="flex gap-4">
-			<FormControl classes="w-full" label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
+			<!-- Outbound Call Number-->
+			<FormControl label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
 				<input
 					type="text"
 					placeholder="Type here"
@@ -74,6 +78,19 @@
 					bind:value={$ruleConfig.rule.outboundCallNumber}
 				/>
 			</FormControl>
+
+			<!-- GHL Post Data -->
+			<div class="form-control whitespace-nowrap">
+				<div class="label font-semibold gap-4">
+					<div>GHL Post Data</div>
+					<div class="tooltip" data-tip="This data will sent to ghl at the time lead arrival">
+						<Icon icon="mdi:information-variant-circle" width={22} class="text-info" />
+					</div>
+				</div>
+				<button class="btn btn-primary" on:click={() => (showModal = true)}> Configure Data </button>
+			</div>
+
+			<!-- SMS Template -->
 			<FormControl
 				classes="w-full"
 				label="SMS Template"
@@ -81,12 +98,15 @@
 				secLabelClasses="text-sm"
 				error={zodErrors?.smsTemplate}
 			>
-				<textarea
-					placeholder="Type here"
-					class="textarea textarea-bordered"
-					bind:value={$ruleConfig.rule.smsTemplate}
-					rows={1}
-				/>
+				<div class="join">
+					<textarea
+						placeholder="Type here"
+						class="textarea textarea-bordered join-item w-full"
+						bind:value={$ruleConfig.rule.smsTemplate}
+						rows={1}
+					/>
+					<Variables insertVariable={(v) => ($ruleConfig.rule.smsTemplate += v)} />
+				</div>
 			</FormControl>
 		</div>
 		<div class="divider" />
@@ -108,4 +128,8 @@
 
 		<DispositionRules />
 	</div>
+
+	{#if showModal}
+		<GHLPostData bind:showModal jsonText={$ruleConfig.rule.ghlPostData} />
+	{/if}
 {/if}

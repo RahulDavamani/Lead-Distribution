@@ -2,9 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import FormControl from '../../../components/FormControl.svelte';
-	import { onMount } from 'svelte';
-	import SelectSupervisor from './SelectSupervisor.svelte';
-	import DynamicVariables from './DynamicVariables.svelte';
+	import Variables from './Variables.svelte';
 	import { timeToText } from '$lib/client/DateTime';
 
 	$: ({
@@ -92,14 +90,11 @@
 			</FormControl>
 		</div>
 
-		<div class="flex justify-between items-center mb-4">
-			<div class="flex items-start gap-2">
-				<div class="font-semibold">Operation Notification Wait Time:</div>
-				<button class="z-10 text-success" on:click={addNotificationAttempt}>
-					<Icon icon="mdi:add-circle" width={24} />
-				</button>
-			</div>
-			<DynamicVariables />
+		<div class="flex items-start gap-2 mb-4">
+			<div class="font-semibold">Operation Notification Wait Time:</div>
+			<button class="z-10 text-success" on:click={addNotificationAttempt}>
+				<Icon icon="mdi:add-circle" width={24} />
+			</button>
 		</div>
 
 		<div class="space-y-4 px-2 mb-4">
@@ -118,11 +113,20 @@
 							bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
 							error={zodErrors?.notification?.notificationAttempts?.[i]?.textTemplate}
 						>
-							<textarea
-								placeholder="Type here"
-								class="textarea textarea-sm textarea-bordered w-full join-item"
-								bind:value={$ruleConfig.rule.notification.notificationAttempts[i].textTemplate}
-							/>
+							<div class="join">
+								<textarea
+									placeholder="Type here"
+									class="textarea textarea-sm textarea-bordered w-full join-item"
+									bind:value={$ruleConfig.rule.notification.notificationAttempts[i].textTemplate}
+									rows={1}
+								/>
+								<Variables
+									variables={['NotificationType']}
+									insertVariable={(v) =>
+										$ruleConfig.rule.notification &&
+										($ruleConfig.rule.notification.notificationAttempts[i].textTemplate += v)}
+								/>
+							</div>
 						</FormControl>
 						<FormControl
 							label="Wait Time"

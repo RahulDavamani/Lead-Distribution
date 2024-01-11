@@ -11,7 +11,7 @@ import { upsertLead } from './upsertLead';
 import type { Rule } from '../../../../zod/rule.schema';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
-import { generateNotificationMessage } from './generateNotificationMessage';
+import { generateMessage } from './generateMessage';
 import { getUserKey, getUserName } from './getUserValues';
 
 export const getAvailableOperators = async () => {
@@ -24,6 +24,7 @@ export const getAvailableOperators = async () => {
 };
 
 export const triggerNotification = async (
+	notificationType: string,
 	ProspectKey: string,
 	leadId: string,
 	UserId: number,
@@ -31,7 +32,7 @@ export const triggerNotification = async (
 	attempt?: NonNullable<Rule['notification']>['notificationAttempts'][number]
 ) => {
 	const UserKey = await getUserKey(UserId);
-	const message = await generateNotificationMessage(ProspectKey, textTemplate);
+	const message = await generateMessage(ProspectKey, textTemplate, { NotificationType: notificationType });
 
 	// Generate Token
 	const result =
@@ -70,6 +71,7 @@ export const triggerNotification = async (
 };
 
 export const sendNotifications = async (
+	notificationType: string,
 	ProspectKey: string,
 	leadId: string,
 	rule: LdRule & {
@@ -101,7 +103,7 @@ export const sendNotifications = async (
 		if (attempt.num === 1) await upsertLead(ProspectKey, 'SENDING NOTIFICATION TO OPERATORS');
 
 		// Send Notification to Operator
-		await triggerNotification(ProspectKey, leadId, operator.UserId, attempt.textTemplate, attempt);
+		await triggerNotification(notificationType, ProspectKey, leadId, operator.UserId, attempt.textTemplate, attempt);
 		completedAttempts.push({ attemptId: attempt.id, UserId: operator.UserId });
 		await waitFor(attempt.waitTime);
 
@@ -110,18 +112,22 @@ export const sendNotifications = async (
 		if (isLeadCompleted) break;
 	}
 
-	if (noOperatorFound) upsertLead(ProspectKey, `NO OPERATOR FOUND`);
+	if (noOperatorFound) await upsertLead(ProspectKey, `NO OPERATOR FOUND`);
 	else {
 		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
 		if (isLeadCompleted) return;
-		upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
+		await upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
 	}
 
 	// Send Notification to Supervisor
-	await Promise.all(
-		rule.supervisors.map(async ({ UserId, textTemplate, isEscalate }) => {
-			if (!isEscalate) return;
-			await triggerNotification(ProspectKey, leadId, UserId, textTemplate);
-		})
-	);
+	const supervisors = rule.supervisors.filter(({ isEscalate }) => isEscalate);
+	if (supervisors.length === 0)
+		await upsertLead(ProspectKey, `NO SUPERVISOR FOUND FOR ESCALATION`, { isDistribute: false });
+	else
+		await Promise.all(
+			supervisors.map(
+				async ({ UserId, textTemplate }) =>
+					await triggerNotification(notificationType, ProspectKey, leadId, UserId, textTemplate)
+			)
+		);
 };

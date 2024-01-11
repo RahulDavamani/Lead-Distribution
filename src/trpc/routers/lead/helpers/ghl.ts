@@ -1,19 +1,5 @@
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { generateNotificationMessage } from './generateNotificationMessage';
-
-export const updateGHLSmsTemplate = async (ProspectKey: string, smsTemplate: string) => {
-	const message = await generateNotificationMessage(ProspectKey, smsTemplate);
-	const ghlTemplate = {
-		customFields: [
-			{
-				id: 'bundlesmstemplate',
-				key: 'bundlesmstemplate',
-				field_value: message
-			}
-		]
-	};
-	await prisma.$queryRaw`exec [p_GHL_PUTContactUpdate] ${ProspectKey},${ghlTemplate}`.catch(prismaErrorHandler);
-};
+import { generateMessage } from './generateMessage';
 
 export const getGHLStatus = async (ProspectKey: string) => {
 	try {
@@ -28,4 +14,25 @@ export const getGHLStatus = async (ProspectKey: string) => {
 	} catch (error) {
 		return 'Not Found';
 	}
+};
+
+export const updateGHLTemplates = async (ProspectKey: string, templates: { [k: string]: string }) => {
+	for (const [key, value] of Object.entries(templates)) {
+		const ghlTemplate = {
+			customFields: [
+				{
+					id: key,
+					key: key,
+					field_value: value
+				}
+			]
+		};
+		await prisma.$queryRaw`exec [p_GHL_PUTContactUpdate] ${ProspectKey},${ghlTemplate}`.catch(prismaErrorHandler);
+	}
+};
+
+export const postGHLData = async (ProspectKey: string, data: string) => {
+	const message = await generateMessage(ProspectKey, data);
+	const json = JSON.parse(message);
+	await prisma.$queryRaw`exec [p_GHL_PostProspect] ${ProspectKey},${json}`.catch(prismaErrorHandler);
 };

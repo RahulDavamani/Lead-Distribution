@@ -28,6 +28,7 @@ export const ruleConfig = (() => {
 		name: '',
 		description: '',
 		outboundCallNumber: '',
+		ghlPostData: '{}',
 		smsTemplate: '',
 		operators: [],
 		affiliates: [],
@@ -88,7 +89,7 @@ export const ruleConfig = (() => {
 
 		if (id) await trpc($page).rule.deleteRole.query({ id }).catch(trpcClientErrorHandler);
 
-		window.location.href = '/rules';
+		ui.navigate('/rules');
 		ui.showToast({
 			class: 'alert-success',
 			title: 'Rule Deleted Successfully'

@@ -7,6 +7,7 @@ export const ruleSchema = z.object({
 	description: z.string(),
 
 	outboundCallNumber: z.string().min(1),
+	ghlPostData: z.string().min(1),
 	smsTemplate: z.string(),
 
 	operators: z.array(z.object({ UserId: z.number() })),
