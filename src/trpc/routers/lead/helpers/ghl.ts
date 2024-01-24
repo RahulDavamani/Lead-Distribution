@@ -34,5 +34,7 @@ export const updateGHLTemplates = async (ProspectKey: string, templates: { [k: s
 export const postGHLData = async (ProspectKey: string, data: string) => {
 	const message = await generateMessage(ProspectKey, data);
 	const json = JSON.parse(message);
+	if (Object.keys(json).length === 0) return;
+	json['locationId'] = '%%locationId%%';
 	await prisma.$queryRaw`exec [p_GHL_PostProspect] ${ProspectKey},${json}`.catch(prismaErrorHandler);
 };

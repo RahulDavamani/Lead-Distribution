@@ -15,7 +15,7 @@ export interface TRPCZodError {
 }
 
 export type TRPCZodErrors<T> = {
-	[K in keyof T]: T[K] extends object | undefined ? TRPCZodErrors<T[K]> : TRPCZodError;
+	[K in keyof T]: T[K] extends object | undefined | null ? TRPCZodErrors<T[K]> : TRPCZodError;
 };
 
 export interface TRPCHandlerError<T> {
@@ -91,7 +91,7 @@ export const formatZodErrors = <T>(errors: TRPCZodError[]): TRPCZodErrors<T> => 
 			const key = path[i];
 
 			if (i === path.length - 1) {
-				currentObj[key as keyof T] = error as T[keyof T] extends object | undefined
+				currentObj[key as keyof T] = error as T[keyof T] extends object | undefined | null
 					? TRPCZodErrors<T[keyof T]>
 					: TRPCZodError;
 			} else {

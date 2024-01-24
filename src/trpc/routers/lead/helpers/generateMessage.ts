@@ -5,7 +5,7 @@ type Variables = { [key: string]: string };
 
 export const generateMessage = async (ProspectKey: string, textTemplate: string, variables?: Variables) => {
 	// Get Prospect
-	const { CustomerFirstName, CustomerLastName, Email, Address, ZipCode } = await prisma.leadProspect
+	const { CustomerFirstName, CustomerLastName, Email, Phone, Address, ZipCode } = await prisma.leadProspect
 		.findFirstOrThrow({
 			where: { ProspectKey },
 			select: {
@@ -13,6 +13,7 @@ export const generateMessage = async (ProspectKey: string, textTemplate: string,
 				CustomerFirstName: true,
 				CustomerLastName: true,
 				Email: true,
+				Phone: true,
 				Address: true,
 				ZipCode: true
 			}
@@ -33,6 +34,7 @@ export const generateMessage = async (ProspectKey: string, textTemplate: string,
 		CustomerFirstName: CustomerFirstName ?? '',
 		CustomerLastName: CustomerLastName ?? '',
 		Email: Email ?? '',
+		Phone: Phone ?? '',
 		Address: Address ?? '',
 		ZipCode: ZipCode ?? '',
 		RuleName: rule?.name ?? '',

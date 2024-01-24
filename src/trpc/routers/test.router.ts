@@ -2,6 +2,21 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		const result = await prisma.$queryRaw`
+         select functionname from v_plan_Functions where Active=1
+      `;
+		console.log(result);
+		// const ProspectKeys = await prisma.ldLead.deleteMany({
+		// 	where: { ProspectKey: 'F13BEE4E-06EC-4D75-8846-FEE71E26DCAA' }
+		// });
+		// console.log(ProspectKeys);
+		// [
+		//    { ProspectKey: 'ED8BB4B7-CF80-4D7B-89F9-D6DCDC9CD83E' },
+		//    { ProspectKey: 'E238814B-4FDE-4D7C-B4EB-F0D57E5301DE' },
+		//    { ProspectKey: '80710479-392D-490A-A9C8-77F6CD47EF84' },
+		//    { ProspectKey: '19AC76FD-A0CD-48DB-9DB1-D25C79CE2590' },
+		//    { ProspectKey: '958879B5-EF68-4403-B195-E0FFE3BE1AF5' },
+		//    { ProspectKey: '392DF353-88C5-45A5-8408-BDACFBB17AE4' }
 		// console.log(await getProspectDetails('E139170E-7DEF-4C7B-87B3-520DA8A36D73'));
 		// const UserKey = '5a36aa41-73e1-44f7-b71b-f5bceeaff626';
 		// const result =
@@ -25,7 +40,7 @@ export const testRouter = router({
 		// const result = await prisma.$queryRaw`select Email from VonageUsers where UserId = 1013 and Active=1`;
 		// await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`;
 		// const result = await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready'  and AgentId='1042'`;
-		await prisma.ldLead.delete({ where: { ProspectKey: '91E5EBB8-B82C-43FE-94A3-ED4C0F350EB6' } });
+		// await prisma.ldLead.delete({ where: { ProspectKey: '56135F1F-F051-4C8C-9403-EA1F9965213F' } });
 		// console.log(await prisma.ldLeadToken.findMany());
 		// const result = await prisma.$queryRaw`select * from Users where Email='davamani@xyzies.com'`;
 		// const result = await prisma.$queryRaw`EXEC [dbo].[p_PA_SendPushAlert]

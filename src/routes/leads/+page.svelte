@@ -47,14 +47,7 @@
 			.lead.getQueued.query({ UserKey, roleType })
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
-		queuedLeads = leads.queuedLeads.map((lead) => ({
-			...lead,
-			createdAt: new Date(lead.createdAt),
-			updatedAt: new Date(lead.updatedAt),
-			ProspectId: lead.ProspectId,
-			ruleId: lead.ruleId,
-			operatorName: lead.operatorName
-		}));
+		queuedLeads = leads.queuedLeads;
 		if (oldQueuedLeads.length !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
 		await tick();
 		new DataTable('#queuedLeadsTable');
@@ -84,14 +77,7 @@
 			})
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
-		completedLeads = leads.completedLeads.map((lead) => ({
-			...lead,
-			createdAt: new Date(lead.createdAt),
-			updatedAt: new Date(lead.updatedAt),
-			ProspectId: lead.ProspectId,
-			ruleId: lead.ruleId,
-			operatorName: lead.operatorName
-		}));
+		completedLeads = leads.completedLeads;
 		ui.setLoader();
 		await tick();
 		new DataTable('#completedLeadsTable');

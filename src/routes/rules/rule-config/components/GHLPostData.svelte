@@ -208,7 +208,7 @@
 							<option value="string">String</option>
 							<option value="number">Number</option>
 						</select>
-						<Variables isTop={false} insertVariable={(v) => (curJson += v)} />
+						<Variables isTop={false} variables={['Phone']} insertVariable={(v) => (curJson += v)} />
 					</div>
 				</FormControl>
 			{:else if curJsonType === 'list' && Array.isArray(curJson)}
@@ -227,18 +227,19 @@
 						</thead>
 						<tbody>
 							{#each curJson as value, i}
+								{@const isString = typeof value === 'string'}
 								<tr>
 									<td class="text-center p-0">{i}</td>
-
 									<td>
 										{#if getJsonType(value) === 'single'}
 											<input
-												type="text"
+												type={isString ? 'text' : 'number'}
 												placeholder="Type here"
 												class="input input-bordered input-sm w-full"
 												{value}
 												on:change={(e) => {
-													if (Array.isArray(curJson)) curJson[i] = e.currentTarget.value;
+													if (Array.isArray(curJson))
+														curJson[i] = isString ? e.currentTarget.value : Number(e.currentTarget.value);
 												}}
 											/>
 										{:else if getJsonType(value) === 'list' && Array.isArray(value)}
@@ -290,6 +291,7 @@
 						</thead>
 						<tbody>
 							{#each Object.entries(curJson) as [key, value], i}
+								{@const isString = typeof value === 'string'}
 								<tr>
 									<td class="text-center p-0">{i}</td>
 									<td>
@@ -304,13 +306,13 @@
 									<td>
 										{#if getJsonType(value) === 'single'}
 											<input
-												type="text"
+												type={isString ? 'text' : 'number'}
 												placeholder="Type here"
 												class="input input-bordered input-sm w-full"
 												{value}
 												on:change={(e) => {
 													if (typeof curJson === 'object' && !Array.isArray(curJson))
-														curJson[key] = e.currentTarget.value;
+														curJson[key] = isString ? e.currentTarget.value : Number(e.currentTarget.value);
 												}}
 											/>
 										{:else if getJsonType(value) === 'list' && Array.isArray(value)}

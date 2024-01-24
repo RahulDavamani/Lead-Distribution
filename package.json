@@ -51,6 +51,7 @@
 		"datatables.net-dt": "^1.13.8",
 		"lodash.clonedeep": "^4.5.0",
 		"node-schedule": "^2.1.1",
+		"superjson": "^2.2.1",
 		"svelte-flatpickr": "^3.3.4",
 		"trpc-sveltekit": "^3.5.22"
 	}
