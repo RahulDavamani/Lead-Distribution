@@ -4810,6 +4810,7 @@ model ImportComcastPayment {
    Caller_ID                String?   @map("Caller ID") @db.VarChar(100)
    ProductKey               String?   @db.UniqueIdentifier
    StatusKey                String?   @db.UniqueIdentifier
+   Originator               String?   @db.VarChar(255)
 
    @@ignore
 }
@@ -5148,6 +5149,7 @@ model ImportEarthlinkPayment {
    Vendor_Account_Number                 String?   @map("Vendor Account Number") @db.VarChar(50)
    Account_Number                        String?   @map("Account Number") @db.VarChar(50)
    Is_Blended_Bounty_Rate                String?   @map("Is Blended Bounty Rate") @db.VarChar(15)
+   ProductKey                            String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -13145,6 +13147,158 @@ model VonageCallMaster {
    Disposition          String?   @db.NVarChar(255)
 }
 
+model Plan {
+   id               String           @id @unique
+   createdAt        DateTime         @default(now())
+   updatedAt        DateTime
+   name             String
+   description      String
+   processFrequency String
+   paymentFrequency String
+   effectiveFrom    String
+   effectiveTo      String
+   eligibilityId    String           @unique
+   isActive         Boolean
+   optionsId        String           @unique
+   ProviderKey      String
+   finalCommission  String
+   PlanEligibility  PlanEligibility  @relation(fields: [eligibilityId], references: [id])
+   PlanOptions      PlanOptions      @relation(fields: [optionsId], references: [id])
+   PlanCreditPull   PlanCreditPull[]
+   PlanVariable     PlanVariable[]
+}
+
+model PlanCreditPull {
+   id                   String                 @id @unique
+   createdAt            DateTime               @default(now())
+   updatedAt            DateTime
+   num                  Int
+   date                 DateTime
+   hierarchy            String?
+   planId               String
+   source               String
+   Plan                 Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
+   PlanCreditPullFilter PlanCreditPullFilter[]
+}
+
+model PlanCreditPullFilter {
+   id             String         @id @unique
+   createdAt      DateTime       @default(now())
+   updatedAt      DateTime
+   type           String
+   column         String
+   values         String
+   creditPullId   String
+   condition      String
+   PlanCreditPull PlanCreditPull @relation(fields: [creditPullId], references: [id], onDelete: Cascade)
+}
+
+model PlanEligibility {
+   id                    String                  @id @unique
+   createdAt             DateTime                @default(now())
+   updatedAt             DateTime
+   target                String
+   Plan                  Plan?
+   PlanEligibilityFilter PlanEligibilityFilter[]
+}
+
+model PlanEligibilityFilter {
+   id              String          @id @unique
+   createdAt       DateTime        @default(now())
+   updatedAt       DateTime
+   type            String
+   column          String
+   values          String
+   eligibilityId   String
+   condition       String
+   PlanEligibility PlanEligibility @relation(fields: [eligibilityId], references: [id], onDelete: Cascade)
+}
+
+model PlanOptions {
+   id                    String                 @id @unique
+   createdAt             DateTime               @default(now())
+   updatedAt             DateTime
+   Plan                  Plan?
+   PlanOptionsChargeback PlanOptionsChargeback?
+   PlanOptionsEscrow     PlanOptionsEscrow?
+}
+
+model PlanOptionsChargeback {
+   id                   String      @id @unique
+   createdAt            DateTime    @default(now())
+   updatedAt            DateTime
+   chargebackPercentage Float
+   chargebackDuration   Int
+   optionsId            String      @unique
+   PlanOptions          PlanOptions @relation(fields: [optionsId], references: [id], onDelete: Cascade)
+}
+
+model PlanOptionsEscrow {
+   id                     String      @id @unique
+   createdAt              DateTime    @default(now())
+   updatedAt              DateTime
+   escrowPaybackDays      Int
+   optionsId              String      @unique
+   pullEscrowPercentage   Float
+   pullFrom               String
+   staticEscrowPercentage Float
+   PlanOptions            PlanOptions @relation(fields: [optionsId], references: [id], onDelete: Cascade)
+}
+
+model PlanVariable {
+   id                    String                  @id @unique
+   createdAt             DateTime                @default(now())
+   updatedAt             DateTime
+   functionName          String
+   isVisible             Boolean
+   planId                String
+   name                  String
+   Plan                  Plan                    @relation(fields: [planId], references: [id], onDelete: Cascade)
+   PlanVariableParameter PlanVariableParameter[]
+}
+
+model PlanVariableParameter {
+   id           String       @id @unique
+   createdAt    DateTime     @default(now())
+   updatedAt    DateTime
+   num          Int
+   name         String
+   type         String
+   value        String
+   variableId   String
+   PlanVariable PlanVariable @relation(fields: [variableId], references: [id], onDelete: Cascade)
+}
+
+model RunControl {
+   RunSeq      Int       @id(map: "PK__RunContr__9F551F828BF670DF") @default(autoincrement())
+   RunKey      String?   @unique(map: "UQ__RunContr__E0A5F0BF699FCCDA") @default(dbgenerated("newid()"), map: "DF__RunContro__RunKe__40F2B247") @db.UniqueIdentifier
+   ProviderKey String?   @db.UniqueIdentifier
+   RunSql      String?   @db.VarChar(Max)
+   RunNow      Int?
+   RunComment  String?   @db.VarChar(Max)
+   RunStart    DateTime? @db.DateTime
+   RunEnd      DateTime? @db.DateTime
+   CreatedOn   DateTime? @db.DateTime
+   CreatedBy   String?   @db.UniqueIdentifier
+   RunType     Int?
+}
+
+model RunControlLog {
+   RunSeq      Int       @id(map: "PK__RunContr__9F551F8256A09066") @default(autoincrement())
+   RunKey      String    @db.UniqueIdentifier
+   ProviderKey String?   @db.UniqueIdentifier
+   RunSql      String?   @db.VarChar(Max)
+   RunNow      Int?
+   RunComment  String?   @db.VarChar(Max)
+   RunStart    DateTime? @db.DateTime
+   RunEnd      DateTime? @db.DateTime
+   CreatedOn   DateTime? @db.DateTime
+   CreatedBy   String?   @db.UniqueIdentifier
+   RunStatus   Int?
+   RunMessage  String?   @db.VarChar(Max)
+   RunType     Int?
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -13159,12 +13313,21 @@ model LdRule {
    smsTemplate                 String
    waitTimeForCustomerResponse Int?
 
-   operators        LdRuleOperator[]
-   affiliates       LdRuleAffiliate[]
-   notification     LdRuleNotification?
-   supervisors      LdRuleSupervisor[]
-   dispositionRules LdRuleDispositionRule[]
-   leads            LdLead[]
+   operators    LdRuleOperator[]
+   affiliates   LdRuleAffiliate[]
+   notification LdRuleNotification?
+   supervisors  LdRuleSupervisor[]
+
+   totalDispositionLimit Int
+   dispositionRules      LdRuleDispositionRule[]
+
+   dispositionsNoMatchActionsId String        @unique @map("dispositionsUnMatchActionsId")
+   dispositionsNoMatchActions   LdRuleActions @relation("DispositionNoMatchAction", fields: [dispositionsNoMatchActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   dispositionsLimitExceedActionsId String        @unique
+   dispositionsLimitExceedActions   LdRuleActions @relation("DispositionLimitExceedAction", fields: [dispositionsLimitExceedActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   leads LdLead[]
 }
 
 model LdRuleOperator {
@@ -13238,15 +13401,70 @@ model LdRuleDispositionRule {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num          Int
    dispositions String
-   smsTemplate  String
-   requeueTime  Int
-   ruleId       String
+   count        Int
 
-   rule            LdRule              @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   actionsId String        @unique
+   actions   LdRuleActions @relation(fields: [actionsId], references: [id])
+
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
    leadDisposition ldLeadDisposition[]
    leadRequeue     LdLeadRequeue[]
+}
+
+model LdRuleActions {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   dispositionRuleAction        LdRuleDispositionRule?
+   dispositionNoMatchAction     LdRule?                @relation("DispositionNoMatchAction")
+   dispositionLimitExceedAction LdRule?                @relation("DispositionLimitExceedAction")
+
+   requeueLeadActions  LdRuleRequeueLeadAction[]
+   sendSMSActions      LdRuleSendSMSAction[]
+   closeLeadActions    LdRuleCloseLeadAction[]
+   completeLeadActions LdRuleCompleteLeadAction[]
+}
+
+model LdRuleRequeueLeadAction {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num         Int
+   requeueTime Int
+   actions     LdRuleActions[]
+}
+
+model LdRuleSendSMSAction {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num         Int
+   smsTemplate String
+   actions     LdRuleActions[]
+}
+
+model LdRuleCloseLeadAction {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num     Int
+   actions LdRuleActions[]
+}
+
+model LdRuleCompleteLeadAction {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num     Int
+   actions LdRuleActions[]
 }
 
 model LdLead {

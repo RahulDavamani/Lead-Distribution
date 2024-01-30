@@ -2,10 +2,21 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		const result = await prisma.$queryRaw`
-         select functionname from v_plan_Functions where Active=1
-      `;
-		console.log(result);
+		// const rules = await prisma.ldRule.findMany({ select: { id: true } });
+		// for (const { id } of rules) {
+		// 	const actions1 = await prisma.ldRuleActions.create({ data: {} });
+		// 	const actions2 = await prisma.ldRuleActions.create({ data: {} });
+		// 	await prisma.ldRule.update({
+		// 		where: { id },
+		// 		data: {
+		// 			dispositionsUnMatchActionsId: actions1.id,
+		// 			dispositionsLimitExceedActionsId: actions2.id
+		// 		}
+		// 	});
+		// }
+		// const x = await prisma.ldRuleActions.create({
+		// 	data: {}
+		// });
 		// const ProspectKeys = await prisma.ldLead.deleteMany({
 		// 	where: { ProspectKey: 'F13BEE4E-06EC-4D75-8846-FEE71E26DCAA' }
 		// });

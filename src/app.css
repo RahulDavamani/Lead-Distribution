@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.my-card {
+	@apply card border-2 shadow-sm p-4 hover:outline hover:shadow-lg focus-within:outline focus-within:shadow-lg;
+}

@@ -4,6 +4,7 @@
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
+	import { nanoid } from 'nanoid';
 
 	afterUpdate(() => {
 		new DataTable('#supervisorsTable');
@@ -25,7 +26,7 @@
 		$ruleConfig.rule.supervisors = [
 			...$ruleConfig.rule.supervisors,
 			...selectedSupervisors.map((UserId) => ({
-				id: null,
+				id: nanoid(),
 				UserId,
 				textTemplate: '',
 				isEscalate: true,

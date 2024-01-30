@@ -8,6 +8,9 @@ import { invalidateAll } from '$app/navigation';
 import type { Operator } from '../zod/operator.schema';
 import type { Affiliate } from '../zod/affiliate.schema';
 import cloneDeep from 'lodash.clonedeep';
+import { nanoid } from 'nanoid';
+import type { Actions } from '$lib/config/actions.schema';
+import { actionsConfigList } from '$lib/config/actions.config';
 
 export interface RuleConfig {
 	init: boolean;
@@ -22,21 +25,32 @@ export interface RuleConfig {
 }
 
 export const ruleConfig = (() => {
+	const getNewActions = (): Actions =>
+		Object.fromEntries([['id', nanoid()], ...actionsConfigList.map(({ labels: { keyActions } }) => [keyActions, []])]);
+
 	const newRule: Rule = {
 		id: null,
 		isActive: true,
 		name: '',
 		description: '',
+
 		outboundCallNumber: '',
 		ghlPostData: '{}',
 		smsTemplate: '',
+		waitTimeForCustomerResponse: null,
+
 		operators: [],
 		affiliates: [],
-		waitTimeForCustomerResponse: null,
+
 		notification: null,
 		supervisors: [],
-		dispositionRules: []
+
+		totalDispositionLimit: 0,
+		dispositionRules: [],
+		dispositionsUnMatchActions: getNewActions(),
+		dispositionsLimitExceedActions: getNewActions()
 	};
+
 	const { subscribe, set, update } = writable<RuleConfig>({
 		init: false,
 		rule: cloneDeep(newRule),
@@ -98,5 +112,13 @@ export const ruleConfig = (() => {
 		ui.setLoader();
 	};
 
-	return { subscribe, set, update, init, saveRule, deleteRule };
+	return {
+		subscribe,
+		set,
+		update,
+		getNewActions,
+		init,
+		saveRule,
+		deleteRule
+	};
 })();

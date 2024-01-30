@@ -4,6 +4,7 @@
 	import FormControl from '../../../components/FormControl.svelte';
 	import Variables from './Variables.svelte';
 	import { timeToText } from '$lib/client/DateTime';
+	import { nanoid } from 'nanoid';
 
 	$: ({
 		rule: { notification },
@@ -15,7 +16,7 @@
 			$ruleConfig.rule.notification.notificationAttempts = [
 				...notification.notificationAttempts,
 				{
-					id: null,
+					id: nanoid(),
 					num: notification.notificationAttempts.length + 1,
 					textTemplate: '',
 					waitTime: 0
@@ -54,7 +55,7 @@
 		on:click={() => {
 			if (notification === null)
 				$ruleConfig.rule.notification = {
-					id: null,
+					id: nanoid(),
 					notificationType: 'one',
 					notificationAttempts: []
 				};
@@ -91,7 +92,10 @@
 		</div>
 
 		<div class="flex items-start gap-2 mb-4">
-			<div class="font-semibold">Operation Notification Wait Time:</div>
+			<div>
+				<span class="font-semibold">Operation Notification Attempts:</span>
+				<span class="font-mono">({notification.notificationAttempts.length})</span>
+			</div>
 			<button class="z-10 text-success" on:click={addNotificationAttempt}>
 				<Icon icon="mdi:add-circle" width={24} />
 			</button>
@@ -99,7 +103,7 @@
 
 		<div class="space-y-4 px-2 mb-4">
 			{#each notification.notificationAttempts as { num }, i}
-				<div class="card border-2 p-4">
+				<div class="my-card">
 					<div class="flex justify-start items-center gap-2 mb-1">
 						<button on:click={() => deleteNotificationAttempt(num)}>
 							<Icon icon="mdi:close" class="text-error" width="20" />

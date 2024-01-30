@@ -47,21 +47,21 @@ export const auth = (() => {
 				set({ token, user, roleType });
 			}
 		}
-		set({
-			token: 'abc',
-			user: {
-				Message: 'Success',
-				UserKey: '5a36aa41-73e1-44f7-b71b-f5bceeaff626',
-				CompanyKey: '4f82d8a1-3933-4a02-8c6a-ebfaa2763a6b',
-				userRole: [
-					{
-						ID: 5,
-						Role: 'Agent'
-					}
-				]
-			},
-			roleType: 'ADMIN'
-		});
+		// set({
+		// 	token: 'abc',
+		// 	user: {
+		// 		Message: 'Success',
+		// 		UserKey: '5a36aa41-73e1-44f7-b71b-f5bceeaff626',
+		// 		CompanyKey: '4f82d8a1-3933-4a02-8c6a-ebfaa2763a6b',
+		// 		userRole: [
+		// 			{
+		// 				ID: 5,
+		// 				Role: 'Agent'
+		// 			}
+		// 		]
+		// 	},
+		// 	roleType: 'ADMIN'
+		// });
 		ui.setLoader();
 	};
 
