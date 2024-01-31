@@ -1,9 +1,7 @@
 import type { ServerLoadEvent } from '@sveltejs/kit';
 import { createContext, router } from '../server';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
-import { ruleRouter } from './rule.router';
-import { operatorRouter } from './operator.router';
-import { affiliateRouter } from './affiliate.router';
+import { ruleRouter } from './rule/rule.router';
 import { leadRouter } from './lead/lead.router';
 import { vonageCallRouter } from './vonageCall.router';
 import { testRouter } from './test.router';
@@ -14,8 +12,6 @@ import { testRouter } from './test.router';
 export const appRouter = router({
 	test: testRouter,
 	rule: ruleRouter,
-	operator: operatorRouter,
-	affiliate: affiliateRouter,
 	lead: leadRouter,
 	vonageCall: vonageCallRouter
 });

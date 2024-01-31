@@ -6,18 +6,16 @@
 	import Operators from './components/Operators.svelte';
 	import Affiliates from './components/Affiliates.svelte';
 	import WaitTimeCR from './components/WaitTimeCR.svelte';
-	import Notification from './components/Notification.svelte';
+	import NotificationAttempts from './components/NotificationAttempts.svelte';
 	import { ui } from '../../../stores/ui.store';
-	import DispositionRules from './components/DispositionRules.svelte';
+	import Responses from './components/Responses.svelte';
 	import Supervisors from './components/Supervisors.svelte';
-	import GHLPostData from './components/GHLPostData.svelte';
 	import Variables from './components/Variables.svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data;
-	$: ({ rule, operators, affiliates } = data);
-	onMount(() => ruleConfig.init(rule, operators, affiliates));
-
-	let showModal = false;
+	$: ({ rule, operators, affiliates, canDelete } = data);
+	$: ruleConfig.init(rule, operators, affiliates);
 </script>
 
 {#if $ruleConfig.init}
@@ -36,7 +34,7 @@
 			<!-- Save & Delete Buttons -->
 			<div class="space-x-2">
 				<button
-					class="btn btn-sm btn-error {$ruleConfig.rule.id === null && 'btn-disabled'}"
+					class="btn btn-sm btn-error {(rule?.id === null || !canDelete) && 'btn-disabled'}"
 					on:click={ruleConfig.deleteRule}
 				>
 					<Icon icon="mdi:delete-forever" width={22} />
@@ -80,7 +78,7 @@
 			</FormControl>
 
 			<!-- GHL Post Data -->
-			<div class="form-control whitespace-nowrap">
+			<!-- <div class="form-control whitespace-nowrap">
 				<div class="label font-semibold gap-4">
 					<div>GHL Post Data</div>
 					<div class="tooltip" data-tip="This data will sent to ghl at the time lead arrival">
@@ -88,7 +86,7 @@
 					</div>
 				</div>
 				<button class="btn btn-primary" on:click={() => (showModal = true)}> Configure Data </button>
-			</div>
+			</div> -->
 
 			<!-- SMS Template -->
 			<FormControl
@@ -117,19 +115,12 @@
 		</div>
 		<div class="divider" />
 
-		<WaitTimeCR />
-		<div class="divider" />
-
-		<Notification />
+		<NotificationAttempts />
 		<div class="divider" />
 
 		<Supervisors />
 		<div class="divider" />
 
-		<DispositionRules />
+		<Responses />
 	</div>
-
-	{#if showModal}
-		<GHLPostData bind:showModal jsonText={$ruleConfig.rule.ghlPostData} />
-	{/if}
 {/if}

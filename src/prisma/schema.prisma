@@ -9503,6 +9503,9 @@ model Users {
    CitizenshipId       Int?
    LMSId               String?   @db.VarChar(100)
    LMSPassword         String?   @db.VarChar(100)
+
+   LdRuleOperators   LdRuleOperator[]
+   LdRuleSupervisors LdRuleSupervisor[]
 }
 
 model UsersArc {
@@ -13148,24 +13151,25 @@ model VonageCallMaster {
 }
 
 model Plan {
-   id               String           @id @unique
-   createdAt        DateTime         @default(now())
-   updatedAt        DateTime
-   name             String
-   description      String
-   processFrequency String
-   paymentFrequency String
-   effectiveFrom    String
-   effectiveTo      String
-   eligibilityId    String           @unique
-   isActive         Boolean
-   optionsId        String           @unique
-   ProviderKey      String
-   finalCommission  String
-   PlanEligibility  PlanEligibility  @relation(fields: [eligibilityId], references: [id])
-   PlanOptions      PlanOptions      @relation(fields: [optionsId], references: [id])
-   PlanCreditPull   PlanCreditPull[]
-   PlanVariable     PlanVariable[]
+   id                         String           @id @unique
+   createdAt                  DateTime         @default(now())
+   updatedAt                  DateTime
+   name                       String
+   description                String
+   processFrequency           String
+   paymentFrequency           String
+   effectiveFrom              String
+   effectiveTo                String
+   eligibilityId              String           @unique
+   isActive                   Boolean
+   optionsId                  String           @unique
+   ProviderKey                String
+   planFinalCommission        String
+   transactionFinalCommission String
+   PlanEligibility            PlanEligibility  @relation(fields: [eligibilityId], references: [id])
+   PlanOptions                PlanOptions      @relation(fields: [optionsId], references: [id])
+   PlanCreditPull             PlanCreditPull[]
+   PlanVariable               PlanVariable[]
 }
 
 model PlanCreditPull {
@@ -13173,10 +13177,10 @@ model PlanCreditPull {
    createdAt            DateTime               @default(now())
    updatedAt            DateTime
    num                  Int
-   date                 DateTime
    hierarchy            String?
    planId               String
    source               String
+   dateType             String
    Plan                 Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
    PlanCreditPullFilter PlanCreditPullFilter[]
 }
@@ -13253,6 +13257,7 @@ model PlanVariable {
    isVisible             Boolean
    planId                String
    name                  String
+   type                  Int
    Plan                  Plan                    @relation(fields: [planId], references: [id], onDelete: Cascade)
    PlanVariableParameter PlanVariableParameter[]
 }
@@ -13299,33 +13304,145 @@ model RunControlLog {
    RunType     Int?
 }
 
+model PlanCalcRecord {
+   CreSeq         Int       @id(map: "PK_PlanCalcRecord") @default(autoincrement())
+   CreatedOn      DateTime  @default(now(), map: "DF__PlanCalcR__Creat__698AB386") @db.DateTime
+   ComType        String    @db.Char(1)
+   ComGrossAmount Decimal   @db.Decimal(10, 2)
+   ComNetAmount   Decimal   @db.Decimal(10, 2)
+   ComMatrixKey   String?   @db.UniqueIdentifier
+   EscrowRate     Decimal?  @db.Decimal(5, 2)
+   EscrowAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowPayOn    DateTime? @db.Date
+   ComJson        String?   @db.VarChar(255)
+}
+
+model PlanCreditRecord {
+   CreSeq       Int       @default(autoincrement())
+   PlanId       String    @db.VarChar(50)
+   CompanyKey   String    @db.UniqueIdentifier
+   UserKey      String    @db.UniqueIdentifier
+   CreditRefKey String    @db.VarChar(50)
+   SalesRepKey  String    @db.UniqueIdentifier
+   Account      String    @db.VarChar(50)
+   SubAccount   String    @db.VarChar(50)
+   ProductKey   String    @db.UniqueIdentifier
+   ProductName  String    @db.VarChar(100)
+   PackageName  String    @db.VarChar(100)
+   SaleOn       DateTime? @db.Date
+   InstallOn    DateTime? @db.Date
+   DisconnectOn DateTime? @db.Date
+   CancelOn     DateTime? @db.Date
+   IsConfirmed  Boolean
+   IsInstalled  Boolean
+   CreatedOn    DateTime  @default(now(), map: "DF__PlanCredi__Creat__61E991BE") @db.DateTime
+
+   @@id([PlanId, UserKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
+}
+
+model PlanCurrentPeriod {
+   PlanId         String    @id(map: "PK_PlanCurrentPeriod") @db.VarChar(255)
+   CurrentPeriod  String    @db.UniqueIdentifier
+   ProcessCloseOn DateTime? @db.DateTime
+   PaymentCloseOn DateTime? @db.DateTime
+}
+
+model PlanParticipant {
+   PlanSeq    Int       @default(autoincrement())
+   PlanId     String    @db.VarChar(50)
+   CompanyKey String    @db.UniqueIdentifier
+   UserKey    String    @db.UniqueIdentifier
+   CreatedOn  DateTime? @default(now(), map: "DF__PlanParti__Creat__3EA05581") @db.DateTime
+   ModifiedOn DateTime? @db.DateTime
+
+   @@id([PlanId, UserKey], map: "pk_PlanParticipant")
+}
+
+model PlanProcessLog {
+   LogSeq        Int       @id(map: "PK_PlanProcessLog") @default(autoincrement())
+   PlanId        String?   @db.VarChar(50)
+   PeriodKey     String?   @db.UniqueIdentifier
+   ProcessOn     DateTime? @db.DateTime
+   ProcessBy     String?   @db.UniqueIdentifier
+   ProcessStatus String?   @db.VarChar(50)
+   ExceptionAny  String?   @db.VarChar(1000)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
+   CreSeq         Int       @default(autoincrement())
+   CreatedOn      DateTime  @db.DateTime
+   ComType        String    @db.Char(1)
+   ComGrossAmount Decimal   @db.Decimal(10, 2)
+   ComNetAmount   Decimal   @db.Decimal(10, 2)
+   ComMatrixKey   String?   @db.UniqueIdentifier
+   EscrowRate     Decimal?  @db.Decimal(5, 2)
+   EscrowAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowPayOn    DateTime? @db.Date
+   ComJson        String?   @db.VarChar(255)
+
+   @@map("ZPlanCalcRecord_wqVF5Cw8gEGT-21IdUVgZ")
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
+   CreSeq       Int       @default(autoincrement())
+   PlanId       String    @db.VarChar(50)
+   CompanyKey   String    @db.UniqueIdentifier
+   UserKey      String    @db.UniqueIdentifier
+   CreditRefKey String    @db.VarChar(50)
+   SalesRepKey  String    @db.UniqueIdentifier
+   Account      String    @db.VarChar(50)
+   SubAccount   String    @db.VarChar(50)
+   ProductKey   String    @db.UniqueIdentifier
+   ProductName  String    @db.VarChar(100)
+   PackageName  String    @db.VarChar(100)
+   SaleOn       DateTime? @db.Date
+   InstallOn    DateTime? @db.Date
+   DisconnectOn DateTime? @db.Date
+   CancelOn     DateTime? @db.Date
+   IsConfirmed  Boolean
+   IsInstalled  Boolean
+   CreatedOn    DateTime  @db.DateTime
+
+   @@map("ZPlanCreditRecord_wqVF5Cw8gEGT-21IdUVgZ")
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanParticipant_wqVF5Cw8gEGT_21IdUVgZ {
+   PlanSeq    Int       @default(autoincrement())
+   PlanId     String    @db.VarChar(50)
+   CompanyKey String    @db.UniqueIdentifier
+   UserKey    String    @db.UniqueIdentifier
+   CreatedOn  DateTime? @db.DateTime
+   ModifiedOn DateTime? @db.DateTime
+
+   @@map("ZPlanParticipant_wqVF5Cw8gEGT-21IdUVgZ")
+   @@ignore
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
    isActive    Boolean
-   name        String
+   name        String  @unique
    description String
 
-   outboundCallNumber          String
-   ghlPostData                 String
-   smsTemplate                 String
-   waitTimeForCustomerResponse Int?
+   outboundCallNumber String
+   smsTemplate        String
 
-   operators    LdRuleOperator[]
-   affiliates   LdRuleAffiliate[]
-   notification LdRuleNotification?
-   supervisors  LdRuleSupervisor[]
+   operators            LdRuleOperator[]
+   affiliates           LdRuleAffiliate[]
+   notificationAttempts LdRuleNotificationAttempt[]
+   supervisors          LdRuleSupervisor[]
 
-   totalDispositionLimit Int
-   dispositionRules      LdRuleDispositionRule[]
-
-   dispositionsNoMatchActionsId String        @unique @map("dispositionsUnMatchActionsId")
-   dispositionsNoMatchActions   LdRuleActions @relation("DispositionNoMatchAction", fields: [dispositionsNoMatchActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-
-   dispositionsLimitExceedActionsId String        @unique
-   dispositionsLimitExceedActions   LdRuleActions @relation("DispositionLimitExceedAction", fields: [dispositionsLimitExceedActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+   responses         LdRuleResponse[]
+   responseOptionsId String                @unique
+   responseOptions   LdRuleResponseOptions @relation(fields: [responseOptionsId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
    leads LdLead[]
 }
@@ -13335,11 +13452,14 @@ model LdRuleOperator {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   UserId Int
    ruleId String
    rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-   @@unique([ruleId, UserId])
+   num     Int
+   UserKey String @db.UniqueIdentifier
+   user    Users  @relation(fields: [UserKey], references: [UserKey], onUpdate: Cascade, onDelete: Cascade)
+
+   @@unique([ruleId, UserKey])
 }
 
 model LdRuleAffiliate {
@@ -13347,23 +13467,13 @@ model LdRuleAffiliate {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+   num        Int
    CompanyKey String
-   ruleId     String
-   rule       LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
    @@unique([ruleId, CompanyKey])
-}
-
-model LdRuleNotification {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
-
-   notificationType     String
-   notificationAttempts LdRuleNotificationAttempt[]
-
-   ruleId String @unique
-   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model LdRuleNotificationAttempt {
@@ -13371,13 +13481,16 @@ model LdRuleNotificationAttempt {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num          Int
-   textTemplate String
-   waitTime     Int
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-   notification   LdRuleNotification @relation(fields: [notificationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-   notificationId String
-   leadAttempts   LdLeadAttempts[]
+   num             Int
+   messageTemplate String
+   waitTime        Int
+
+   leadAttempts LdLeadAttempts[]
+
+   @@unique([ruleId, num])
 }
 
 model LdRuleSupervisor {
@@ -13385,33 +13498,53 @@ model LdRuleSupervisor {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   UserId       Int
-   textTemplate String
-   isEscalate   Boolean
-   isRequeue    Boolean
-
    ruleId String
    rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-   @@unique([ruleId, UserId])
+   num     Int
+   UserKey String @db.UniqueIdentifier
+   user    Users  @relation(fields: [UserKey], references: [UserKey], onUpdate: Cascade, onDelete: Cascade)
+
+   messageTemplate String
+   isEscalate      Boolean
+   isRequeue       Boolean
+
+   @@unique([ruleId, UserKey])
 }
 
-model LdRuleDispositionRule {
+model LdRuleResponse {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   dispositions String
-   count        Int
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+   num        Int
+   type       String
+   maxAttempt Int
+   values     String
 
    actionsId String        @unique
    actions   LdRuleActions @relation(fields: [actionsId], references: [id])
 
-   ruleId String
-   rule   LdRule @relation(fields: [ruleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   @@unique([ruleId, num])
+}
 
-   leadDisposition ldLeadDisposition[]
-   leadRequeue     LdLeadRequeue[]
+model LdRuleResponseOptions {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   totalMaxAttempt Int
+
+   responsesNoMatchActionsId String        @unique
+   responsesNoMatchActions   LdRuleActions @relation("ResponsesNoMatchActions", fields: [responsesNoMatchActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   responsesLimitExceedActionsId String        @unique
+   responsesLimitExceedActions   LdRuleActions @relation("ResponsesLimitExceedActions", fields: [responsesLimitExceedActionsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   rule LdRule?
 }
 
 model LdRuleActions {
@@ -13419,9 +13552,9 @@ model LdRuleActions {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   dispositionRuleAction        LdRuleDispositionRule?
-   dispositionNoMatchAction     LdRule?                @relation("DispositionNoMatchAction")
-   dispositionLimitExceedAction LdRule?                @relation("DispositionLimitExceedAction")
+   responseActions             LdRuleResponse?
+   responsesNoMatchActions     LdRuleResponseOptions? @relation("ResponsesNoMatchActions")
+   responsesLimitExceedActions LdRuleResponseOptions? @relation("ResponsesLimitExceedActions")
 
    requeueLeadActions  LdRuleRequeueLeadAction[]
    sendSMSActions      LdRuleSendSMSAction[]
@@ -13525,8 +13658,7 @@ model LdLeadRequeue {
    dispositionRuleId String?
    leadId            String
 
-   dispositionRule LdRuleDispositionRule? @relation(fields: [dispositionRuleId], references: [id])
-   lead            LdLead                 @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   lead LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model ldLeadCall {
@@ -13545,13 +13677,8 @@ model ldLeadDisposition {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   dispositionRuleId String?
-   disposition       String
-   message           String
-   leadId            String
+   disposition String
+   leadId      String
 
-   dispositionRule LdRuleDispositionRule? @relation(fields: [dispositionRuleId], references: [id])
-   lead            LdLead                 @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-
-   @@unique([dispositionRuleId, leadId])
+   lead LdLead @relation(fields: [leadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }

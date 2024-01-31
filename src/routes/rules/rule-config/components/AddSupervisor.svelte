@@ -11,24 +11,28 @@
 	});
 
 	export let showModal: boolean;
-	$: ({ rule, operators } = $ruleConfig);
+	$: ({
+		rule: { supervisors },
+		operators
+	} = $ruleConfig);
 
-	let selectedSupervisors: number[] = [];
-	$: addedSupervisors = rule.supervisors.map(({ UserId }) => UserId);
+	let selectedSupervisors: string[] = [];
+	$: addedSupervisors = supervisors.map(({ UserKey }) => UserKey);
 
-	const selectSupervisor = (id: number) => {
-		if (addedSupervisors.includes(id)) return;
-		if (selectedSupervisors.includes(id)) selectedSupervisors = selectedSupervisors.filter((o) => o !== id);
-		else selectedSupervisors = [...selectedSupervisors, id];
+	const selectSupervisor = (UserKey: string) => {
+		if (addedSupervisors.includes(UserKey)) return;
+		if (selectedSupervisors.includes(UserKey)) selectedSupervisors = selectedSupervisors.filter((o) => o !== UserKey);
+		else selectedSupervisors = [...selectedSupervisors, UserKey];
 	};
 
 	const addSupervisors = () => {
 		$ruleConfig.rule.supervisors = [
-			...$ruleConfig.rule.supervisors,
-			...selectedSupervisors.map((UserId) => ({
+			...supervisors,
+			...selectedSupervisors.map((UserKey, i) => ({
 				id: nanoid(),
-				UserId,
-				textTemplate: '',
+				num: supervisors.length + i + 1,
+				UserKey,
+				messageTemplate: '',
 				isEscalate: true,
 				isRequeue: true
 			}))
@@ -55,21 +59,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each operators as { UserId, Name, Email }}
+				{#each operators as { UserKey, VonageAgentId, FirstName, LastName, Email }}
 					<tr
-						class="hover {!addedSupervisors.includes(UserId) && 'cursor-pointer'}"
-						on:click={() => selectSupervisor(UserId)}
+						class="hover {!addedSupervisors.includes(UserKey) && 'cursor-pointer'}"
+						on:click={() => selectSupervisor(UserKey)}
 					>
 						<td class="text-center w-12">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-sm checkbox-success"
-								checked={selectedSupervisors.includes(UserId)}
-								disabled={addedSupervisors.includes(UserId)}
+								checked={selectedSupervisors.includes(UserKey)}
+								disabled={addedSupervisors.includes(UserKey)}
 							/>
 						</td>
-						<td>{UserId}</td>
-						<td>{Name}</td>
+						<td>{VonageAgentId}</td>
+						<td>{FirstName} {LastName}</td>
 						<td>{Email}</td>
 					</tr>
 				{/each}

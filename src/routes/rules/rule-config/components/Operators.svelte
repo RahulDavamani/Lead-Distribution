@@ -3,10 +3,19 @@
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import AddOperator from './AddOperator.svelte';
 
-	$: ({ rule, operators } = $ruleConfig);
+	$: ({
+		rule: { operators },
+		operators: allOperators
+	} = $ruleConfig);
 	let showModal = false;
 
-	const deleteOperator = (id: number) => ($ruleConfig.rule.operators = rule.operators.filter((o) => o.UserId !== id));
+	const sortOperators = () =>
+		($ruleConfig.rule.operators = operators.sort((a, b) => a.num - b.num).map((op, i) => ({ ...op, num: i })));
+
+	const deleteOperator = (UserKey: string) => {
+		$ruleConfig.rule.operators = operators.filter((op) => op.UserKey !== UserKey);
+		sortOperators();
+	};
 </script>
 
 <div class="w-full card border p-4">
@@ -17,20 +26,21 @@
 		</button>
 	</div>
 	<div class="px-2 space-y-2">
-		{#each rule.operators as { UserId }}
-			{@const operator = operators.find((o) => o.UserId === UserId)}
+		{#each operators as { UserKey }}
+			{@const operator = allOperators.find((o) => o.UserKey === UserKey)}
 
 			<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
 				<div>
 					{#if operator}
-						<span class="font-mono">{UserId}:</span>
-						<span class="font-semibold">{operator.Name}</span>
-						<span class="italic"> - {operator.Email}</span>
+						{@const { VonageAgentId, FirstName, LastName, Email } = operator}
+						<span class="font-mono">{VonageAgentId}:</span>
+						<span class="font-semibold">{FirstName} {LastName}</span>
+						<span class="italic"> - {Email}</span>
 					{:else}
 						<span>Invalid Operator</span>
 					{/if}
 				</div>
-				<button class="text-error" on:click={() => deleteOperator(UserId)}>
+				<button class="text-error" on:click={() => deleteOperator(UserKey)}>
 					<Icon icon="mdi:delete" width={20} />
 				</button>
 			</div>

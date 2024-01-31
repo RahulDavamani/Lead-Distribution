@@ -35,20 +35,20 @@ export const ruleConfig = (() => {
 		description: '',
 
 		outboundCallNumber: '',
-		ghlPostData: '{}',
 		smsTemplate: '',
-		waitTimeForCustomerResponse: null,
 
 		operators: [],
 		affiliates: [],
-
-		notification: null,
+		notificationAttempts: [],
 		supervisors: [],
 
-		totalDispositionLimit: 0,
-		dispositionRules: [],
-		dispositionsUnMatchActions: getNewActions(),
-		dispositionsLimitExceedActions: getNewActions()
+		responses: [],
+		responseOptions: {
+			id: nanoid(),
+			totalMaxAttempt: 10,
+			responsesNoMatchActions: getNewActions(),
+			responsesLimitExceedActions: getNewActions()
+		}
 	};
 
 	const { subscribe, set, update } = writable<RuleConfig>({
@@ -63,6 +63,7 @@ export const ruleConfig = (() => {
 	});
 
 	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
+		console.log('hey');
 		update((state) => ({
 			...state,
 			init: true,
@@ -78,19 +79,17 @@ export const ruleConfig = (() => {
 		const $page = get(page);
 		const { rule } = get(ruleConfig);
 
-		const { rule: updatedRule } = await trpc($page)
+		const { ruleId } = await trpc($page)
 			.rule.saveRule.query(rule)
 			.catch((e) => trpcClientErrorHandler<Rule>(e, (e) => update((state) => ({ ...state, zodErrors: e.zodErrors }))));
-		if (!updatedRule) return;
 
-		update((state) => ({ ...state, rule: updatedRule, zodErrors: undefined }));
-		window.history.replaceState(history.state, '', `/rules/rule-config?id=${updatedRule.id}`);
+		window.history.replaceState(history.state, '', `/rules/rule-config?id=${ruleId}`);
 
+		await invalidateAll();
 		ui.showToast({
 			class: 'alert-success',
 			title: 'Rule Updated Successfully'
 		});
-		invalidateAll();
 		ui.setLoader();
 	};
 
@@ -108,8 +107,6 @@ export const ruleConfig = (() => {
 			class: 'alert-success',
 			title: 'Rule Deleted Successfully'
 		});
-		invalidateAll();
-		ui.setLoader();
 	};
 
 	return {

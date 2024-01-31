@@ -5,24 +5,28 @@
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 
-	afterUpdate(() => {
-		new DataTable('#operatorsTable');
-	});
+	afterUpdate(() => new DataTable('#operatorsTable'));
 
 	export let showModal: boolean;
-	$: ({ rule, operators } = $ruleConfig);
+	$: ({
+		rule: { operators },
+		operators: allOperators
+	} = $ruleConfig);
 
-	let selectedOperators: number[] = [];
-	$: addedOperators = rule.operators.map(({ UserId }) => UserId);
+	let selectedOperators: string[] = [];
+	$: addedOperators = operators.map(({ UserKey }) => UserKey);
 
-	const selectOperator = (id: number) => {
-		if (addedOperators.includes(id)) return;
-		if (selectedOperators.includes(id)) selectedOperators = selectedOperators.filter((o) => o !== id);
-		else selectedOperators = [...selectedOperators, id];
+	const selectOperator = (UserKey: string) => {
+		if (addedOperators.includes(UserKey)) return;
+		if (selectedOperators.includes(UserKey)) selectedOperators = selectedOperators.filter((o) => o !== UserKey);
+		else selectedOperators = [...selectedOperators, UserKey];
 	};
 
 	const addOperator = () => {
-		$ruleConfig.rule.operators = [...$ruleConfig.rule.operators, ...selectedOperators.map((UserId) => ({ UserId }))];
+		$ruleConfig.rule.operators = [
+			...operators,
+			...selectedOperators.map((UserKey, i) => ({ num: operators.length + i + 1, UserKey }))
+		];
 		showModal = false;
 		selectedOperators = [];
 	};
@@ -45,21 +49,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each operators as { UserId, Name, Email }}
+				{#each allOperators as { UserKey, VonageAgentId, FirstName, LastName, Email }}
 					<tr
-						class="hover {!addedOperators.includes(UserId) && 'cursor-pointer'}"
-						on:click={() => selectOperator(UserId)}
+						class="hover {!addedOperators.includes(UserKey) && 'cursor-pointer'}"
+						on:click={() => selectOperator(UserKey)}
 					>
 						<td class="text-center w-12">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-sm checkbox-success"
-								checked={selectedOperators.includes(UserId)}
-								disabled={addedOperators.includes(UserId)}
+								checked={selectedOperators.includes(UserKey)}
+								disabled={addedOperators.includes(UserKey)}
 							/>
 						</td>
-						<td>{UserId}</td>
-						<td>{Name}</td>
+						<td>{VonageAgentId}</td>
+						<td>{FirstName} {LastName}</td>
 						<td>{Email}</td>
 					</tr>
 				{/each}

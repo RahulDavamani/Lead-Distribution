@@ -35,9 +35,7 @@
 	<div class="divider mt-1" />
 
 	<div class="flex flex-col gap-4">
-		{#each rules as { id, isActive, name, description, createdAt, notification, _count, leads }}
-			{@const queuedLeads = leads.filter(({ isCompleted }) => !isCompleted).length}
-			{@const completedLeads = leads.filter(({ isCompleted }) => isCompleted).length}
+		{#each rules as { id, isActive, name, description, createdAt, _count }}
 			<div class="indicator w-full">
 				<span class="indicator-item badge badge-sm {isActive ? 'badge-success' : 'badge-error'} mt-0.5 mr-0.5" />
 				<button
@@ -74,19 +72,12 @@
 					</div>
 
 					<div class="card p-2 text-center">
-						<div class="text-lg font-semibold {notification === null ? 'text-error' : 'text-success'}">
-							{notification === null ? 'Disabled' : `Enabled: ${notification._count.notificationAttempts} Attempts`}
-						</div>
-						<div class="text-sm">Notification</div>
-					</div>
-
-					<div class="card p-2 text-center">
-						<div class="text-lg font-semibold font-mono text-warning">{queuedLeads}</div>
+						<div class="text-lg font-semibold font-mono text-warning">{_count.leads}</div>
 						<div class="text-sm">Queued Leads</div>
 					</div>
 
 					<div class="card p-2 text-center">
-						<div class="text-lg font-semibold font-mono text-success">{completedLeads}</div>
+						<div class="text-lg font-semibold font-mono text-success">{_count.leads}</div>
 						<div class="text-sm">Completed Leads</div>
 					</div>
 					<Icon icon="mdi:chevron-right" width={24} class="ml-2" />

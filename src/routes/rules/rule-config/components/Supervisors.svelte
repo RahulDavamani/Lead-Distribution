@@ -4,19 +4,30 @@
 	import AddSupervisor from './AddSupervisor.svelte';
 	import FormControl from '../../../components/FormControl.svelte';
 	import Variables from './Variables.svelte';
+	import { tick } from 'svelte';
 
 	let showModal = false;
-	$: ({ rule, zodErrors, operators } = $ruleConfig);
+	$: ({
+		rule: { supervisors },
+		zodErrors,
+		operators
+	} = $ruleConfig);
 
-	const deleteSupervisor = (id: number) =>
-		($ruleConfig.rule.supervisors = rule.supervisors.filter((o) => o.UserId !== id));
+	const sortSupervisors = () =>
+		($ruleConfig.rule.supervisors = supervisors.sort((a, b) => a.num - b.num).map((sp, i) => ({ ...sp, num: i })));
+
+	const deleteSupervisor = async (UserKey: string) => {
+		$ruleConfig.rule.supervisors = supervisors.filter((sp) => sp.UserKey !== UserKey);
+		await tick();
+		sortSupervisors();
+	};
 </script>
 
 <div class="flex justify-between items-center mb-4">
 	<div class="flex gap-2">
 		<div>
 			<span class="text-lg font-semibold">Supervisors:</span>
-			<span class="font-mono">({rule.supervisors.length})</span>
+			<span class="font-mono">({supervisors.length})</span>
 		</div>
 		<button class="z-10 text-success" on:click={() => (showModal = true)}>
 			<Icon icon="mdi:add-circle" width={24} />
@@ -25,18 +36,19 @@
 </div>
 
 <div class="space-y-4 px-2 mb-2">
-	{#each rule.supervisors as { UserId }, i}
-		{@const supervisor = operators.find((o) => o.UserId === UserId)}
+	{#each supervisors as { UserKey }, i}
+		{@const supervisor = operators.find((o) => o.UserKey === UserKey)}
 		<div class="my-card">
 			<div class="flex justify-start items-center gap-2 mb-1">
-				<button on:click={() => deleteSupervisor(UserId)}>
+				<button on:click={() => deleteSupervisor(UserKey)}>
 					<Icon icon="mdi:close" class="text-error" width="20" />
 				</button>
 				<div>
 					{#if supervisor}
-						<span class="font-mono">{UserId}:</span>
-						<span class="font-semibold">{supervisor.Name}</span>
-						<span class="italic"> - {supervisor.Email}</span>
+						{@const { VonageAgentId, FirstName, LastName, Email } = supervisor}
+						<span class="font-mono">{VonageAgentId}:</span>
+						<span class="font-semibold">{FirstName} {LastName}</span>
+						<span class="italic"> - {Email}</span>
 					{:else}
 						<span>Invalid Supervisor</span>
 					{/if}
@@ -46,18 +58,18 @@
 			<FormControl
 				label="Notification Message Template"
 				bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
-				error={zodErrors?.supervisors?.[i]?.textTemplate}
+				error={zodErrors?.supervisors?.[i]?.messageTemplate}
 			>
 				<div class="join">
 					<textarea
 						placeholder="Type here"
 						class="textarea textarea-bordered join-item w-full"
-						bind:value={$ruleConfig.rule.supervisors[i].textTemplate}
+						bind:value={$ruleConfig.rule.supervisors[i].messageTemplate}
 						rows={1}
 					/>
 					<Variables
 						variables={['NotificationType']}
-						insertVariable={(v) => ($ruleConfig.rule.supervisors[i].textTemplate += v)}
+						insertVariable={(v) => ($ruleConfig.rule.supervisors[i].messageTemplate += v)}
 					/>
 				</div>
 			</FormControl>

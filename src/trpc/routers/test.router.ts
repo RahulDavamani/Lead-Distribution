@@ -2,7 +2,15 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const operators = (await prisma.$queryRaw`
+		//    select Users.UserKey, Users.FirstName, Users.LastName, Users.Email, Users.VonageAgentId
+		//    from VonageUsers inner join Users on VonageUsers.UserId=Users.VonageAgentId
+		//    where VonageUsers.Active=1
+		// `);
+		// console.log(operators.length);
+		// console.log(operators[0]);
 		// const rules = await prisma.ldRule.findMany({ select: { id: true } });
+		// await prisma.ldLead.deleteMany({});
 		// for (const { id } of rules) {
 		// 	const actions1 = await prisma.ldRuleActions.create({ data: {} });
 		// 	const actions2 = await prisma.ldRuleActions.create({ data: {} });

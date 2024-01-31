@@ -10,10 +10,13 @@
 	});
 
 	export let showModal: boolean;
-	$: ({ rule, affiliates } = $ruleConfig);
+	$: ({
+		rule: { affiliates },
+		affiliates: allAffiliates
+	} = $ruleConfig);
 
 	let selectedAffiliates: string[] = [];
-	$: addedAffiliates = rule.affiliates.map(({ CompanyKey }) => CompanyKey);
+	$: addedAffiliates = affiliates.map(({ CompanyKey }) => CompanyKey);
 
 	const selectAffiliate = (id: string) => {
 		if (addedAffiliates.includes(id)) return;
@@ -23,8 +26,8 @@
 
 	const addAffiliate = () => {
 		$ruleConfig.rule.affiliates = [
-			...$ruleConfig.rule.affiliates,
-			...selectedAffiliates.map((CompanyKey) => ({ CompanyKey }))
+			...affiliates,
+			...selectedAffiliates.map((CompanyKey, i) => ({ num: affiliates.length + i + 1, CompanyKey }))
 		];
 		showModal = false;
 		selectedAffiliates = [];
@@ -47,7 +50,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each affiliates as { CompanyKey, CompanyName }}
+				{#each allAffiliates as { CompanyKey, CompanyName }}
 					<tr
 						class="hover {!addedAffiliates.includes(CompanyKey) && 'cursor-pointer'}"
 						on:click={() => selectAffiliate(CompanyKey)}
