@@ -1,30 +1,17 @@
 <script lang="ts">
 	import Modal from '../../../components/Modal.svelte';
-	import {
-		type ActionKey,
-		type Action,
-		actionsConfigList,
-		actionsConfig,
-		keyActionsList
-	} from '$lib/config/actions.config';
+	import { type ActionKey, actionsConfigList, actionsConfig, keyActionsList } from '$lib/config/actions.config';
 	import type { Actions } from '$lib/config/actions.schema';
 	import RequeueLead from '$lib/config/requeueLead/RequeueLead.svelte';
 	import SendSMS from '$lib/config/sendSMS/SendSMS.svelte';
 	import CloseLead from '$lib/config/closeLead/CloseLead.svelte';
 	import CompleteLead from '$lib/config/completeLead/CompleteLead.svelte';
+	import { getActionsList } from '$lib/config/utils/getActionsList';
 
 	export let actions: Actions;
-	export let actionsName: String;
+	export let actionsName: string;
 	let showAddAction = false;
-	$: actionsCount = actionsConfigList.reduce((acc, cur) => acc + actions[cur.labels.keyActions].length, 0);
-	$: actionsList = Array.from({ length: actionsCount }, (_, i) => {
-		let action: { [K in ActionKey]?: Action<K> } = {};
-		for (const {
-			labels: { key, keyActions }
-		} of actionsConfigList)
-			for (const a of actions[keyActions]) if (a.num === i + 1) action = { [key]: a };
-		return action;
-	});
+	$: ({ actionsCount, actionsList } = getActionsList(actions));
 
 	const addAction = (key: ActionKey) => {
 		const keyActions = `${key}Actions` as `${ActionKey}Actions`;

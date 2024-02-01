@@ -8,7 +8,7 @@
 	import { ruleResponseTypes } from '$lib/data/ruleResponseTypes';
 
 	$: ({
-		rule: { responses, responseOptions },
+		rule: { responses },
 		zodErrors
 	} = $ruleConfig);
 

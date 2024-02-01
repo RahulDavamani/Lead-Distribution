@@ -5,6 +5,7 @@
 	import Loader from '../../components/Loader.svelte';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
+	import { getActionsList } from '$lib/config/utils/getActionsList';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
@@ -12,39 +13,8 @@
 	let leadDetails: LeadDetails | undefined;
 
 	const fetchLeadDetails = async (id: string) => {
-		const lead = await trpc($page).lead.getLeadDetails.query({ id });
-		leadDetails = {
-			ProspectKey: lead.ProspectKey,
-			history: lead.history.map(({ createdAt, updatedAt, ...values }) => ({
-				createdAt: new Date(createdAt),
-				updatedAt: new Date(updatedAt),
-				...values
-			})),
-			attempts: lead.attempts.map(({ createdAt, updatedAt, name, ...values }) => ({
-				createdAt: new Date(createdAt),
-				updatedAt: new Date(updatedAt),
-				name,
-				...values
-			})),
-			calls: lead.calls.map(({ createdAt, updatedAt, name, ...values }) => ({
-				createdAt: new Date(createdAt),
-				updatedAt: new Date(updatedAt),
-				name,
-				...values
-			})),
-			requeues: lead.requeues.map(({ createdAt, updatedAt, supervisorName, dispositionNum, ...values }) => ({
-				createdAt: new Date(createdAt),
-				updatedAt: new Date(updatedAt),
-				supervisorName,
-				dispositionNum,
-				...values
-			})),
-			dispositions: lead.dispositions.map(({ createdAt, updatedAt, ...values }) => ({
-				createdAt: new Date(createdAt),
-				updatedAt: new Date(updatedAt),
-				...values
-			}))
-		};
+		const type = $page.url.searchParams.get('type') as 'queued' | 'completed';
+		leadDetails = await trpc($page).lead.getLeadDetails.query({ id, type });
 	};
 
 	$: id ? fetchLeadDetails(id) : (leadDetails = undefined);
@@ -53,125 +23,181 @@
 {#if id}
 	<Modal title="Lead Details" showModal={id !== undefined} closeModal={() => (id = undefined)} boxClasses="max-w-full">
 		{#if leadDetails}
-			<div class="grid grid-cols-7 gap-4">
+			<div class="grid grid-cols-6 gap-4">
 				<div class="overflow-x-auto col-span-2 row-span-2">
 					<div class="text-lg font-semibold mb-1">Lead Status History:</div>
-					<div class="table table-zebra table-sm border rounded-none">
-						<thead class="bg-base-200">
-							<tr>
-								<th>Date Time</th>
-								<th>Status</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each leadDetails.history as { createdAt, status }}
-								<tr>
-									<td>{createdAt.toLocaleString()}</td>
-									<td>{status}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</div>
+					<ul class="steps steps-vertical">
+						{#each leadDetails.statuses as { createdAt, status }}
+							<li class="step step-primary my-2">
+								<div class="text-left">
+									<div class="font-semibold">{status}</div>
+									<div class="text-xs">{createdAt.toLocaleString()}</div>
+								</div>
+							</li>
+						{/each}
+					</ul>
 				</div>
 
-				<div class="grid grid-cols-5 col-span-5 gap-4">
-					<div class="overflow-x-auto col-span-3">
-						<div class="text-lg font-semibold mb-1">Notification Attempts:</div>
-						<div class="table table-zebra border rounded-none">
-							<thead class="bg-base-200">
-								<tr>
-									<th>Date Time</th>
-									<th>Operator</th>
-									<th>Message</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each leadDetails.attempts as { createdAt, UserId, name, message }}
-									<tr>
-										<td>{createdAt.toLocaleString()}</td>
-										<td>{UserId} - {name}</td>
-										<td>{message}</td>
-									</tr>
-								{:else}
-									<tr>
-										<td class="text-center" colspan={3}>No Attempts Found</td>
-									</tr>
-								{/each}
-							</tbody>
-						</div>
-					</div>
+				<div class="grid grid-cols-4 col-span-4 gap-4">
+					<div class="text-lg font-semibold col-span-4">Notification Queues:</div>
 
-					<div class="overflow-x-auto col-span-2">
-						<div class="text-lg font-semibold mb-1">Calls:</div>
-						<div class="table table-zebra border rounded-none">
-							<thead class="bg-base-200">
-								<tr>
-									<th>Date Time</th>
-									<th>Operator</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each leadDetails.calls as { createdAt, UserId, name }}
-									<tr>
-										<td>{createdAt.toLocaleString()}</td>
-										<td>{UserId} - {name}</td>
-									</tr>
-								{:else}
-									<tr>
-										<td class="text-center" colspan={3}>No Calls Found</td>
-									</tr>
-								{/each}
-							</tbody>
-						</div>
-					</div>
+					{#each leadDetails.notificationQueues as { type, createdAt, isCompleted, notificationAttempts }}
+						<details class="collapse collapse-arrow border shadow-sm col-span-4">
+							<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
+								<div class="flex justify-between items-center">
+									<div>
+										<div class="font-semibold">{type}</div>
+										<div>{createdAt.toLocaleString()}</div>
+									</div>
+									{#if isCompleted}
+										<div class="badge badge-success">Completed</div>
+									{:else}
+										<div class="badge badge-warning">In Progress</div>
+									{/if}
+								</div>
+							</summary>
+							<div class="collapse-content">
+								<div class="overflow-x-auto col-span-4 mt-4">
+									<div class="text-lg font-semibold mb-1">Notification Attempts:</div>
+									<div class="table table-zebra border rounded-none">
+										<thead class="bg-base-200">
+											<tr>
+												<th>#</th>
+												<th>Date Time</th>
+												<th>Operator / Supervisor</th>
+												<th>Message</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#each notificationAttempts as { createdAt, userValues, message }, i}
+												<tr>
+													<td>{i + 1}</td>
+													<td>{createdAt.toLocaleString()}</td>
+													<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
+													<td>{message}</td>
+												</tr>
+											{:else}
+												<tr>
+													<td class="text-center" colspan={3}>No Attempts Found</td>
+												</tr>
+											{/each}
+										</tbody>
+									</div>
+								</div>
+							</div>
+						</details>
+					{/each}
 
-					<div class="overflow-x-auto col-span-3">
-						<div class="text-lg font-semibold mb-1">Dispositions:</div>
-						<div class="table table-zebra border rounded-none">
-							<thead class="bg-base-200">
-								<tr>
-									<th>Date Time</th>
-									<th>Disposition</th>
-									<th>Message</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each leadDetails.dispositions as { createdAt, disposition, message }}
-									<tr>
-										<td>{createdAt.toLocaleString()}</td>
-										<td>{disposition}</td>
-										<td>{message}</td>
-									</tr>
-								{:else}
-									<tr>
-										<td class="text-center" colspan={3}>No Disposition Found</td>
-									</tr>
-								{/each}
-							</tbody>
-						</div>
-					</div>
+					<div class="divider m-0 col-span-4" />
 
-					<div class="overflow-x-auto col-span-2">
-						<div class="text-lg font-semibold mb-1">Requeue:</div>
+					<div class="overflow-x-auto col-span-4">
+						<div class="text-lg font-semibold mb-1">Responses:</div>
 						<div class="table table-zebra border rounded-none">
 							<thead class="bg-base-200">
 								<tr>
-									<th>Date Time</th>
-									<th>Supervisor / Disposition</th>
+									<th class="flex items-center" colspan="4">
+										<div class="w-12">#</div>
+										<div class="w-full px-3">Date Time</div>
+										<div class="w-full px-3">Response Type</div>
+										<div class="w-full px-3">Response Value</div>
+										<div class="w-full px-3"></div>
+									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{#each leadDetails.requeues as { createdAt, UserId, supervisorName, dispositionNum }}
+								{#each leadDetails.responses as { createdAt, type, responseValue, isCompleted, actions }, i}
+									{@const { actionsList } = actions ? getActionsList(actions) : { actionsList: [] }}
 									<tr>
-										<td>{createdAt.toLocaleString()}</td>
-										<td>
-											{#if supervisorName}
-												Supervisor: {UserId} - {supervisorName}
-											{/if}
-											{#if dispositionNum}
-												Call Disposition #{dispositionNum}
-											{/if}
+										<td class="px-4" colspan="4">
+											<details class="collapse">
+												<summary>
+													<div class="flex items-center cursor-pointer">
+														<div class="w-12">{i + 1}</div>
+														<td class="w-full">{createdAt.toLocaleString()}</td>
+														<td class="w-full">{type}</td>
+														<td class="w-full">{responseValue}</td>
+														<td class="w-full">
+															{#if $page.url.searchParams.get('type') === 'completed' || isCompleted}
+																<div class="badge badge-success">Completed</div>
+															{:else}
+																<div class="badge badge-warning">In Progress</div>
+															{/if}
+														</td>
+													</div>
+												</summary>
+												<div class="collapse-content flex justify-center">
+													<ul class="steps">
+														{#each actionsList as { requeueLead, sendSMS, closeLead, completeLead }}
+															<li class="step step-accent">
+																{requeueLead
+																	? 'Requeue Lead'
+																	: sendSMS
+																	  ? 'Send SMS'
+																	  : closeLead
+																	    ? 'Close Lead'
+																	    : completeLead
+																	      ? 'Complete Lead'
+																	      : ''}
+															</li>
+														{/each}
+													</ul>
+												</div>
+											</details>
 										</td>
+									</tr>
+								{:else}
+									<tr>
+										<td class="text-center" colspan={2}>No Disposition Found</td>
+									</tr>
+								{/each}
+							</tbody>
+						</div>
+					</div>
+
+					<div class="divider m-0 col-span-4" />
+
+					<div class="overflow-x-auto col-span-2">
+						<div class="text-lg font-semibold mb-1">Customer Calls:</div>
+						<div class="table table-zebra border rounded-none">
+							<thead class="bg-base-200">
+								<tr>
+									<th>#</th>
+									<th>Date Time</th>
+									<th>Operator / Supervisor</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each leadDetails.calls as { createdAt, userValues }, i}
+									<tr>
+										<td>{i + 1}</td>
+										<td>{createdAt.toLocaleString()}</td>
+										<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
+									</tr>
+								{:else}
+									<tr>
+										<td class="text-center" colspan={2}>No Calls Found</td>
+									</tr>
+								{/each}
+							</tbody>
+						</div>
+					</div>
+
+					<div class="overflow-x-auto col-span-2">
+						<div class="text-lg font-semibold mb-1">Customer SMS:</div>
+						<div class="table table-zebra border rounded-none">
+							<thead class="bg-base-200">
+								<tr>
+									<th>#</th>
+									<th>Date Time</th>
+									<th>SMS</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each leadDetails.messages as { createdAt, message }, i}
+									<tr>
+										<td>{i + 1}</td>
+										<td>{createdAt.toLocaleString()}</td>
+										<td>{message}</td>
 									</tr>
 								{:else}
 									<tr>

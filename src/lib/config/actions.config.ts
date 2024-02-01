@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import closeLeadConfig from './closeLead/closeLead.config';
 import type { CloseLead } from './closeLead/closeLead.schema';
 import completeLeadConfig from './completeLead/completeLead.config';
@@ -45,3 +46,6 @@ export const actionsConfig: ActionsConfig = {
 export const actionKeys = Object.keys(actionsConfig) as ActionKey[];
 export const actionsConfigList = Object.values(actionsConfig);
 export const keyActionsList = actionsConfigList.map(({ labels }) => labels.keyActions);
+export const actionsInclude: { include: Prisma.LdRuleActionsInclude } = {
+	include: Object.fromEntries(keyActionsList.map((k) => [k, true]))
+};

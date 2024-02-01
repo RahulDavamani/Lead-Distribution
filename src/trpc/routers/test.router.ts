@@ -2,6 +2,15 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		await prisma.ldLeadStatus.deleteMany({});
+		await prisma.ldLeadNotificationAttempt.deleteMany({});
+		await prisma.ldLeadNotificationsQueue.deleteMany({});
+		await prisma.ldLeadCall.deleteMany({});
+		await prisma.ldLeadMessage.deleteMany({});
+		await prisma.ldLeadResponse.deleteMany({});
+		await prisma.ldLead.deleteMany({});
+		await prisma.ldLeadCompleted.deleteMany({});
+
 		// const operators = (await prisma.$queryRaw`
 		//    select Users.UserKey, Users.FirstName, Users.LastName, Users.Email, Users.VonageAgentId
 		//    from VonageUsers inner join Users on VonageUsers.UserId=Users.VonageAgentId
@@ -10,7 +19,6 @@ export const testRouter = router({
 		// console.log(operators.length);
 		// console.log(operators[0]);
 		// const rules = await prisma.ldRule.findMany({ select: { id: true } });
-		// await prisma.ldLead.deleteMany({});
 		// for (const { id } of rules) {
 		// 	const actions1 = await prisma.ldRuleActions.create({ data: {} });
 		// 	const actions2 = await prisma.ldRuleActions.create({ data: {} });

@@ -2,9 +2,10 @@ import { z } from 'zod';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import type { Affiliate } from '../../../../zod/affiliate.schema';
 import { procedure } from '../../../server';
-import { getUserId, getUserKey, getUserName } from '../helpers/getUserValues';
 import { roleTypeSchema } from '../../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
+import { getUserValues } from '../helpers/user.helper';
+import { actionsInclude } from '$lib/config/actions.config';
 
 export const getProspectDetails = async (ProspectKey: string) => {
 	try {
@@ -46,19 +47,19 @@ export const getProspectDetails = async (ProspectKey: string) => {
 	}
 };
 
-const getLeadWhere = (roleType: string, UserId?: number) => {
-	let where: Prisma.LdLeadWhereInput = {};
+const getLeadWhere = (roleType: string, UserKey?: string) => {
+	let where: Prisma.LdLeadWhereInput | Prisma.LdLeadCompletedWhereInput = {};
 	switch (roleType) {
 		case 'ADMIN':
 			where = {};
 			break;
 
 		case 'SUPERVISOR':
-			where = { rule: { supervisors: { some: { UserId } } } };
+			where = { rule: { supervisors: { some: { UserKey } } } };
 			break;
 
 		case 'AGENT':
-			where = { attempts: { some: { UserId } } };
+			where = { rule: { operators: { some: { UserKey } } } };
 			break;
 	}
 	return where;
@@ -67,35 +68,57 @@ const getLeadWhere = (roleType: string, UserId?: number) => {
 export const getQueuedProcedure = procedure
 	.input(z.object({ UserKey: z.string().min(1), roleType: roleTypeSchema }))
 	.query(async ({ input: { UserKey, roleType } }) => {
-		const UserId = await getUserId(UserKey);
+		const where = getLeadWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
+
 		const queuedLeads = await Promise.all(
 			(
 				await prisma.ldLead
 					.findMany({
-						where: { isCompleted: false, ...getLeadWhere(roleType, UserId) },
+						where,
 						include: {
 							rule: {
 								select: {
 									name: true,
-									supervisors: { where: { UserId }, select: { isRequeue: true } }
+									supervisors: {
+										where: { UserKey },
+										select: { UserKey: true, isRequeue: true }
+									}
 								}
 							},
+
+							statuses: {
+								orderBy: { createdAt: 'desc' },
+								take: 1,
+								select: { status: true }
+							},
+
+							notificationQueues: {
+								select: { isCompleted: true }
+							},
+
 							calls: {
 								orderBy: { createdAt: 'desc' },
 								take: 1,
-								select: { UserId: true }
+								select: { UserKey: true }
 							}
 						}
 					})
 					.catch(prismaErrorHandler)
 			).map(async (lead) => {
-				const prospectDetails = await getProspectDetails(lead.ProspectKey);
-				const operatorName = UserId ? await getUserName(UserId) : undefined;
-				const latestCallUserKey = lead.calls[0]?.UserId ? await getUserKey(lead.calls[0].UserId) : undefined;
-				return { ...lead, ...prospectDetails, operatorName, latestCallUserKey };
+				return {
+					...lead,
+					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
+					status: lead.statuses[0].status,
+					isNewLead: lead.notificationQueues.length <= 1,
+					isNotificationQueue:
+						lead.notificationQueues.length === 0
+							? true
+							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
+					latestCallUserKey: lead.calls[0]?.UserKey ?? undefined
+				};
 			})
 		);
-		queuedLeads.sort((a, b) => (a.ProspectId ?? 0) - (b.ProspectId ?? 0));
+		queuedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
 
 		return { queuedLeads };
 	});
@@ -109,71 +132,104 @@ export const getCompletedProcedure = procedure
 		})
 	)
 	.query(async ({ input: { dateRange, UserKey, roleType } }) => {
+		const where = getLeadWhere(roleType, UserKey) as Prisma.LdLeadCompletedWhereInput;
+
 		const startDate = new Date(dateRange[0]);
 		const endDate = new Date(dateRange[1]);
 		endDate.setDate(endDate.getDate() + 1);
-		const UserId = await getUserId(UserKey);
 
 		const completedLeads = await Promise.all(
 			(
-				await prisma.ldLead
+				await prisma.ldLeadCompleted
 					.findMany({
 						where: {
-							updatedAt: { gte: startDate, lte: endDate },
-							isCompleted: true,
-							...getLeadWhere(roleType, UserId)
+							...where,
+							updatedAt: { gte: startDate, lte: endDate }
 						},
 						include: { rule: { select: { name: true } } }
 					})
 					.catch(prismaErrorHandler)
 			).map(async (lead) => {
-				const prospectDetails = await getProspectDetails(lead.ProspectKey);
-				const operatorName = UserId ? await getUserName(UserId) : undefined;
-				return { ...lead, ...prospectDetails, operatorName };
+				return {
+					...lead,
+					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) }
+				};
 			})
 		);
-		completedLeads.sort((a, b) => (a.ProspectId ?? 0) - (b.ProspectId ?? 0));
+		completedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
 
 		return { completedLeads };
 	});
 
 export const getLeadDetailsProcedure = procedure
-	.input(z.object({ id: z.string().min(1) }))
-	.query(async ({ input: { id } }) => {
-		const lead = await prisma.ldLead
-			.findUniqueOrThrow({
-				where: { id },
-				select: {
-					ProspectKey: true,
-					history: { orderBy: { createdAt: 'asc' } },
-					attempts: { orderBy: { createdAt: 'asc' } },
-					calls: { orderBy: { createdAt: 'asc' } },
-					requeues: { orderBy: { createdAt: 'asc' } },
-					dispositions: { orderBy: { createdAt: 'asc' } }
-				}
-			})
-			.catch(prismaErrorHandler);
-
-		const attempts = [];
-		for (const attempt of lead.attempts) attempts.push({ ...attempt, name: await getUserName(attempt.UserId) });
-
-		const calls = [];
-		for (const call of lead.calls) calls.push({ ...call, name: await getUserName(call.UserId) });
-
-		const requeues = [];
-
-		for (const requeue of lead.requeues) {
-			const supervisorName = requeue.UserId ? await getUserName(requeue.UserId) : undefined;
-			const disposition = await prisma.ldRuleDispositionRule
-				.findUnique({ where: { id: requeue.dispositionRuleId ?? '' } })
+	.input(z.object({ id: z.string().min(1), type: z.enum(['queued', 'completed']) }))
+	.query(async ({ input: { id, type } }) => {
+		let lead;
+		if (type === 'queued')
+			lead = await prisma.ldLead
+				.findUniqueOrThrow({
+					where: { id },
+					select: {
+						ProspectKey: true,
+						statuses: { orderBy: { createdAt: 'asc' } },
+						notificationQueues: {
+							orderBy: { createdAt: 'asc' },
+							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }
+						},
+						messages: { orderBy: { createdAt: 'asc' } },
+						calls: { orderBy: { createdAt: 'asc' } },
+						responses: { orderBy: { createdAt: 'asc' }, include: { actions: actionsInclude } }
+					}
+				})
+				.catch(prismaErrorHandler);
+		else
+			lead = await prisma.ldLeadCompleted
+				.findUniqueOrThrow({
+					where: { id },
+					select: {
+						ProspectKey: true,
+						statuses: { orderBy: { createdAt: 'asc' } },
+						notificationQueues: {
+							orderBy: { createdAt: 'asc' },
+							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }
+						},
+						messages: { orderBy: { createdAt: 'asc' } },
+						calls: { orderBy: { createdAt: 'asc' } },
+						responses: { orderBy: { createdAt: 'asc' }, include: { actions: actionsInclude } }
+					}
+				})
 				.catch(prismaErrorHandler);
 
-			requeues.push({
-				...requeue,
-				supervisorName,
-				dispositionNum: disposition?.num
+		const notificationAttempts = [];
+		for (const notificationAttempt of lead.notificationQueues.flatMap(
+			({ notificationAttempts }) => notificationAttempts
+		)) {
+			notificationAttempts.push({
+				...notificationAttempt,
+				userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
+			});
+		}
+		const notificationQueues = [];
+		for (const notificationQueue of lead.notificationQueues) {
+			const notificationAttempts = [];
+			for (const notificationAttempt of notificationQueue.notificationAttempts)
+				notificationAttempts.push({
+					...notificationAttempt,
+					userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
+				});
+
+			notificationQueues.push({
+				...notificationQueue,
+				notificationAttempts
 			});
 		}
 
-		return { ...lead, attempts, calls, requeues };
+		const calls = [];
+		for (const call of lead.calls)
+			calls.push({
+				...call,
+				userValues: call?.UserKey ? await getUserValues(call.UserKey) : undefined
+			});
+
+		return { ...lead, calls, notificationQueues };
 	});

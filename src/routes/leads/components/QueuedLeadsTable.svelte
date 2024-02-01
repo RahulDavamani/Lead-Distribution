@@ -26,7 +26,7 @@
 	const requeue = async (ProspectKey: string) => {
 		ui.setLoader({ title: 'Requeueing Lead' });
 		const interval = setInterval(() => {
-			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isDistribute) {
+			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isNotificationQueue) {
 				ui.setLoader();
 				clearInterval(interval);
 			}
@@ -34,57 +34,72 @@
 		await trpc($page).lead.redistribute.query({ ProspectKey, UserKey });
 	};
 
-	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isCall);
+	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isPicked);
 </script>
 
 <div class="overflow-x-auto">
 	<table id="queuedLeadsTable" class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
-				<th>Prospect ID</th>
-				<th>Vonage GUID</th>
-				<th>Created On</th>
-				<th>Updated On</th>
-				<th>Customer Name</th>
-				<th>Customer Address</th>
+				<th class="w-1">Prospect ID</th>
+				<th class="w-1">Vonage GUID</th>
+				<th class="w-1">Created On</th>
+				<th class="w-1">Updated On</th>
+				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
 				<th>Status</th>
-				<th>Time Elapsed</th>
-				<th>Actions</th>
+				<th class="w-1"><div class="text-center">Lead Time Elapsed</div></th>
+				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { id, ProspectId, VonageGUID, ProspectKey, createdAt, updatedAt, CustomerName, CustomerAddress, CompanyName, status, rule, isDistribute, isCall, latestCallUserKey }, i}
+			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, status, isNotificationQueue, isPicked, latestCallUserKey }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUserKey !== UserKey) ||
-					(isCall ? latestCallUserKey !== UserKey : false)}
-				{@const canRequeue = roleType === 'ADMIN' || (roleType === 'SUPERVISOR' && rule?.supervisors[0].isRequeue)}
-				{@const statusBtnDisable = roleType === 'AGENT' ? isCall : isDistribute || isCall ? true : !canRequeue}
+					(isPicked ? latestCallUserKey !== UserKey : false)}
+
+				{@const canRequeue =
+					roleType === 'ADMIN' ||
+					(roleType === 'SUPERVISOR' && rule?.supervisors.find((s) => s.UserKey === UserKey)?.isRequeue)}
+
+				{@const statusBtnEnable =
+					roleType === 'AGENT' ? (isPicked ? false : true) : isNotificationQueue ? false : canRequeue}
+
 				{@const statusBtnText =
 					roleType === 'AGENT'
-						? isCall
-							? 'In Call'
+						? isPicked
+							? 'Lead Picked'
 							: 'Available'
-						: isDistribute
-						  ? 'In Progress'
-						  : isCall
-						    ? 'In Call'
+						: isNotificationQueue
+						  ? 'Queueing'
+						  : isPicked
+						    ? 'Requeue (Lead Picked)'
 						    : 'Requeue'}
+
 				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
 
 				<tr class="hover">
-					<td class="text-center">{ProspectId}</td>
+					<td>
+						<div class="flex justify-center items-center gap-2">
+							{#if isNewLead}
+								<div class="badge badge-sm badge-success" />
+							{/if}
+							{ProspectId}
+						</div>
+					</td>
 					<td
 						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
 						on:click={() => VonageGUID && ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`)}
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
-					<td>{createdAt.toLocaleString()}</td>
-					<td>{updatedAt.toLocaleString()}</td>
-					<td>{CustomerName ?? 'N/A'}</td>
-					<td>{CustomerAddress ?? 'N/A'}</td>
+					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td>
+						<div>{CustomerName ?? 'N/A'}</div>
+						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
+					</td>
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td>{status}</td>
@@ -94,7 +109,7 @@
 							<!-- Status Btn -->
 							<button
 								class="btn btn-sm {roleType === 'AGENT' ? 'btn-success' : 'btn-warning'} mb-2
-                        {statusBtnDisable && 'btn-disabled'} text-xs min-w-24"
+                        {!statusBtnEnable && 'btn-disabled'} text-xs min-w-24"
 								on:click={statusBtnClick}
 							>
 								{statusBtnText}

@@ -1,39 +1,23 @@
 import { waitFor } from '$lib/waitFor';
-import type {
-	LdRule,
-	LdRuleNotification,
-	LdRuleNotificationAttempt,
-	LdRuleOperator,
-	LdRuleSupervisor
-} from '@prisma/client';
-import { checkLeadDistributeCompleted } from '../procedures/distribute.procedure';
-import { upsertLead } from './upsertLead';
-import type { Rule } from '../../../../zod/rule.schema';
+import type { LdRule, LdRuleNotificationAttempt, LdRuleOperator, LdRuleSupervisor } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
 import { generateMessage } from './generateMessage';
-import { getUserKey, getUserName } from './getUserValues';
+import { createLeadNotificationQueue, updateLeadFunc } from './lead.helper';
+import { getUserStr } from './user.helper';
 
 export const getAvailableOperators = async () => {
 	await prisma.$queryRaw`EXEC [p_GetVonageAgentStatus]`.catch(prismaErrorHandler);
-	const availableOperators =
-		(await prisma.$queryRaw`select * from VonageAgentStatus where Status='Ready' and ISNULL(calls,0)=0 and ISNULL(semiLive,0)=0 and StatusSince > dateadd(hour,-1,getdate())`.catch(
-			prismaErrorHandler
-		)) as { AgentId: number }[];
+	const availableOperators = (await prisma.$queryRaw`
+      select Users.UserKey from VonageAgentStatus
+      inner join Users on VonageAgentStatus.AgentId=Users.VonageAgentId
+      where Status='Ready' and ISNULL(calls,0)=0 and ISNULL(semiLive,0)=0
+      and StatusSince > dateadd(hour,-1,getdate())
+   `.catch(prismaErrorHandler)) as { UserKey: string }[];
 	return availableOperators;
 };
 
-export const triggerNotification = async (
-	notificationType: string,
-	ProspectKey: string,
-	leadId: string,
-	UserId: number,
-	textTemplate: string,
-	attempt?: NonNullable<Rule['notification']>['notificationAttempts'][number]
-) => {
-	const UserKey = await getUserKey(UserId);
-	const message = await generateMessage(ProspectKey, textTemplate, { NotificationType: notificationType });
-
+export const triggerNotification = async (UserKey: string, message: string) => {
 	// Generate Token
 	const result =
 		(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
@@ -49,50 +33,38 @@ export const triggerNotification = async (
 	   @ExpireInSeconds = 600,
 	   @HrefURL = ${`${env.BASE_URL}/leads?BPT=${token}`},
 	   @ActionBtnTitle = 'View Lead';`.catch(prismaErrorHandler);
-
-	// Create Lead Attempt
-	await prisma.ldLeadAttempts
-		.create({
-			data: {
-				leadId,
-				attemptId: attempt?.id ?? null,
-				UserId: UserId,
-				message
-			}
-		})
-		.catch(prismaErrorHandler);
-
-	// Update Lead Status
-	const Name = await getUserName(UserId);
-	const status = attempt
-		? `ATTEMPT #${attempt.num} SENT TO OPERATOR "${UserId}: ${Name}"`
-		: `LEAD ESCALATED TO SUPERVISOR "${UserId}: ${Name}"`;
-	await upsertLead(ProspectKey, status, { isDistribute: attempt !== undefined });
 };
 
 export const sendNotifications = async (
-	notificationType: string,
+	queueType: string,
 	ProspectKey: string,
-	leadId: string,
 	rule: LdRule & {
-		notification: (LdRuleNotification & { notificationAttempts: LdRuleNotificationAttempt[] }) | null;
+		notificationAttempts: LdRuleNotificationAttempt[];
 		operators: LdRuleOperator[];
 		supervisors: LdRuleSupervisor[];
 	}
 ) => {
-	if (!rule.notification) return;
-	const { notificationAttempts } = rule.notification;
+	const updateLead = updateLeadFunc(ProspectKey);
+
+	await updateLead({
+		status: { status: `${queueType}: Sending notification to operators` },
+		isPicked: false
+	});
+	const { addNotificationAttempt, checkLeadNotificationQueueCompleted, completeLeadNotificationQueue } =
+		await createLeadNotificationQueue(queueType, ProspectKey);
+
+	const { notificationAttempts } = rule;
 	const availableOperators = await getAvailableOperators();
 
-	const completedAttempts: { attemptId: string; UserId: number }[] = [];
+	const completedAttempts: { attemptId: string; UserKey: string }[] = [];
 
 	let noOperatorFound = false;
 	for (const attempt of notificationAttempts) {
 		// Get Operator
 		const operator = rule.operators.find(
-			({ UserId }) =>
-				availableOperators.map(({ AgentId }) => AgentId).includes(UserId) &&
-				!completedAttempts.map(({ UserId }) => UserId).includes(UserId)
+			({ UserKey }) =>
+				availableOperators.map(({ UserKey }) => UserKey).includes(UserKey) &&
+				!completedAttempts.map(({ UserKey }) => UserKey).includes(UserKey)
 		);
 
 		// No Operator Found
@@ -100,34 +72,47 @@ export const sendNotifications = async (
 			noOperatorFound = attempt.num === 1;
 			break;
 		}
-		if (attempt.num === 1) await upsertLead(ProspectKey, 'SENDING NOTIFICATION TO OPERATORS');
 
 		// Send Notification to Operator
-		await triggerNotification(notificationType, ProspectKey, leadId, operator.UserId, attempt.textTemplate, attempt);
-		completedAttempts.push({ attemptId: attempt.id, UserId: operator.UserId });
+		const { UserKey } = operator;
+		const userStr = await getUserStr(UserKey);
+		const message = await generateMessage(ProspectKey, attempt.messageTemplate, { NotificationType: queueType });
+		await triggerNotification(UserKey, message);
+		completedAttempts.push({ attemptId: attempt.id, UserKey });
+		await updateLead({
+			status: { status: `${queueType}: Attempt #${attempt.num} sent to operator ${userStr}` }
+		});
+		addNotificationAttempt({ message, userType: 'OPERATOR', user: { connect: { UserKey: UserKey } } });
 		await waitFor(attempt.waitTime);
 
 		// Check if Lead is already completed
-		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
-		if (isLeadCompleted) break;
+		const isLeadNotificationQueueCompleted = await checkLeadNotificationQueueCompleted();
+		if (isLeadNotificationQueueCompleted) break;
 	}
 
-	if (noOperatorFound) await upsertLead(ProspectKey, `NO OPERATOR FOUND`);
+	if (noOperatorFound) await updateLead({ status: { status: `${queueType}: No operator found` } });
 	else {
-		const isLeadCompleted = await checkLeadDistributeCompleted(ProspectKey);
-		if (isLeadCompleted) return;
-		await upsertLead(ProspectKey, `NO RESPONSE FROM OPERATORS`);
+		const isLeadNotificationQueueCompleted = await checkLeadNotificationQueueCompleted();
+		if (isLeadNotificationQueueCompleted) return;
+		await updateLead({ status: { status: `${queueType}: No response from operators` } });
 	}
 
 	// Send Notification to Supervisor
 	const supervisors = rule.supervisors.filter(({ isEscalate }) => isEscalate);
 	if (supervisors.length === 0)
-		await upsertLead(ProspectKey, `NO SUPERVISOR FOUND FOR ESCALATION`, { isDistribute: false });
+		await updateLead({ status: { status: `${queueType}: No supervisor found for escalation` } });
 	else
-		await Promise.all(
-			supervisors.map(
-				async ({ UserId, textTemplate }) =>
-					await triggerNotification(notificationType, ProspectKey, leadId, UserId, textTemplate)
-			)
-		);
+		for (const { UserKey, messageTemplate } of supervisors) {
+			// Check if Lead is already completed
+			const isLeadNotificationQueueCompleted = await checkLeadNotificationQueueCompleted();
+			if (isLeadNotificationQueueCompleted) break;
+
+			const userStr = await getUserStr(UserKey);
+			const message = await generateMessage(ProspectKey, messageTemplate, { NotificationType: queueType });
+			await triggerNotification(UserKey, message);
+			await updateLead({ status: { status: `${queueType}: Lead escalated to supervisor ${userStr}` } });
+			addNotificationAttempt({ message, userType: 'SUPERVISOR', user: { connect: { UserKey: UserKey } } });
+		}
+
+	await completeLeadNotificationQueue();
 };

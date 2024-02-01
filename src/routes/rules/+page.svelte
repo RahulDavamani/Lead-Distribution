@@ -1,24 +1,9 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { trpc } from '../../trpc/client';
-	import { page } from '$app/stores';
-	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
 	import { ui } from '../../stores/ui.store';
-	import { invalidateAll } from '$app/navigation';
 
 	export let data;
 	$: ({ rules } = data);
-
-	const deleteRule = async (id: string) => {
-		ui.setLoader({ title: 'Deleting Rule' });
-		await trpc($page).rule.deleteRole.query({ id }).catch(trpcClientErrorHandler);
-		ui.showToast({
-			class: 'alert-success',
-			title: 'Rule Deleted Successfully'
-		});
-		invalidateAll();
-		ui.setLoader();
-	};
 </script>
 
 <div class="container mx-auto">
@@ -72,12 +57,12 @@
 					</div>
 
 					<div class="card p-2 text-center">
-						<div class="text-lg font-semibold font-mono text-warning">{_count.leads}</div>
+						<div class="text-lg font-semibold font-mono text-warning">{_count.queuedLeads}</div>
 						<div class="text-sm">Queued Leads</div>
 					</div>
 
 					<div class="card p-2 text-center">
-						<div class="text-lg font-semibold font-mono text-success">{_count.leads}</div>
+						<div class="text-lg font-semibold font-mono text-success">{_count.completedLeads}</div>
 						<div class="text-sm">Completed Leads</div>
 					</div>
 					<Icon icon="mdi:chevron-right" width={24} class="ml-2" />

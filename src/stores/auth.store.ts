@@ -13,7 +13,7 @@ export interface Auth {
 		userRole: { ID: number; Role: string }[];
 	};
 }
-export const roleTypeSchema = z.literal('ADMIN').or(z.literal('SUPERVISOR').or(z.literal('AGENT')));
+export const roleTypeSchema = z.enum(['ADMIN', 'SUPERVISOR', 'AGENT']);
 export type RoleType = z.infer<typeof roleTypeSchema>;
 
 export const auth = (() => {

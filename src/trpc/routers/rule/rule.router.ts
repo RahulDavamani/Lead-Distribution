@@ -5,21 +5,23 @@ import { procedure, router } from '../../server';
 import { prisma } from '../../../prisma/prisma';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import type { Prisma } from '@prisma/client';
-import { keyActionsList } from '$lib/config/actions.config';
+import { actionsInclude, keyActionsList } from '$lib/config/actions.config';
 import { getOperators } from './helpers/getOperators';
 import { getAffiliates } from './helpers/getAffiliates';
 import { upsertActions } from './helpers/upsertActions';
 
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
-		const rules = await prisma.ldRule.findMany({ include: { _count: true } }).catch(prismaErrorHandler);
+		const rules = await prisma.ldRule
+			.findMany({
+				include: { _count: true },
+				orderBy: { createdAt: 'desc' }
+			})
+			.catch(prismaErrorHandler);
 		return { rules };
 	}),
 
 	getById: procedure.input(z.object({ id: z.string().min(1).nullable() })).query(async ({ input: { id } }) => {
-		const actionsInclude: { include: Prisma.LdRuleActionsInclude } = {
-			include: Object.fromEntries(keyActionsList.map((k) => [k, true]))
-		};
 		const rule = id
 			? await prisma.ldRule
 					.findUnique({
@@ -36,7 +38,7 @@ export const ruleRouter = router({
 									responsesNoMatchActions: actionsInclude
 								}
 							},
-							_count: { select: { leads: true } }
+							_count: { select: { queuedLeads: true, completedLeads: true } }
 						}
 					})
 					.catch(prismaErrorHandler)
@@ -44,7 +46,12 @@ export const ruleRouter = router({
 
 		const operators = await getOperators();
 		const affiliates = await getAffiliates();
-		return { rule, operators, affiliates, canDelete: rule?._count?.leads === 0 };
+		return {
+			rule,
+			operators,
+			affiliates,
+			canDelete: (rule?._count?.queuedLeads ?? 0) + (rule?._count?.completedLeads ?? 0) === 0
+		};
 	}),
 
 	saveRule: procedure

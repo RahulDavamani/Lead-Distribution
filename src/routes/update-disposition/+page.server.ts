@@ -9,7 +9,9 @@ export const load = async (event) => {
 	if (!Disposition) throw error(400, 'Bad Request: Missing params "Disposition"');
 
 	const trpc = await createCaller(event);
-	await trpc.lead.updateDisposition({ ProspectKey, Disposition }).catch(trpcServerErrorHandler);
+	await trpc.lead
+		.validateResponse({ ProspectKey, ResponseType: 'disposition', Response: Disposition })
+		.catch(trpcServerErrorHandler);
 
 	return {};
 };

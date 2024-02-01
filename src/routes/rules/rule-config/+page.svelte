@@ -1,17 +1,14 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import FormControl from '../../components/FormControl.svelte';
-	import { onMount } from 'svelte';
 	import { ruleConfig } from '../../../stores/ruleConfig.store';
 	import Operators from './components/Operators.svelte';
 	import Affiliates from './components/Affiliates.svelte';
-	import WaitTimeCR from './components/WaitTimeCR.svelte';
 	import NotificationAttempts from './components/NotificationAttempts.svelte';
 	import { ui } from '../../../stores/ui.store';
 	import Responses from './components/Responses.svelte';
 	import Supervisors from './components/Supervisors.svelte';
 	import Variables from './components/Variables.svelte';
-	import { invalidateAll } from '$app/navigation';
 
 	export let data;
 	$: ({ rule, operators, affiliates, canDelete } = data);

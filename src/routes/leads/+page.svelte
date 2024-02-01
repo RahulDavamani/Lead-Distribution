@@ -28,11 +28,13 @@
 		let affiliates: { [key: string]: number } = {};
 		if (tab === 1)
 			queuedLeads.forEach(
-				({ CompanyName }) => CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
+				({ prospectDetails: { CompanyName } }) =>
+					CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
 			);
 		else
 			completedLeads.forEach(
-				({ CompanyName }) => CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
+				({ prospectDetails: { CompanyName } }) =>
+					CompanyName && (affiliates[CompanyName] = (affiliates[CompanyName] ?? 0) + 1)
 			);
 		return affiliates;
 	})();
@@ -56,7 +58,10 @@
 		if (missingLead) {
 			await fetchCompletedLeads(dateRange);
 			if (completedLeads.find((lead) => lead.id === missingLead.id))
-				ui.showToast({ title: `${missingLead.ProspectId}: Lead has been Closed/Completed`, class: 'alert-success' });
+				ui.showToast({
+					title: `${missingLead.prospectDetails.ProspectId}: Lead has been Closed/Completed`,
+					class: 'alert-success'
+				});
 		}
 	};
 
@@ -163,12 +168,14 @@
 
 	{#if tab === 1}
 		<QueuedLeadsTable
-			queuedLeads={queuedLeads.filter(({ CompanyName }) => (affiliateSelect ? CompanyName === affiliateSelect : true))}
+			queuedLeads={queuedLeads.filter(({ prospectDetails: { CompanyName } }) =>
+				affiliateSelect ? CompanyName === affiliateSelect : true
+			)}
 			bind:leadDetailsModelId
 		/>
 	{:else}
 		<CompletedLeadsTable
-			completedLeads={completedLeads.filter(({ CompanyName }) =>
+			completedLeads={completedLeads.filter(({ prospectDetails: { CompanyName } }) =>
 				affiliateSelect ? CompanyName === affiliateSelect : true
 			)}
 			bind:leadDetailsModelId

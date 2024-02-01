@@ -21,24 +21,31 @@
 	<table id="completedLeadsTable" class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
-				<th>Prospect ID</th>
-				<th>Vonage GUID</th>
-				<th>Created On</th>
-				<th>Completed On</th>
-				<th>Customer Name</th>
-				<th>Customer Address</th>
+				<th class="w-1">Prospect ID</th>
+				<th class="w-1">Vonage GUID</th>
+				<th class="w-1">Created On</th>
+				<th class="w-1">Updated On</th>
+				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
-				<th>Operator</th>
-				<th>Status</th>
+				<th>Close Status</th>
 				<th>Response Time</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { id, ProspectId, VonageGUID, createdAt, updatedAt, CustomerName, CustomerAddress, CompanyName, operatorName, status, rule }}
+			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus }}
 				<tr class="hover">
-					<td class="text-center">{ProspectId}</td>
+					<td>
+						<div class="flex justify-center items-center gap-2">
+							{#if closeStatus}
+								<div class="badge badge-sm badge-error" />
+							{:else}
+								<div class="badge badge-sm badge-success" />
+							{/if}
+							{ProspectId}
+						</div>
+					</td>
 					<td
 						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
 						on:click={() => {
@@ -47,14 +54,15 @@
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
-					<td>{createdAt.toLocaleString()}</td>
-					<td>{updatedAt.toLocaleString()}</td>
-					<td>{CustomerName ?? 'N/A'}</td>
-					<td>{CustomerAddress ?? 'N/A'}</td>
+					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td>
+						<div>{CustomerName ?? 'N/A'}</div>
+						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
+					</td>
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
-					<td>{operatorName ?? 'N/A'}</td>
-					<td>{status}</td>
+					<td>{closeStatus ?? 'N/A'}</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
 					<td>
 						<div class="flex justify-center items-center">
