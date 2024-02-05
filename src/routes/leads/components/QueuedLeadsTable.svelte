@@ -8,7 +8,7 @@
 	import DataTable from 'datatables.net-dt';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
-	import { getTimeElapsedText } from '$lib/client/DateTime';
+	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
@@ -18,9 +18,15 @@
 		user: { UserKey },
 		roleType
 	} = $auth);
+	$: avgLeadTimeElapsed =
+		queuedLeads.length > 0
+			? Math.floor(
+					queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, new Date()), 0) / queuedLeads.length
+			  )
+			: 0;
 
 	onMount(() => {
-		if (queuedLeads.length > 0) new DataTable('#queuedLeadsTable');
+		new DataTable('#queuedLeadsTable', { order: [] });
 	});
 
 	const requeue = async (ProspectKey: string) => {
@@ -38,6 +44,13 @@
 </script>
 
 <div class="overflow-x-auto">
+	<div class="flex justify-center text-sm">
+		<div>
+			<span class="font-semibold">Avg. Lead Time Elapsed:</span>
+			<span class="">{timeToText(avgLeadTimeElapsed)}</span>
+		</div>
+	</div>
+
 	<table id="queuedLeadsTable" class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
@@ -48,16 +61,17 @@
 				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
-				<th>Status</th>
-				<th class="w-1"><div class="text-center">Lead Time Elapsed</div></th>
+				<th>Lead Status</th>
+				<th>Log Message</th>
+				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, status, isNotificationQueue, isPicked, latestCallUserKey }, i}
+			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, latestNotificationQueue, log, isNotificationQueue, isPicked, latestCallUser }, i}
 				{@const disableViewLead =
-					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUserKey !== UserKey) ||
-					(isPicked ? latestCallUserKey !== UserKey : false)}
+					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUser?.UserKey !== UserKey) ||
+					(isPicked ? latestCallUser?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
 					roleType === 'ADMIN' ||
@@ -82,6 +96,9 @@
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
+							{#if isPicked}
+								<div class="badge badge-sm badge-warning" />
+							{/if}
 							{#if isNewLead}
 								<div class="badge badge-sm badge-success" />
 							{/if}
@@ -102,7 +119,19 @@
 					</td>
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
-					<td>{status}</td>
+					<td>
+						<div>{latestNotificationQueue?.type ?? 'NEW LEAD'}</div>
+						{#if latestNotificationQueue}
+							{#if isPicked}
+								<div>Picked by {latestCallUser?.userStr}</div>
+							{:else if latestNotificationQueue.isCompleted}
+								<div>Escalated to supervisor</div>
+							{:else if latestNotificationQueue.notificationAttempts.length > 0}
+								<div>Attempt {latestNotificationQueue.notificationAttempts[0].attempt?.num}</div>
+							{/if}
+						{/if}
+					</td>
+					<td>{log}</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
 					<td>
 						<div class="flex flex-col justify-center">

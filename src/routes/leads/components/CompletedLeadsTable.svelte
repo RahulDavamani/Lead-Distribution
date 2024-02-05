@@ -5,43 +5,72 @@
 	import { ui } from '../../../stores/ui.store';
 	import { onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
-	import { getTimeElapsedText } from '$lib/client/DateTime';
+	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
 	export let leadDetailsModelId: string | undefined;
+	$: avgLeadResponseTime =
+		completedLeads.length > 0
+			? Math.floor(
+					completedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, cur.updatedAt), 0) /
+						completedLeads.length
+			  )
+			: 0;
+
+	$: avgCustomerTalkTime =
+		completedLeads.length > 0
+			? Math.floor(completedLeads.reduce((acc, cur) => acc + cur.customerTalkTime, 0) / completedLeads.length)
+			: 0;
 
 	onMount(() => {
-		new DataTable('#completedLeadsTable');
+		new DataTable('#completedLeadsTable', { order: [] });
 	});
 </script>
 
 <div class="overflow-x-auto">
+	<div class="flex justify-center text-sm">
+		<div>
+			<span class="font-semibold">Avg. Lead Response Time:</span>
+			<span class="">{timeToText(avgLeadResponseTime)}</span>
+		</div>
+		<div class="divider divider-horizontal" />
+		<div>
+			<span class="font-semibold">Avg. Customer Talk Time:</span>
+			<span class="">{timeToText(avgCustomerTalkTime)}</span>
+		</div>
+	</div>
+
 	<table id="completedLeadsTable" class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
 				<th class="w-1">Prospect ID</th>
 				<th class="w-1">Vonage GUID</th>
 				<th class="w-1">Created On</th>
-				<th class="w-1">Updated On</th>
+				<th class="w-1">Completed On</th>
 				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
 				<th>Close Status</th>
-				<th>Response Time</th>
+				<th>Lead Response Time</th>
+				<th>Customer Talk Time</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus }}
+			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus, customerTalkTime }}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
 							{#if closeStatus}
-								<div class="badge badge-sm badge-error" />
+								<div class="badge badge-sm badge-error">
+									<Icon icon="mdi:close" />
+								</div>
 							{:else}
-								<div class="badge badge-sm badge-success" />
+								<div class="badge badge-sm badge-success">
+									<Icon icon="mdi:check" />
+								</div>
 							{/if}
 							{ProspectId}
 						</div>
@@ -64,6 +93,7 @@
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td>{closeStatus ?? 'N/A'}</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
+					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
 						<div class="flex justify-center items-center">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>

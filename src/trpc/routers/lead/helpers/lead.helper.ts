@@ -14,10 +14,9 @@ export const createLead = async (ProspectKey: string, ruleId?: string) =>
 
 type Args = {
 	isPicked?: boolean;
-	status?: Prisma.LdLeadStatusCreateInput;
+	log?: Prisma.LdLeadLogCreateInput;
 	message?: Prisma.LdLeadMessageCreateInput;
 	call?: Prisma.LdLeadCallCreateInput;
-	response?: Prisma.LdLeadResponseCreateInput;
 };
 
 export const updateLeadFunc = (ProspectKey: string) => async (args: Args) =>
@@ -26,10 +25,9 @@ export const updateLeadFunc = (ProspectKey: string) => async (args: Args) =>
 			where: { ProspectKey },
 			data: {
 				isPicked: args.isPicked,
-				statuses: args.status ? { create: args.status } : undefined,
+				logs: args.log ? { create: args.log } : undefined,
 				messages: args.message ? { create: args.message } : undefined,
-				calls: args.call ? { create: args.call } : undefined,
-				responses: args.response ? { create: args.response } : undefined
+				calls: args.call ? { create: args.call } : undefined
 			}
 		})
 		.catch(prismaErrorHandler);
@@ -81,7 +79,7 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 		.findUniqueOrThrow({
 			where: { ProspectKey },
 			include: {
-				statuses: { select: { id: true } },
+				logs: { select: { id: true } },
 				notificationQueues: { select: { id: true } },
 				messages: { select: { id: true } },
 				calls: { select: { id: true } },
@@ -103,8 +101,8 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 	});
 
 	await Promise.all(
-		lead.statuses.map(async ({ id }) => {
-			await prisma.ldLeadStatus.update({
+		lead.logs.map(async ({ id }) => {
+			await prisma.ldLeadLog.update({
 				where: { id },
 				data: {
 					completedLead: { connect: { id: completedLeadId } },
@@ -119,7 +117,8 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 				where: { id },
 				data: {
 					completedLead: { connect: { id: completedLeadId } },
-					lead: { disconnect: true }
+					lead: { disconnect: true },
+					isCompleted: true
 				}
 			});
 		})
@@ -152,7 +151,8 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 				where: { id },
 				data: {
 					completedLead: { connect: { id: completedLeadId } },
-					lead: { disconnect: true }
+					lead: { disconnect: true },
+					isCompleted: true
 				}
 			});
 		})

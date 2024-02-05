@@ -69,7 +69,7 @@
 							rows={1}
 						/>
 						<Variables
-							variables={['NotificationType']}
+							variables={['LeadStatus']}
 							insertVariable={(v) => ($ruleConfig.rule.notificationAttempts[i].messageTemplate += v)}
 						/>
 					</div>

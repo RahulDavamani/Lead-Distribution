@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import AddOperator from './AddOperator.svelte';
+	import { tick } from 'svelte';
 
 	$: ({
 		rule: { operators },
@@ -12,8 +13,9 @@
 	const sortOperators = () =>
 		($ruleConfig.rule.operators = operators.sort((a, b) => a.num - b.num).map((op, i) => ({ ...op, num: i })));
 
-	const deleteOperator = (UserKey: string) => {
+	const deleteOperator = async (UserKey: string) => {
 		$ruleConfig.rule.operators = operators.filter((op) => op.UserKey !== UserKey);
+		await tick();
 		sortOperators();
 	};
 </script>

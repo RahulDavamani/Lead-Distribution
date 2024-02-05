@@ -4,7 +4,7 @@ import type { Affiliate } from '../../../../zod/affiliate.schema';
 import { procedure } from '../../../server';
 import { roleTypeSchema } from '../../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
-import { getUserValues } from '../helpers/user.helper';
+import { getUserStr, getUserValues } from '../helpers/user.helper';
 import { actionsInclude } from '$lib/config/actions.config';
 
 export const getProspectDetails = async (ProspectKey: string) => {
@@ -86,14 +86,26 @@ export const getQueuedProcedure = procedure
 								}
 							},
 
-							statuses: {
+							logs: {
 								orderBy: { createdAt: 'desc' },
 								take: 1,
-								select: { status: true }
+								select: { log: true }
 							},
 
 							notificationQueues: {
-								select: { isCompleted: true }
+								orderBy: { updatedAt: 'desc' },
+								select: {
+									isCompleted: true,
+									type: true,
+									notificationAttempts: {
+										select: {
+											id: true,
+											UserKey: true,
+											attempt: { select: { num: true } }
+										},
+										orderBy: { createdAt: 'desc' }
+									}
+								}
 							},
 
 							calls: {
@@ -108,17 +120,26 @@ export const getQueuedProcedure = procedure
 				return {
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
-					status: lead.statuses[0].status,
-					isNewLead: lead.notificationQueues.length <= 1,
+					log: lead.logs[0].log,
+					isNewLead: lead.notificationQueues.length <= 1 && !lead.isPicked,
 					isNotificationQueue:
 						lead.notificationQueues.length === 0
 							? true
 							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
-					latestCallUserKey: lead.calls[0]?.UserKey ?? undefined
+					latestNotificationQueue: lead.notificationQueues[0],
+					latestCallUser: lead.calls[0]
+						? {
+								...lead.calls[0],
+								userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
+						  }
+						: undefined
 				};
 			})
 		);
-		queuedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
+		queuedLeads.sort((a, b) => {
+			if (a.isNewLead !== b.isNewLead) return a.isNewLead ? -1 : 1;
+			return (b.prospectDetails.ProspectId ?? 0) - (a.prospectDetails.ProspectId ?? 0);
+		});
 
 		return { queuedLeads };
 	});
@@ -150,13 +171,23 @@ export const getCompletedProcedure = procedure
 					})
 					.catch(prismaErrorHandler)
 			).map(async (lead) => {
+				const customerTalkTime = lead.VonageGUID
+					? Number(
+							(
+								(await prisma.$queryRaw`Select Duration from VonageCalls where Guid=${lead.VonageGUID}`.catch(
+									prismaErrorHandler
+								)) as { Duration: string | null }[]
+							)?.[0]?.Duration ?? '0'
+					  )
+					: 0;
 				return {
 					...lead,
-					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) }
+					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
+					customerTalkTime
 				};
 			})
 		);
-		completedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
+		completedLeads.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
 		return { completedLeads };
 	});
@@ -171,7 +202,7 @@ export const getLeadDetailsProcedure = procedure
 					where: { id },
 					select: {
 						ProspectKey: true,
-						statuses: { orderBy: { createdAt: 'asc' } },
+						logs: { orderBy: { createdAt: 'asc' } },
 						notificationQueues: {
 							orderBy: { createdAt: 'asc' },
 							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }
@@ -188,7 +219,7 @@ export const getLeadDetailsProcedure = procedure
 					where: { id },
 					select: {
 						ProspectKey: true,
-						statuses: { orderBy: { createdAt: 'asc' } },
+						logs: { orderBy: { createdAt: 'asc' } },
 						notificationQueues: {
 							orderBy: { createdAt: 'asc' },
 							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }

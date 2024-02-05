@@ -12,5 +12,8 @@ export const timeToText = (seconds: number): string => {
 	return formattedTime;
 };
 
+export const getTimeElapsed = (startDate: Date, endDate: Date) =>
+	Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
+
 export const getTimeElapsedText = (startDate: Date, endDate: Date) =>
 	timeToText(Math.floor((endDate.getTime() - startDate.getTime()) / 1000));

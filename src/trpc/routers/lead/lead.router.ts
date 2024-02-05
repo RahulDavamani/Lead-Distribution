@@ -3,7 +3,6 @@ import { procedure, router } from '../../server';
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import { prospectInputSchema } from '../../../zod/prospectInput.schema';
-import { distributeProcedure, redistributeProcedure } from './procedures/distribute.procedure';
 import { getCompletedProcedure, getLeadDetailsProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';
 import { getCompanyKey } from './helpers/getCompanyKey';
 import { roleTypeSchema } from '../../../stores/auth.store';
@@ -11,14 +10,27 @@ import type { Prisma } from '@prisma/client';
 import { completeLead, updateLeadFunc } from './helpers/lead.helper';
 import { getUserStr, getUserValues } from './helpers/user.helper';
 import { validateResponseProcedure } from './procedures/validateResponse.procedure';
+import { distributeLead, redistributeLead } from './helpers/distributeLead';
 
 export const leadRouter = router({
 	getQueued: getQueuedProcedure,
 	getCompleted: getCompletedProcedure,
 	getLeadDetails: getLeadDetailsProcedure,
 
-	distribute: distributeProcedure,
-	redistribute: redistributeProcedure,
+	distribute: procedure
+		.input(z.object({ ProspectKey: z.string().min(1) }))
+		.query(async ({ input: { ProspectKey } }) => {
+			await distributeLead(ProspectKey);
+			return { ProspectKey };
+		}),
+
+	redistribute: procedure
+		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
+		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			await redistributeLead(ProspectKey, UserKey);
+			return { ProspectKey };
+		}),
+
 	validateResponse: validateResponseProcedure,
 
 	view: procedure
@@ -94,7 +106,7 @@ export const leadRouter = router({
 			// Update Lead
 			const userStr = await getUserStr(UserKey);
 			await updateLead({
-				status: { status: `Lead picked by ${userStr}` },
+				log: { log: `Lead picked by "${userStr}"` },
 				isPicked: true,
 				call: { user: { connect: { UserKey } } }
 			});
@@ -122,9 +134,9 @@ export const leadRouter = router({
 				.catch(prismaErrorHandler);
 			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found in queue' });
 
-			// Update Lead Status
+			// Update Lead Log
 			const userStr = await getUserStr(UserKey);
-			await updateLead({ status: { status: `Lead closed by ${userStr}` } });
+			await updateLead({ log: { log: `Lead closed by "${userStr}"` } });
 			await completeLead(ProspectKey, closeStatus);
 			return { ProspectKey };
 		}),

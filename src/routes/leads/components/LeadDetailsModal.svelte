@@ -25,12 +25,12 @@
 		{#if leadDetails}
 			<div class="grid grid-cols-6 gap-4">
 				<div class="overflow-x-auto col-span-2 row-span-2">
-					<div class="text-lg font-semibold mb-1">Lead Status History:</div>
+					<div class="text-lg font-semibold mb-1">Lead Logs History:</div>
 					<ul class="steps steps-vertical">
-						{#each leadDetails.statuses as { createdAt, status }}
+						{#each leadDetails.logs as { createdAt, log }}
 							<li class="step step-primary my-2">
 								<div class="text-left">
-									<div class="font-semibold">{status}</div>
+									<div class="font-semibold">{log}</div>
 									<div class="text-xs">{createdAt.toLocaleString()}</div>
 								</div>
 							</li>
@@ -78,7 +78,7 @@
 												</tr>
 											{:else}
 												<tr>
-													<td class="text-center" colspan={3}>No Attempts Found</td>
+													<td class="text-center" colspan={4}>No Notification Attempts Found</td>
 												</tr>
 											{/each}
 										</tbody>
@@ -114,7 +114,7 @@
 													<div class="flex items-center cursor-pointer">
 														<div class="w-12">{i + 1}</div>
 														<td class="w-full">{createdAt.toLocaleString()}</td>
-														<td class="w-full">{type}</td>
+														<td class="w-full">{type.charAt(0).toUpperCase()}{type.slice(1)}</td>
 														<td class="w-full">{responseValue}</td>
 														<td class="w-full">
 															{#if $page.url.searchParams.get('type') === 'completed' || isCompleted}
@@ -147,7 +147,7 @@
 									</tr>
 								{:else}
 									<tr>
-										<td class="text-center" colspan={2}>No Disposition Found</td>
+										<td class="text-center">No Responses Found</td>
 									</tr>
 								{/each}
 							</tbody>
@@ -175,7 +175,7 @@
 									</tr>
 								{:else}
 									<tr>
-										<td class="text-center" colspan={2}>No Calls Found</td>
+										<td class="text-center" colspan={3}>No Calls Found</td>
 									</tr>
 								{/each}
 							</tbody>
@@ -201,7 +201,7 @@
 									</tr>
 								{:else}
 									<tr>
-										<td class="text-center" colspan={3}>No Requeues Found</td>
+										<td class="text-center" colspan={3}>No Messages Found</td>
 									</tr>
 								{/each}
 							</tbody>

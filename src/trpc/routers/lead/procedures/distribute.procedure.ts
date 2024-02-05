@@ -27,7 +27,7 @@ export const distributeProcedure = procedure
 		const CompanyKey = await getCompanyKey(ProspectKey);
 		if (!CompanyKey) {
 			await createLead(ProspectKey);
-			await updateLead({ status: { status: 'Affiliate not found' } });
+			await updateLead({ log: { log: 'Affiliate not found' } });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 		}
 
@@ -47,18 +47,18 @@ export const distributeProcedure = procedure
 		// Rule Not Found / Inactive
 		if (!rule) {
 			await createLead(ProspectKey);
-			await updateLead({ status: { status: 'Rule not found' } });
+			await updateLead({ log: { log: 'Rule not found' } });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 		if (!rule.isActive) {
 			await createLead(ProspectKey);
-			await updateLead({ status: { status: 'Rule is inactive' } });
+			await updateLead({ log: { log: 'Rule is inactive' } });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 
 		// Create Lead
 		await createLead(ProspectKey, rule.id);
-		await updateLead({ status: { status: 'Lead Queued' } });
+		await updateLead({ log: { log: 'Lead Queued' } });
 
 		// Send SMS
 		const { Phone } = await prisma.leadProspect
@@ -67,7 +67,7 @@ export const distributeProcedure = procedure
 		const message = await generateMessage(ProspectKey, rule.smsTemplate);
 		await sendSMS(Phone ?? '', message);
 		await updateLead({
-			status: { status: 'Text message sent to customer (SMS #1)' },
+			log: { log: 'Text message sent to customer (SMS #1)' },
 			message: { message }
 		});
 
@@ -94,34 +94,27 @@ export const redistributeProcedure = procedure
 							supervisors: true
 						}
 					},
-					notificationQueues: { select: { id: true, isCompleted: true, UserKey: true, responseId: true } }
+					notificationQueues: { select: { id: true, isCompleted: true } }
 				}
 			})
 			.catch(prismaErrorHandler);
 		if (lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0)
 			throw new TRPCError({ code: 'CONFLICT', message: 'Lead is busy' });
 
-		const queueNum = lead.notificationQueues.filter(({ UserKey }) => UserKey !== null).length + 1;
-		const queueType = `SUPERVISOR REQUEUE #${queueNum}`;
+		const queueNum = lead.notificationQueues.length + 1;
+		const queueType = `SUPERVISOR REQUEUE #${queueNum} (SUPERVISOR)`;
 
 		// Create Lead Requeue
 		const userStr = await getUserStr(UserKey);
-		await updateLead({ status: { status: `${queueType}: Lead requeued by ${userStr}` } });
-
-		// Get CompanyKey
-		const CompanyKey = await getCompanyKey(ProspectKey);
-		if (!CompanyKey) {
-			await updateLead({ status: { status: `${queueType}: Affiliate not found` } });
-			throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
-		}
+		await updateLead({ log: { log: `${queueType}: Lead requeued by "${userStr}"` } });
 
 		// Rule Not Found / Inactive
 		if (!lead.rule) {
-			await updateLead({ status: { status: `${queueType}: Rule not found` } });
+			await updateLead({ log: { log: `${queueType}: Rule not found` } });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 		if (!lead.rule.isActive) {
-			await updateLead({ status: { status: `${queueType}: Rule is inactive` } });
+			await updateLead({ log: { log: `${queueType}: Rule is inactive` } });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 

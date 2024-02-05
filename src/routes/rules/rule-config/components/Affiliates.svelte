@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import AddAffiliate from './AddAffiliate.svelte';
+	import { tick } from 'svelte';
 
 	$: ({
 		rule: { affiliates },
@@ -12,8 +13,9 @@
 	const sortAffiliates = () =>
 		($ruleConfig.rule.affiliates = affiliates.sort((a, b) => a.num - b.num).map((af, i) => ({ ...af, num: i })));
 
-	const deleteAffiliate = (CompanyKey: string) => {
+	const deleteAffiliate = async (CompanyKey: string) => {
 		$ruleConfig.rule.affiliates = affiliates.filter((af) => af.CompanyKey !== CompanyKey);
+		await tick();
 		sortAffiliates();
 	};
 </script>

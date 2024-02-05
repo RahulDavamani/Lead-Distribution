@@ -7,5 +7,5 @@ export const getUserValues = async (UserKey: string) =>
 
 export const getUserStr = async (UserKey: string) => {
 	const user = await getUserValues(UserKey);
-	return user ? `"${user.VonageAgentId}: ${user.FirstName} ${user.LastName}"` : '"N/A"';
+	return user ? `${user.VonageAgentId}: ${user.FirstName} ${user.LastName}` : 'N/A';
 };

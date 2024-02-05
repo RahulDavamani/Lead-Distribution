@@ -50,9 +50,11 @@
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		queuedLeads = leads.queuedLeads;
-		if (oldQueuedLeads.length !== queuedLeads.length) new DataTable('#queuedLeadsTable').destroy();
-		await tick();
-		new DataTable('#queuedLeadsTable');
+		if (oldQueuedLeads.length !== queuedLeads.length) {
+			new DataTable('#queuedLeadsTable').destroy();
+			await tick();
+			new DataTable('#queuedLeadsTable', { order: [] });
+		}
 
 		const missingLead = oldQueuedLeads.find((lead) => !queuedLeads.find((lead2) => lead2.id === lead.id));
 		if (missingLead) {
@@ -85,7 +87,7 @@
 		completedLeads = leads.completedLeads;
 		ui.setLoader();
 		await tick();
-		new DataTable('#completedLeadsTable');
+		new DataTable('#completedLeadsTable', { order: [] });
 	};
 
 	let interval: NodeJS.Timeout | undefined;

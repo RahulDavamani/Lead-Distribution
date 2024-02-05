@@ -13307,11 +13307,11 @@ model RunControlLog {
 }
 
 model PlanCalcRecord {
-   CreSeq         Int       @id(map: "PK_PlanCalcRecord") @default(autoincrement())
+   CreSeq         Int       @id(map: "PK_PlanCalcRecord")
    CreatedOn      DateTime  @default(now(), map: "DF__PlanCalcR__Creat__698AB386") @db.DateTime
-   ComType        String    @db.Char(1)
-   ComGrossAmount Decimal   @db.Decimal(10, 2)
-   ComNetAmount   Decimal   @db.Decimal(10, 2)
+   ComType        String?   @db.Char(1)
+   ComGrossAmount Decimal?  @db.Decimal(10, 2)
+   ComNetAmount   Decimal?  @db.Decimal(10, 2)
    ComMatrixKey   String?   @db.UniqueIdentifier
    EscrowRate     Decimal?  @db.Decimal(5, 2)
    EscrowAmount   Decimal?  @db.Decimal(10, 2)
@@ -13322,6 +13322,7 @@ model PlanCalcRecord {
 model PlanCreditRecord {
    CreSeq       Int       @default(autoincrement())
    PlanId       String    @db.VarChar(50)
+   PeriodKey    String    @db.UniqueIdentifier
    CreditRuleId String?   @db.VarChar(50)
    CompanyKey   String    @db.UniqueIdentifier
    UserKey      String    @db.UniqueIdentifier
@@ -13340,7 +13341,7 @@ model PlanCreditRecord {
    IsInstalled  Boolean
    CreatedOn    DateTime  @default(now(), map: "DF__PlanCredi__Creat__61E991BE") @db.DateTime
 
-   @@id([PlanId, CompanyKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
+   @@id([PlanId, PeriodKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
 }
 
 model PlanCurrentPeriod {
@@ -13353,12 +13354,13 @@ model PlanCurrentPeriod {
 model PlanParticipant {
    PlanSeq    Int       @default(autoincrement())
    PlanId     String    @db.VarChar(50)
+   PeriodKey  String    @db.UniqueIdentifier
    CompanyKey String    @db.UniqueIdentifier
    UserKey    String    @db.UniqueIdentifier
    CreatedOn  DateTime? @default(now(), map: "DF__PlanParti__Creat__3EA05581") @db.DateTime
    ModifiedOn DateTime? @db.DateTime
 
-   @@id([PlanId, UserKey], map: "pk_PlanParticipant")
+   @@id([PlanId, PeriodKey, CompanyKey], map: "pk_PlanParticipant")
 }
 
 model PlanProcessLog {
@@ -13375,16 +13377,17 @@ model PlanProcessLog {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
-   CreSeq         Int       @default(autoincrement())
+   CreSeq         Int
    CreatedOn      DateTime  @db.DateTime
-   ComType        String    @db.Char(1)
-   ComGrossAmount Decimal   @db.Decimal(10, 2)
-   ComNetAmount   Decimal   @db.Decimal(10, 2)
+   ComType        String?   @db.Char(1)
+   ComGrossAmount Decimal?  @db.Decimal(10, 2)
+   ComNetAmount   Decimal?  @db.Decimal(10, 2)
    ComMatrixKey   String?   @db.UniqueIdentifier
    EscrowRate     Decimal?  @db.Decimal(5, 2)
    EscrowAmount   Decimal?  @db.Decimal(10, 2)
    EscrowPayOn    DateTime? @db.Date
    ComJson        String?   @db.VarChar(255)
+   ComAmount      String?   @db.VarChar(1000)
 
    @@map("ZPlanCalcRecord_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13394,6 +13397,7 @@ model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
 model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
    CreSeq       Int       @default(autoincrement())
    PlanId       String    @db.VarChar(50)
+   PeriodKey    String    @db.UniqueIdentifier
    CreditRuleId String?   @db.VarChar(50)
    CompanyKey   String    @db.UniqueIdentifier
    UserKey      String    @db.UniqueIdentifier
@@ -13420,6 +13424,7 @@ model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
 model ZPlanParticipant_wqVF5Cw8gEGT_21IdUVgZ {
    PlanSeq                  Int       @default(autoincrement())
    PlanId                   String    @db.VarChar(50)
+   PeriodKey                String    @db.UniqueIdentifier
    CompanyKey               String    @db.UniqueIdentifier
    UserKey                  String    @db.UniqueIdentifier
    CreatedOn                DateTime? @db.DateTime
@@ -13623,7 +13628,7 @@ model LdLead {
    isPicked    Boolean
    VonageGUID  String? @db.NVarChar(100)
 
-   statuses           LdLeadStatus[]
+   logs               LdLeadLog[]
    notificationQueues LdLeadNotificationsQueue[]
    messages           LdLeadMessage[]
    calls              LdLeadCall[]
@@ -13643,14 +13648,14 @@ model LdLeadCompleted {
    VonageGUID  String? @db.NVarChar(100)
    closeStatus String?
 
-   statuses           LdLeadStatus[]
+   logs               LdLeadLog[]
    notificationQueues LdLeadNotificationsQueue[]
    messages           LdLeadMessage[]
    calls              LdLeadCall[]
    responses          LdLeadResponse[]
 }
 
-model LdLeadStatus {
+model LdLeadLog {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13660,7 +13665,7 @@ model LdLeadStatus {
    completedLeadId String?
    completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
 
-   status String
+   log String
 }
 
 model LdLeadNotificationsQueue {

@@ -2,7 +2,7 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		await prisma.ldLeadStatus.deleteMany({});
+		await prisma.ldLeadLog.deleteMany({});
 		await prisma.ldLeadNotificationAttempt.deleteMany({});
 		await prisma.ldLeadNotificationsQueue.deleteMany({});
 		await prisma.ldLeadCall.deleteMany({});
