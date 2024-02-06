@@ -11,6 +11,7 @@ import { completeLead, updateLeadFunc } from './helpers/lead.helper';
 import { getUserStr, getUserValues } from './helpers/user.helper';
 import { validateResponseProcedure } from './procedures/validateResponse.procedure';
 import { distributeLead, redistributeLead } from './helpers/distributeLead';
+import { getLeadsWhere } from './helpers/getLeadsWhere';
 
 export const leadRouter = router({
 	getQueued: getQueuedProcedure,
@@ -36,20 +37,7 @@ export const leadRouter = router({
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1), roleType: roleTypeSchema }))
 		.query(async ({ input: { ProspectKey, UserKey, roleType } }) => {
-			let where: Prisma.LdLeadWhereInput = {};
-			switch (roleType) {
-				case 'ADMIN':
-					where = { ProspectKey };
-					break;
-
-				case 'SUPERVISOR':
-					where = { ProspectKey, rule: { supervisors: { some: { UserKey } } } };
-					break;
-
-				case 'AGENT':
-					where = { ProspectKey, notificationQueues: { some: { notificationAttempts: { some: { UserKey } } } } };
-					break;
-			}
+			const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
 
 			const lead = await prisma.ldLead
 				.findFirst({
@@ -142,15 +130,12 @@ export const leadRouter = router({
 		}),
 
 	postLeadProspect: procedure
-		.input(z.object({ prospect: prospectInputSchema }))
-		.query(async ({ input: { prospect } }) => {
+		.input(z.object({ prospect: prospectInputSchema, AccessKey: z.string().min(1) }))
+		.query(async ({ input: { prospect, AccessKey } }) => {
 			const url = 'https://openapi.xyzies.com/LeadProspect/PostLead';
 			const res = await fetch(url, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9'
-				},
+				headers: { 'Content-Type': 'application/json', AccessKey },
 				body: JSON.stringify(prospect)
 			});
 			if (res.status !== 200) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Bad Request' });

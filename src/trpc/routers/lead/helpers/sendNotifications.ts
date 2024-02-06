@@ -82,7 +82,12 @@ export const sendNotifications = async (
 		await updateLead({
 			log: { log: `${queueType}: Attempt #${attempt.num} sent to operator "${userStr}"` }
 		});
-		addNotificationAttempt({ message, userType: 'OPERATOR', user: { connect: { UserKey: UserKey } } });
+		addNotificationAttempt({
+			message,
+			userType: 'OPERATOR',
+			user: { connect: { UserKey: UserKey } },
+			attempt: { connect: { id: attempt.id } }
+		});
 		await waitFor(attempt.waitTime);
 
 		// Check if Lead is already completed

@@ -54,7 +54,7 @@
 					<FormControl inputType="In" label={name}>
 						<input
 							type="radio"
-							name="eligibilityTarget"
+							name="eligibilityTarget{i}"
 							class="radio radio-sm radio-primary"
 							value={key}
 							bind:group={$ruleConfig.rule.responses[i].type}

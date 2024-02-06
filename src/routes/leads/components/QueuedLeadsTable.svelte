@@ -41,6 +41,7 @@
 	};
 
 	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isPicked);
+	$: console.log(queuedLeads);
 </script>
 
 <div class="overflow-x-auto">
@@ -120,14 +121,14 @@
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td>
-						<div>{latestNotificationQueue?.type ?? 'NEW LEAD'}</div>
+						<div class="font-semibold">{latestNotificationQueue?.type ?? 'NEW LEAD'}</div>
 						{#if latestNotificationQueue}
 							{#if isPicked}
 								<div>Picked by {latestCallUser?.userStr}</div>
 							{:else if latestNotificationQueue.isCompleted}
 								<div>Escalated to supervisor</div>
 							{:else if latestNotificationQueue.notificationAttempts.length > 0}
-								<div>Attempt {latestNotificationQueue.notificationAttempts[0].attempt?.num}</div>
+								<div>Attempt {latestNotificationQueue.notificationAttempts.length}</div>
 							{/if}
 						{/if}
 					</td>

@@ -6,6 +6,7 @@ import { roleTypeSchema } from '../../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
 import { getUserStr, getUserValues } from '../helpers/user.helper';
 import { actionsInclude } from '$lib/config/actions.config';
+import { getLeadsWhere } from '../helpers/getLeadsWhere';
 
 export const getProspectDetails = async (ProspectKey: string) => {
 	try {
@@ -47,28 +48,10 @@ export const getProspectDetails = async (ProspectKey: string) => {
 	}
 };
 
-const getLeadWhere = (roleType: string, UserKey?: string) => {
-	let where: Prisma.LdLeadWhereInput | Prisma.LdLeadCompletedWhereInput = {};
-	switch (roleType) {
-		case 'ADMIN':
-			where = {};
-			break;
-
-		case 'SUPERVISOR':
-			where = { rule: { supervisors: { some: { UserKey } } } };
-			break;
-
-		case 'AGENT':
-			where = { rule: { operators: { some: { UserKey } } } };
-			break;
-	}
-	return where;
-};
-
 export const getQueuedProcedure = procedure
 	.input(z.object({ UserKey: z.string().min(1), roleType: roleTypeSchema }))
 	.query(async ({ input: { UserKey, roleType } }) => {
-		const where = getLeadWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
+		const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
 
 		const queuedLeads = await Promise.all(
 			(
@@ -126,7 +109,7 @@ export const getQueuedProcedure = procedure
 						lead.notificationQueues.length === 0
 							? true
 							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
-					latestNotificationQueue: lead.notificationQueues[0],
+					latestNotificationQueue: lead.notificationQueues?.[0],
 					latestCallUser: lead.calls[0]
 						? {
 								...lead.calls[0],
@@ -153,7 +136,7 @@ export const getCompletedProcedure = procedure
 		})
 	)
 	.query(async ({ input: { dateRange, UserKey, roleType } }) => {
-		const where = getLeadWhere(roleType, UserKey) as Prisma.LdLeadCompletedWhereInput;
+		const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadCompletedWhereInput;
 
 		const startDate = new Date(dateRange[0]);
 		const endDate = new Date(dateRange[1]);

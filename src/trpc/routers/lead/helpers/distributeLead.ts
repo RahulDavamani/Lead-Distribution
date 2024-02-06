@@ -95,7 +95,7 @@ export const redistributeLead = async (ProspectKey: string, UserKey?: string) =>
 	if (lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0)
 		throw new TRPCError({ code: 'CONFLICT', message: 'Lead is busy' });
 
-	const queueNum = lead.notificationQueues.length + 1;
+	const queueNum = lead.notificationQueues.length;
 	const queueType = `REQUEUE #${queueNum} (${UserKey ? 'SUPERVISOR' : 'CALLBACK'})`;
 
 	// Create Lead Requeue

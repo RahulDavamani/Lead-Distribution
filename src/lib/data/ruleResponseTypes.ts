@@ -1,4 +1,4 @@
 export const ruleResponseTypes = {
 	disposition: 'Call Disposition',
-	sms: 'SMS Response'
+	sms: 'Customer SMS'
 };

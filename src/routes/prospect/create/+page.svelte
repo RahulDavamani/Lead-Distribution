@@ -6,6 +6,7 @@
 	import type { ProspectInput } from '../../../zod/prospectInput.schema';
 	import FormControl from '../../components/FormControl.svelte';
 
+	let AccessKey = '9A40BA85-78C1-4327-9021-A1AFC06CE9B9';
 	let prospect: ProspectInput = {
 		LeadID: '',
 		CustomerInfo: {
@@ -41,7 +42,7 @@
 
 	const submit = async () => {
 		ui.setLoader({ title: 'Creating Lead Prospect' });
-		await trpc($page).lead.postLeadProspect.query({ prospect }).catch(trpcClientErrorHandler);
+		await trpc($page).lead.postLeadProspect.query({ prospect, AccessKey }).catch(trpcClientErrorHandler);
 		ui.showToast({ class: 'alert-success', title: 'Lead Prospect Created' });
 		ui.setLoader();
 		prospect = {
@@ -59,12 +60,39 @@
 			AcceptedTerms: ''
 		};
 	};
+
+	const submitDummy = async () => {
+		for (let i = 0; i < Array.from(Array(5).keys()).length; i++) {
+			let prospect: ProspectInput = {
+				LeadID: '123',
+				CustomerInfo: {
+					FirstName: 'Rahul',
+					LastName: `Test ${i + 1}`,
+					Email: `b${i + 1}@gmail.com`,
+					Phone: '+919176004141',
+					Address: 'abc',
+					ZipCode: '123'
+				},
+				TrustedFormCertUrl: 'TrustedFormCertUrl.com',
+				ConsentToContact: '',
+				AcceptedTerms: ''
+			};
+			await trpc($page).lead.postLeadProspect.query({ prospect, AccessKey }).catch(trpcClientErrorHandler);
+		}
+	};
 </script>
 
 <div class="flex h-screen justify-center items-center">
 	<div class="card border max-w-5xl w-full p-4 px-6">
-		<div class="text-3xl font-bold">Submit Prospect</div>
+		<div class="flex justify-between items-end">
+			<div class="text-3xl font-bold w-full">Submit Prospect</div>
+			<select bind:value={AccessKey} class="select select-bordered select-sm w-full text-center">
+				<option value="9A40BA85-78C1-4327-9021-A1AFC06CE9B9">Raka Affiliate</option>
+				<option value="FAAEE713-6AC2-4DB3-A11D-EB8E13471BDE">Pointer</option>
+			</select>
+		</div>
 		<div class="divider mt-2" />
+
 		<div class="grid grid-cols-2 gap-x-6">
 			<FormControl label="First Name">
 				<input type="text" bind:value={prospect.CustomerInfo.FirstName} class="input input-bordered w-full" />
@@ -106,5 +134,6 @@
 		</div>
 
 		<button class="btn btn-primary {!enableSubmit && 'btn-disabled'} w-full mt-6" on:click={submit}>Submit</button>
+		<!-- <button class="btn btn-primary w-full mt-6" on:click={submitDummy}>Submit Dummy</button> -->
 	</div>
 </div>
