@@ -39,11 +39,11 @@
 					{@const affiliateName =
 						allAffiliates.find((a) => a.CompanyKey === CompanyKey)?.CompanyName ?? 'Invalid Affiliate'}
 
-					<div class="border shadow rounded-lg px-2 py-1 flex justify-between items-center">
-						<div>{affiliateName}</div>
-						<button class="text-error" on:click={() => deleteAffiliate(CompanyKey)}>
-							<Icon icon="mdi:delete" width={20} />
+					<div class="border shadow rounded-lg p-1 flex items-center">
+						<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAffiliate(CompanyKey)}>
+							<Icon icon="mdi:close" class="text-error" width={20} />
 						</button>
+						<div>{affiliateName}</div>
 					</div>
 				{:else}
 					<div class="text-center absolute inset-0 top-1/2">No Affiliates</div>

@@ -13,9 +13,9 @@
 <li class="step step-primary">
 	<div class="card border shadow-sm p-4 my-2 w-full text-left">
 		<div class="flex justify-between">
-			<div class="flex items-center gap-2">
-				<button on:click={() => deleteAction(action.id)}>
-					<Icon icon="mdi:close" class="cursor-pointer text-error" width={20} />
+			<div class="flex items-center">
+				<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAction(action.id)}>
+					<Icon icon="mdi:close" class="text-error" width={20} />
 				</button>
 				<div class="font-semibold">Send SMS</div>
 			</div>
@@ -33,7 +33,7 @@
 			</div>
 		</div>
 		<div class="divider m-0" />
-		<FormControl label="SMS Template" bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}>
+		<FormControl label="SMS Template">
 			<div class="join">
 				<textarea
 					placeholder="Type here"

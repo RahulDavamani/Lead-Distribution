@@ -39,40 +39,39 @@
 				{#each operators as { UserKey }, i}
 					{@const operator = allOperators.find((o) => o.UserKey === UserKey)}
 
-					<div class="border shadow rounded-lg px-3 py-2">
-						<div class="flex justify-between items-center gap-2">
-							<div class="flex-grow">
-								<div>
-									{#if operator}
-										{@const { VonageAgentId, FirstName, LastName, Email } = operator}
-										<span class="font-mono">{VonageAgentId}:</span>
-										<span class="font-semibold">{FirstName} {LastName}</span>
-										<span class="italic"> - {Email}</span>
-									{:else}
-										<span>Invalid Operator</span>
-									{/if}
-								</div>
-
-								<div class="grid grid-cols-2">
-									<FormControl inputType="In" label="Assign New Leads">
-										<input
-											type="checkbox"
-											class="checkbox checkbox-xs checkbox-primary"
-											bind:checked={$ruleConfig.rule.operators[i].assignNewLeads}
-										/>
-									</FormControl>
-									<FormControl inputType="In" label="Assign Callback Leads">
-										<input
-											type="checkbox"
-											class="checkbox checkbox-xs checkbox-primary"
-											bind:checked={$ruleConfig.rule.operators[i].assignCallbackLeads}
-										/>
-									</FormControl>
-								</div>
-							</div>
-							<button class="text-error" on:click={() => deleteOperator(UserKey)}>
-								<Icon icon="mdi:delete" width={20} />
+					<div class="border shadow rounded-lg p-3">
+						<div class="flex justify-start items-center">
+							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteOperator(UserKey)}>
+								<Icon icon="mdi:close" class="text-error" width={20} />
 							</button>
+
+							<div>
+								{#if operator}
+									{@const { VonageAgentId, FirstName, LastName, Email } = operator}
+									<span class="font-mono">{VonageAgentId}:</span>
+									<span class="font-semibold">{FirstName} {LastName}</span>
+									<span class="italic"> - {Email}</span>
+								{:else}
+									<span>Invalid Operator</span>
+								{/if}
+							</div>
+						</div>
+
+						<div class="grid grid-cols-2">
+							<FormControl inputType="In" label="Assign New Leads">
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm checkbox-primary"
+									bind:checked={$ruleConfig.rule.operators[i].assignNewLeads}
+								/>
+							</FormControl>
+							<FormControl inputType="In" label="Assign Callback Leads">
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm checkbox-primary"
+									bind:checked={$ruleConfig.rule.operators[i].assignCallbackLeads}
+								/>
+							</FormControl>
 						</div>
 					</div>
 				{:else}

@@ -93,22 +93,28 @@
 
 				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
 
-				{#if i === firstNewLead}
+				{#if i === 0 || i === firstNewLead}
 					<tr class="hover">
-						<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold"
-							>New Leads</td
-						>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
-						<td style="display: none;"></td>
+						{#if i == 0 && queuedLeads.filter((lead) => !lead.isNewLead).length > 0}
+							<td colspan="12" class="text-center bg-info text-info-content bg-opacity-90 font-semibold">
+								Callback Leads
+							</td>
+						{:else}
+							<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold">
+								New Leads
+							</td>
+						{/if}
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
+						<td style="display: none;" />
 					</tr>
 				{/if}
 				<tr class="hover">
@@ -116,8 +122,7 @@
 						<div class="flex justify-center items-center gap-2">
 							{#if isPicked}
 								<div class="badge badge-sm badge-warning" />
-							{/if}
-							{#if isNewLead}
+							{:else if isNewLead}
 								<div class="badge badge-sm badge-success" />
 							{/if}
 							{ProspectId}

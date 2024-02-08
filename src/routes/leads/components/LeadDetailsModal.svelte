@@ -21,7 +21,12 @@
 </script>
 
 {#if id}
-	<Modal title="Lead Details" showModal={id !== undefined} closeModal={() => (id = undefined)} boxClasses="max-w-full">
+	<Modal
+		title="Lead Details{leadDetails?.ProspectId ? `: ${leadDetails.ProspectId}` : ''}"
+		showModal={id !== undefined}
+		closeModal={() => (id = undefined)}
+		boxClasses="max-w-full"
+	>
 		{#if leadDetails}
 			<div class="grid grid-cols-6 gap-4">
 				<div class="overflow-x-auto col-span-2 row-span-2">

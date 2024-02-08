@@ -8,6 +8,8 @@ import { actionsInclude } from '$lib/config/actions.config';
 import { getOperators } from './helpers/getOperators';
 import { getAffiliates } from './helpers/getAffiliates';
 import { upsertActions } from './helpers/upsertActions';
+import { roleTypeSchema } from '../../../stores/auth.store';
+import type { Prisma } from '@prisma/client';
 
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
@@ -19,6 +21,57 @@ export const ruleRouter = router({
 			.catch(prismaErrorHandler);
 		return { rules };
 	}),
+
+	getForSettings: procedure
+		.input(z.object({ UserKey: z.string().min(1), roleType: roleTypeSchema }))
+		.query(async ({ input: { UserKey, roleType } }) => {
+			let where: Prisma.LdRuleWhereInput;
+			switch (roleType) {
+				case 'ADMIN':
+					where = {};
+					break;
+
+				case 'SUPERVISOR':
+					where = { supervisors: { some: { UserKey } } };
+					break;
+
+				case 'AGENT':
+					where = { id: '' };
+					break;
+			}
+
+			const rules = await prisma.ldRule
+				.findMany({
+					where,
+					select: {
+						id: true,
+						name: true,
+						operators: {
+							select: {
+								UserKey: true,
+								num: true,
+								assignNewLeads: true,
+								assignCallbackLeads: true,
+								user: { select: { VonageAgentId: true, FirstName: true, LastName: true, Email: true } }
+							}
+						}
+					}
+				})
+				.catch(prismaErrorHandler);
+
+			return { rules };
+		}),
+
+	updateOperators: procedure
+		.input(z.object({ ruleId: z.string().min(1), operators: ruleSchema.shape.operators }))
+		.query(async ({ input: { ruleId, operators } }) => {
+			for (const { UserKey, ...values } of operators) {
+				await prisma.ldRuleOperator.update({
+					where: { ruleId_UserKey: { ruleId, UserKey } },
+					data: values
+				});
+			}
+		}),
 
 	getById: procedure.input(z.object({ id: z.string().min(1).nullable() })).query(async ({ input: { id } }) => {
 		const rule = id

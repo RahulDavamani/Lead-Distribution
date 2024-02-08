@@ -48,7 +48,7 @@
 	};
 </script>
 
-<details class="collapse collapse-arrow">
+<details class="collapse collapse-arrow overflow-visible">
 	<summary class="collapse-title px-0">
 		<div class="flex gap-2">
 			<div>
@@ -65,9 +65,9 @@
 			{#each notificationAttempts as { num }, i}
 				<div class="my-card">
 					<div class="flex justify-between">
-						<div class="flex justify-start items-center gap-2 mb-1">
-							<button on:click={() => deleteNotificationAttempt(num)}>
-								<Icon icon="mdi:close" class="text-error" width="20" />
+						<div class="flex items-center mb-1">
+							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteNotificationAttempt(num)}>
+								<Icon icon="mdi:close" class="text-error" width={20} />
 							</button>
 							<div class="font-semibold">Attempt #{num}</div>
 						</div>
@@ -88,7 +88,7 @@
 						<FormControl
 							label="Notification Message Template"
 							classes="w-full"
-							bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
+							bottomLabel={'Max 190 Characters (After Variables Replaced)'}
 							error={zodErrors?.notificationAttempts?.[i]?.messageTemplate}
 						>
 							<div class="join">

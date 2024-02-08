@@ -30,7 +30,7 @@ export const getProspectDetails = async (ProspectKey: string) => {
 				(CompanyKey
 					? await prisma.$queryRaw`select CompanyName from v_AffilateLeadDistribution where CompanyKey=${CompanyKey}`.catch(
 							prismaErrorHandler
-						)
+					  )
 					: []) as (Affiliate | undefined)[]
 			)[0]?.CompanyName;
 		} catch (error) {
@@ -53,7 +53,7 @@ export const getQueuedProcedure = procedure
 	.query(async ({ input: { UserKey, roleType } }) => {
 		const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
 
-		const queuedLeads = await Promise.all(
+		let queuedLeads = await Promise.all(
 			(
 				await prisma.ldLead
 					.findMany({
@@ -111,7 +111,7 @@ export const getQueuedProcedure = procedure
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
 					log: lead.logs[0].log,
-					isNewLead: lead.notificationQueues.length <= 1 && !lead.isPicked,
+					isNewLead: lead.notificationQueues.length <= 1,
 					isNotificationQueue:
 						lead.notificationQueues.length === 0
 							? true
@@ -122,12 +122,27 @@ export const getQueuedProcedure = procedure
 						? {
 								...lead.calls[0],
 								userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
-							}
+						  }
 						: undefined
 				};
 			})
 		);
 		queuedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
+
+		if (roleType === 'AGENT') {
+			const leads = queuedLeads.filter((lead) => lead.id === '');
+			for (const lead of queuedLeads) {
+				const operator = await prisma.ldRuleOperator.findUnique({
+					where: { ruleId_UserKey: { ruleId: lead.ruleId ?? '', UserKey: UserKey } },
+					select: { assignNewLeads: true, assignCallbackLeads: true }
+				});
+
+				if (operator)
+					if ((lead.isNewLead && operator.assignNewLeads) || (!lead.isNewLead && operator.assignCallbackLeads))
+						leads.push(lead);
+			}
+			queuedLeads = leads;
+		}
 
 		return { queuedLeads };
 	});
@@ -166,7 +181,7 @@ export const getCompletedProcedure = procedure
 									prismaErrorHandler
 								)) as { Duration: string | null }[]
 							)?.[0]?.Duration ?? '0'
-						)
+					  )
 					: 0;
 				return {
 					...lead,
@@ -219,6 +234,13 @@ export const getLeadDetailsProcedure = procedure
 				})
 				.catch(prismaErrorHandler);
 
+		const { ProspectId } = await prisma.leadProspect
+			.findFirstOrThrow({
+				where: { ProspectKey: lead.ProspectKey },
+				select: { ProspectId: true }
+			})
+			.catch(prismaErrorHandler);
+
 		const notificationAttempts = [];
 		for (const notificationAttempt of lead.notificationQueues.flatMap(
 			({ notificationAttempts }) => notificationAttempts
@@ -250,5 +272,5 @@ export const getLeadDetailsProcedure = procedure
 				userValues: call?.UserKey ? await getUserValues(call.UserKey) : undefined
 			});
 
-		return { ...lead, calls, notificationQueues };
+		return { ...lead, ProspectId, calls, notificationQueues };
 	});

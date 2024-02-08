@@ -14,6 +14,7 @@
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import LeadDetailsModal from './components/LeadDetailsModal.svelte';
+	import SettingsModal from './components/SettingsModal.svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -23,6 +24,12 @@
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 	let affiliateSelect: string | undefined;
 	let leadDetailsModelId: string | undefined;
+	let showSettingsModal = false;
+
+	const {
+		user: { UserKey },
+		roleType
+	} = $auth;
 
 	$: affiliates = (() => {
 		let affiliates: { [key: string]: number } = {};
@@ -41,10 +48,7 @@
 
 	const fetchQueuedLeads = async () => {
 		const oldQueuedLeads = queuedLeads;
-		const {
-			user: { UserKey },
-			roleType
-		} = $auth;
+
 		const leads = await trpc($page)
 			.lead.getQueued.query({ UserKey, roleType })
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
@@ -72,10 +76,6 @@
 		new DataTable('#completedLeadsTable').destroy();
 		ui.setLoader({ title: 'Fetching Leads' });
 
-		const {
-			user: { UserKey },
-			roleType
-		} = $auth;
 		const leads = await trpc($page)
 			.lead.getCompleted.query({
 				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
@@ -99,7 +99,7 @@
 		await fetchCompletedLeads(dateRange);
 		ui.setLoader();
 
-		interval = setInterval(fetchQueuedLeads, 1000);
+		// interval = setInterval(fetchQueuedLeads, 1000);
 	});
 
 	onDestroy(() => {
@@ -126,7 +126,7 @@
 
 <div class="container mx-auto">
 	<div class="flex justify-between items-end">
-		<h1 class="text-3xl font-bold flex items-end gap-2 flex-grow">
+		<div class="text-3xl font-bold flex items-end gap-2 flex-grow">
 			{#if tab === 1}
 				Queued Leads:
 				<span class="font-normal font-mono text-2xl">({queuedLeads.length})</span>
@@ -134,6 +134,7 @@
 				Completed Leads:
 				<span class="font-normal font-mono text-2xl">({completedLeads.length})</span>
 			{/if}
+
 			<select
 				class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
 				bind:value={affiliateSelect}
@@ -158,10 +159,17 @@
 					}}
 				/>
 			{/if}
-		</h1>
-		<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={reloadLeads}>
-			<Icon icon="mdi:refresh" class="text-info" width={22} />
-		</button>
+
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={reloadLeads}>
+				<Icon icon="mdi:refresh" class="text-info" width={22} />
+			</button>
+		</div>
+
+		{#if roleType === 'ADMIN' || roleType === 'SUPERVISOR'}
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => (showSettingsModal = true)}>
+				<Icon icon="mdi:settings" width={22} />
+			</button>
+		{/if}
 		<button class="btn btn-sm {tab === 1 ? 'btn-success' : 'btn-warning'}" on:click={() => (tab = tab === 1 ? 2 : 1)}>
 			{tab === 1 ? 'View Completed Leads' : 'View Queued Leads'}
 		</button>
@@ -186,3 +194,4 @@
 </div>
 
 <LeadDetailsModal bind:id={leadDetailsModelId} />
+<SettingsModal bind:showModal={showSettingsModal} />

@@ -51,20 +51,28 @@
 		<div class="space-y-4 px-2 mb-2">
 			{#each responses as { id }, i}
 				<div class="my-card">
-					<div class="font-semibold">Response Type</div>
-					<div class="flex gap-4">
-						{#each Object.entries(ruleResponseTypes) as [key, name]}
-							<FormControl inputType="In" label={name}>
-								<input
-									type="radio"
-									name="eligibilityTarget{i}"
-									class="radio radio-sm radio-primary"
-									value={key}
-									bind:group={$ruleConfig.rule.responses[i].type}
-								/>
-							</FormControl>
-						{/each}
+					<div class="flex items-center justify-between">
+						<div>
+							<div class="font-semibold">Response Type</div>
+							<div class="flex gap-4">
+								{#each Object.entries(ruleResponseTypes) as [key, name]}
+									<FormControl inputType="In" label={name}>
+										<input
+											type="radio"
+											name="eligibilityTarget{i}"
+											class="radio radio-sm radio-primary"
+											value={key}
+											bind:group={$ruleConfig.rule.responses[i].type}
+										/>
+									</FormControl>
+								{/each}
+							</div>
+						</div>
+						<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteResponse(id)}>
+							<Icon icon="mdi:close" class="text-error" width={20} />
+						</button>
 					</div>
+
 					<div class="flex gap-6 mb-4">
 						<FormControl classes="w-full" label="Response Values (Contains)" error={zodErrors?.responses?.[i]?.values}>
 							<textarea
@@ -87,7 +95,6 @@
 								bind:value={$ruleConfig.rule.responses[i].maxAttempt}
 							/>
 						</FormControl>
-						<button class="btn btn-error mt-10" on:click={() => deleteResponse(id)}>Delete</button>
 					</div>
 
 					<Actions actionsName="Actions" bind:actions={$ruleConfig.rule.responses[i].actions} />

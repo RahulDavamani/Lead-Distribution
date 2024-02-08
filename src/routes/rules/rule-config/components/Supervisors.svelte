@@ -23,7 +23,7 @@
 	};
 </script>
 
-<details class="collapse collapse-arrow">
+<details class="collapse collapse-arrow overflow-visible">
 	<summary class="collapse-title px-0">
 		<div class="flex gap-2">
 			<div>
@@ -40,9 +40,9 @@
 			{#each supervisors as { UserKey }, i}
 				{@const supervisor = operators.find((o) => o.UserKey === UserKey)}
 				<div class="my-card">
-					<div class="flex justify-start items-center gap-2 mb-1">
-						<button on:click={() => deleteSupervisor(UserKey)}>
-							<Icon icon="mdi:close" class="text-error" width="20" />
+					<div class="flex items-center mb-1">
+						<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteSupervisor(UserKey)}>
+							<Icon icon="mdi:close" class="text-error" width={20} />
 						</button>
 						<div>
 							{#if supervisor}
@@ -58,7 +58,7 @@
 
 					<FormControl
 						label="Notification Message Template"
-						bottomLabel={'Max 190 Characters (After Dynamic Variables Replaced)'}
+						bottomLabel={'Max 190 Characters (After Variables Replaced)'}
 						error={zodErrors?.supervisors?.[i]?.messageTemplate}
 					>
 						<div class="join">
@@ -69,7 +69,7 @@
 								rows={1}
 							/>
 							<Variables
-								variables={['NotificationType']}
+								variables={['LeadStatus']}
 								insertVariable={(v) => ($ruleConfig.rule.supervisors[i].messageTemplate += v)}
 							/>
 						</div>
