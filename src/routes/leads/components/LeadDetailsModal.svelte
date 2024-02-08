@@ -157,7 +157,7 @@
 					<div class="divider m-0 col-span-4" />
 
 					<div class="overflow-x-auto col-span-2">
-						<div class="text-lg font-semibold mb-1">Customer Calls:</div>
+						<div class="text-lg font-semibold mb-1">Calls Made to Customer:</div>
 						<div class="table table-zebra border rounded-none">
 							<thead class="bg-base-200">
 								<tr>
@@ -183,7 +183,7 @@
 					</div>
 
 					<div class="overflow-x-auto col-span-2">
-						<div class="text-lg font-semibold mb-1">Customer SMS:</div>
+						<div class="text-lg font-semibold mb-1">SMS Sent to Customer:</div>
 						<div class="table table-zebra border rounded-none">
 							<thead class="bg-base-200">
 								<tr>

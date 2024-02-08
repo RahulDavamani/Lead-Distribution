@@ -26,7 +26,7 @@
 			: 0;
 
 	onMount(() => {
-		new DataTable('#queuedLeadsTable', { order: [] });
+		new DataTable('#queuedLeadsTable', { order: [], ordering: false });
 	});
 
 	const requeue = async (ProspectKey: string) => {
@@ -41,7 +41,7 @@
 	};
 
 	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isPicked);
-	$: console.log(queuedLeads);
+	$: firstNewLead = queuedLeads.findIndex((lead) => lead.isNewLead);
 </script>
 
 <div class="overflow-x-auto">
@@ -57,19 +57,20 @@
 			<tr>
 				<th class="w-1">Prospect ID</th>
 				<th class="w-1">Vonage GUID</th>
-				<th class="w-1">Created On</th>
-				<th class="w-1">Updated On</th>
-				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
+				<th class="w-1">Created On</th>
+				<th class="w-1">Updated On</th>
+				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
+				<th class="w-32">Customer</th>
 				<th>Lead Status</th>
 				<th>Log Message</th>
-				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
+				<th>Customer SMS Response</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, latestNotificationQueue, log, isNotificationQueue, isPicked, latestCallUser }, i}
+			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, latestNotificationQueue, log, isNotificationQueue, isPicked, latestCustomerResponse, latestCallUser }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUser?.UserKey !== UserKey) ||
 					(isPicked ? latestCallUser?.UserKey !== UserKey : false)}
@@ -88,12 +89,28 @@
 							: 'Available'
 						: isNotificationQueue
 						  ? 'Queueing'
-						  : isPicked
-						    ? 'Requeue (Lead Picked)'
-						    : 'Requeue'}
+						  : 'Requeue'}
 
 				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
 
+				{#if i === firstNewLead}
+					<tr class="hover">
+						<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold"
+							>New Leads</td
+						>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+						<td style="display: none;"></td>
+					</tr>
+				{/if}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
@@ -112,14 +129,15 @@
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
+					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
 					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
-					<td>{CompanyName ?? 'N/A'}</td>
-					<td>{rule?.name ?? 'N/A'}</td>
 					<td>
 						<div class="font-semibold">{latestNotificationQueue?.type ?? 'NEW LEAD'}</div>
 						{#if latestNotificationQueue}
@@ -133,7 +151,7 @@
 						{/if}
 					</td>
 					<td>{log}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
+					<td>{latestCustomerResponse ?? 'No response yet'}</td>
 					<td>
 						<div class="flex flex-col justify-center">
 							<!-- Status Btn -->

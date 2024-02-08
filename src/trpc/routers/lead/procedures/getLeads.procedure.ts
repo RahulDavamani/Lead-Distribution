@@ -95,6 +95,13 @@ export const getQueuedProcedure = procedure
 								orderBy: { createdAt: 'desc' },
 								take: 1,
 								select: { UserKey: true }
+							},
+
+							responses: {
+								where: { type: 'sms' },
+								orderBy: { createdAt: 'desc' },
+								take: 1,
+								select: { responseValue: true }
 							}
 						}
 					})
@@ -110,6 +117,7 @@ export const getQueuedProcedure = procedure
 							? true
 							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
 					latestNotificationQueue: lead.notificationQueues?.[0],
+					latestCustomerResponse: lead.responses?.[0]?.responseValue,
 					latestCallUser: lead.calls[0]
 						? {
 								...lead.calls[0],
@@ -119,10 +127,7 @@ export const getQueuedProcedure = procedure
 				};
 			})
 		);
-		queuedLeads.sort((a, b) => {
-			if (a.isNewLead !== b.isNewLead) return a.isNewLead ? -1 : 1;
-			return (b.prospectDetails.ProspectId ?? 0) - (a.prospectDetails.ProspectId ?? 0);
-		});
+		queuedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
 
 		return { queuedLeads };
 	});
@@ -170,7 +175,7 @@ export const getCompletedProcedure = procedure
 				};
 			})
 		);
-		completedLeads.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+		completedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
 
 		return { completedLeads };
 	});

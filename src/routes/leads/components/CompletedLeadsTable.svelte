@@ -47,14 +47,14 @@
 			<tr>
 				<th class="w-1">Prospect ID</th>
 				<th class="w-1">Vonage GUID</th>
-				<th class="w-1">Created On</th>
-				<th class="w-1">Completed On</th>
-				<th class="w-32">Customer</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
-				<th>Close Status</th>
+				<th class="w-1">Created On</th>
+				<th class="w-1">Completed On</th>
 				<th>Lead Response Time</th>
 				<th>Customer Talk Time</th>
+				<th class="w-32">Customer</th>
+				<th>Close Status</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
@@ -83,17 +83,17 @@
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
+					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
 					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
+					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
-					<td>{CompanyName ?? 'N/A'}</td>
-					<td>{rule?.name ?? 'N/A'}</td>
 					<td>{closeStatus ?? 'N/A'}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
-					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
 						<div class="flex justify-center items-center">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
