@@ -33,20 +33,20 @@
 			</div>
 		</div>
 		<div class="divider m-0" />
+
 		<FormControl
-			label="Requeue Time"
-			labelClasses="text-sm"
-			classes="w-1/2"
-			bottomLabel={`Time: ${timeToText(action.requeueTime)}`}
+			label="Schedule Time"
+			classes="max-w-xs w-full"
+			bottomLabel="Lead will be requeued in {timeToText(action.scheduleTime)}"
 		>
 			<div class="join">
 				<input
 					type="number"
 					placeholder="Type here"
-					class="input input-sm input-bordered w-full join-item"
-					bind:value={action.requeueTime}
+					class="input input-bordered w-full join-item"
+					bind:value={action.scheduleTime}
 				/>
-				<div class="btn btn-sm join-item no-animation cursor-default">sec</div>
+				<div class="btn join-item no-animation cursor-default">sec</div>
 			</div>
 		</FormControl>
 	</div>

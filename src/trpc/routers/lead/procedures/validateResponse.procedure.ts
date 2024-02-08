@@ -3,61 +3,8 @@ import { procedure } from '../../../server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { TRPCError } from '@trpc/server';
 import { actionsInclude } from '$lib/config/actions.config';
-import { completeLead, createLeadResponse, updateLeadFunc } from '../helpers/lead.helper';
-import type { Actions } from '$lib/config/actions.schema';
-import { generateMessage } from '../helpers/generateMessage';
-import { timeToText } from '$lib/client/DateTime';
-import { scheduleJob } from 'node-schedule';
-import { sendSMS } from '../helpers/twilio';
-import { getActionsList } from '$lib/config/utils/getActionsList';
-import { redistributeLead } from '../helpers/distributeLead';
-
-export const executeActions = async (validateResponseType: string, ProspectKey: string, actions: Actions) => {
-	const updateLead = updateLeadFunc(ProspectKey);
-	const { actionsList } = getActionsList(actions);
-
-	for (const action of actionsList) {
-		if (action.requeueLead) {
-			// Requeue Lead
-			const requeueTimeText = timeToText(action.requeueLead.requeueTime);
-			const scheduledTime = new Date(Date.now() + action.requeueLead.requeueTime * 1000);
-			scheduleJob(scheduledTime, async () => await redistributeLead(ProspectKey));
-			await updateLead({ log: { log: `${validateResponseType}: Lead requeue scheduled in ${requeueTimeText}` } });
-		}
-
-		// Send SMS
-		if (action.sendSMS) {
-			const { Phone } = await prisma.leadProspect
-				.findFirstOrThrow({ where: { ProspectKey }, select: { Phone: true } })
-				.catch(prismaErrorHandler);
-			const message = await generateMessage(ProspectKey, action.sendSMS.smsTemplate);
-			await sendSMS(Phone ?? '', message);
-			const {
-				_count: { messages }
-			} = await prisma.ldLead
-				.findUniqueOrThrow({ where: { ProspectKey }, select: { _count: { select: { messages: true } } } })
-				.catch(prismaErrorHandler);
-			await updateLead({
-				log: { log: `${validateResponseType}: Text message sent to customer (SMS #${messages + 1})` },
-				message: { message }
-			});
-		}
-
-		// Complete Lead
-		if (action.completeLead) {
-			await completeLead(ProspectKey);
-			await updateLead({ log: { log: `Lead completed` } });
-			break;
-		}
-
-		// Close Lead
-		if (action.closeLead) {
-			await completeLead(ProspectKey, 'Close Lead');
-			await updateLead({ log: { log: `Lead closed by response action` } });
-			break;
-		}
-	}
-};
+import { createLeadResponse, updateLeadFunc } from '../helpers/lead.helper';
+import { executeActions } from '../helpers/executeActions';
 
 export const validateResponseProcedure = procedure
 	.input(
@@ -107,7 +54,7 @@ export const validateResponseProcedure = procedure
 
 		// Get Response
 		const response = lead.rule.responses.find(({ values }) =>
-			values.split(',').some((value) => Response.includes(value))
+			values.split(',').some((value) => Response.toLowerCase().includes(value.toLowerCase()))
 		);
 
 		// Execute No Match Actions

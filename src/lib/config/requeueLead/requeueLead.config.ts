@@ -10,7 +10,7 @@ const actionConfig: ActionConfig<typeof key> = {
 		getNewAction: (num) => ({
 			id: nanoid(),
 			num,
-			requeueTime: 0
+			scheduleTime: 0
 		})
 	}
 };

@@ -30,7 +30,7 @@ export const getProspectDetails = async (ProspectKey: string) => {
 				(CompanyKey
 					? await prisma.$queryRaw`select CompanyName from v_AffilateLeadDistribution where CompanyKey=${CompanyKey}`.catch(
 							prismaErrorHandler
-					  )
+						)
 					: []) as (Affiliate | undefined)[]
 			)[0]?.CompanyName;
 		} catch (error) {
@@ -110,20 +110,20 @@ export const getQueuedProcedure = procedure
 				return {
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
-					log: lead.logs[0].log,
 					isNewLead: lead.notificationQueues.length <= 1,
+					customerResponse: lead.responses?.[0]?.responseValue,
 					isNotificationQueue:
 						lead.notificationQueues.length === 0
 							? true
 							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
-					latestNotificationQueue: lead.notificationQueues?.[0],
-					latestCustomerResponse: lead.responses?.[0]?.responseValue,
-					latestCallUser: lead.calls[0]
+					notificationQueue: lead.notificationQueues?.[0],
+					callUser: lead.calls[0]
 						? {
 								...lead.calls[0],
 								userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
-						  }
-						: undefined
+							}
+						: undefined,
+					log: lead.logs[0].log
 				};
 			})
 		);
@@ -170,7 +170,15 @@ export const getCompletedProcedure = procedure
 							...where,
 							updatedAt: { gte: startDate, lte: endDate }
 						},
-						include: { rule: { select: { name: true } } }
+						include: {
+							rule: { select: { name: true } },
+
+							logs: {
+								orderBy: { createdAt: 'desc' },
+								take: 1,
+								select: { log: true }
+							}
+						}
 					})
 					.catch(prismaErrorHandler)
 			).map(async (lead) => {
@@ -181,12 +189,14 @@ export const getCompletedProcedure = procedure
 									prismaErrorHandler
 								)) as { Duration: string | null }[]
 							)?.[0]?.Duration ?? '0'
-					  )
+						)
 					: 0;
 				return {
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
-					customerTalkTime
+					customerTalkTime,
+					user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined,
+					log: lead.logs[0].log
 				};
 			})
 		);

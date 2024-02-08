@@ -3,6 +3,7 @@
 	import FormControl from '../../../routes/components/FormControl.svelte';
 	import type { SendSMS } from './sendSMS.schema';
 	import Variables from '../../../routes/rules/rule-config/components/Variables.svelte';
+	import { timeToText } from '$lib/client/DateTime';
 
 	export let action: SendSMS;
 	export let actionsCount: number;
@@ -33,16 +34,32 @@
 			</div>
 		</div>
 		<div class="divider m-0" />
-		<FormControl label="SMS Template">
-			<div class="join">
-				<textarea
+
+		<div class="flex gap-4">
+			<FormControl classes="w-full" label="SMS Template">
+				<div class="join">
+					<textarea
+						placeholder="Type here"
+						class="textarea textarea-bordered w-full join-item"
+						bind:value={action.smsTemplate}
+						rows={1}
+					/>
+					<Variables insertVariable={(v) => (action.smsTemplate += v)} />
+				</div>
+			</FormControl>
+
+			<FormControl
+				classes="max-w-xs w-full"
+				label="Schedule Time"
+				bottomLabel="SMS will be sent in {timeToText(action.scheduleTime)}"
+			>
+				<input
+					type="number"
 					placeholder="Type here"
-					class="textarea textarea-bordered w-full join-item"
-					bind:value={action.smsTemplate}
-					rows={1}
+					class="input input-bordered w-full"
+					bind:value={action.scheduleTime}
 				/>
-				<Variables insertVariable={(v) => (action.smsTemplate += v)} />
-			</div>
-		</FormControl>
+			</FormControl>
+		</div>
 	</div>
 </li>

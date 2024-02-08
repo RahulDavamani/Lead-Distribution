@@ -41,7 +41,7 @@ export const leadRouter = router({
 
 			const lead = await prisma.ldLead
 				.findFirst({
-					where,
+					where: { ProspectKey, ...where },
 					include: {
 						calls: {
 							orderBy: { createdAt: 'desc' },
@@ -124,8 +124,8 @@ export const leadRouter = router({
 
 			// Update Lead Log
 			const userStr = await getUserStr(UserKey);
-			await updateLead({ log: { log: `Lead closed by "${userStr}"` } });
-			await completeLead(ProspectKey, closeStatus);
+			await updateLead({ log: { log: `Lead closed by "${userStr}": ${closeStatus}` } });
+			await completeLead(ProspectKey, closeStatus, UserKey);
 			return { ProspectKey };
 		}),
 

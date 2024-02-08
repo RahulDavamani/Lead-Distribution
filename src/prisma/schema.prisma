@@ -1675,6 +1675,7 @@ model CompanyBankLog {
    ModifiedBy    String?   @db.UniqueIdentifier
    IsApproved    Boolean?
    DocumentKey   String?   @db.UniqueIdentifier
+   Reason        String?   @db.VarChar(1000)
 
    @@ignore
 }
@@ -9508,6 +9509,7 @@ model Users {
    LdLeadNotificationsQueues  LdLeadNotificationsQueue[]
    LdRuleOperators            LdRuleOperator[]
    LdRuleSupervisors          LdRuleSupervisor[]
+   LdLeadCompleted            LdLeadCompleted[]
 }
 
 model UsersArc {
@@ -13307,20 +13309,27 @@ model RunControlLog {
 }
 
 model PlanCalcRecord {
-   CreSeq         Int       @id(map: "PK_PlanCalcRecord")
+   CreSeq         Int
+   PlanId         String?   @db.VarChar(50)
+   PeriodKey      String?   @db.UniqueIdentifier
+   CreKey         String?   @db.UniqueIdentifier
    CreatedOn      DateTime  @default(now(), map: "DF__PlanCalcR__Creat__698AB386") @db.DateTime
-   ComType        String?   @db.Char(1)
+   ComType        String    @db.Char(1)
    ComGrossAmount Decimal?  @db.Decimal(10, 2)
    ComNetAmount   Decimal?  @db.Decimal(10, 2)
-   ComMatrixKey   String?   @db.UniqueIdentifier
    EscrowRate     Decimal?  @db.Decimal(5, 2)
    EscrowAmount   Decimal?  @db.Decimal(10, 2)
    EscrowPayOn    DateTime? @db.Date
    ComJson        String?   @db.VarChar(255)
+   RefCreKey      String?   @db.UniqueIdentifier
+
+   @@id([CreSeq, ComType], map: "PK_PlanCalcRecord")
 }
 
 model PlanCreditRecord {
    CreSeq                Int       @default(autoincrement())
+   ComType               String    @db.Char(1)
+   CreKey                String?   @db.UniqueIdentifier
    PlanId                String    @db.VarChar(50)
    PeriodKey             String    @db.UniqueIdentifier
    CreditRuleId          String?   @db.VarChar(50)
@@ -13343,8 +13352,9 @@ model PlanCreditRecord {
    IsConfirmed           Boolean
    IsInstalled           Boolean
    CreatedOn             DateTime  @default(now(), map: "DF__PlanCredi__Creat__61E991BE") @db.DateTime
+   RefCreKey             String?   @db.UniqueIdentifier
 
-   @@id([PlanId, PeriodKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
+   @@id([ComType, PlanId, PeriodKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
 }
 
 model PlanCurrentPeriod {
@@ -13380,20 +13390,23 @@ model PlanProcessLog {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
-   CreSeq            Int
-   CreatedOn         DateTime  @db.DateTime
-   ComType           String?   @db.Char(1)
-   ComGrossAmount    Decimal?  @db.Decimal(10, 2)
-   ComNetAmount      Decimal?  @db.Decimal(10, 2)
-   ComMatrixKey      String?   @db.UniqueIdentifier
-   EscrowRate        Decimal?  @db.Decimal(5, 2)
-   EscrowAmount      Decimal?  @db.Decimal(10, 2)
-   EscrowPayOn       DateTime? @db.Date
-   ComJson           String?   @db.VarChar(255)
-   PortalFeePercent  String?   @db.VarChar(1000)
-   ComAmount         String?   @db.VarChar(1000)
-   FinalNetAmount    String?   @db.VarChar(1000)
-   CommissionPackage String?   @db.VarChar(1000)
+   CreSeq           Int
+   PlanId           String?   @db.VarChar(50)
+   PeriodKey        String?   @db.UniqueIdentifier
+   CreKey           String?   @db.UniqueIdentifier
+   CreatedOn        DateTime  @db.DateTime
+   ComType          String    @db.Char(1)
+   ComGrossAmount   Decimal?  @db.Decimal(10, 2)
+   ComNetAmount     Decimal?  @db.Decimal(10, 2)
+   EscrowRate       Decimal?  @db.Decimal(5, 2)
+   EscrowAmount     Decimal?  @db.Decimal(10, 2)
+   EscrowPayOn      DateTime? @db.Date
+   ComJson          String?   @db.VarChar(255)
+   RefCreKey        String?   @db.UniqueIdentifier
+   PortalFeePercent String?   @db.VarChar(1000)
+   ComAmount        String?   @db.VarChar(1000)
+   DerivedPackage   String?   @db.VarChar(1000)
+   FinalNetAmount   String?   @db.VarChar(1000)
 
    @@map("ZPlanCalcRecord_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13402,6 +13415,8 @@ model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
    CreSeq                Int       @default(autoincrement())
+   ComType               String    @db.Char(1)
+   CreKey                String?   @db.UniqueIdentifier
    PlanId                String    @db.VarChar(50)
    PeriodKey             String    @db.UniqueIdentifier
    CreditRuleId          String?   @db.VarChar(50)
@@ -13424,6 +13439,7 @@ model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
    IsConfirmed           Boolean
    IsInstalled           Boolean
    CreatedOn             DateTime  @db.DateTime
+   RefCreKey             String?   @db.UniqueIdentifier
 
    @@map("ZPlanCreditRecord_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13640,9 +13656,9 @@ model LdRuleRequeueLeadAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num         Int
-   requeueTime Int
-   actions     LdRuleActions[]
+   num          Int
+   scheduleTime Int             @default(30)
+   actions      LdRuleActions[]
 }
 
 model LdRuleSendSMSAction {
@@ -13650,9 +13666,10 @@ model LdRuleSendSMSAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num         Int
-   smsTemplate String
-   actions     LdRuleActions[]
+   num          Int
+   scheduleTime Int             @default(30)
+   smsTemplate  String
+   actions      LdRuleActions[]
 }
 
 model LdRuleCloseLeadAction {
@@ -13660,8 +13677,9 @@ model LdRuleCloseLeadAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num     Int
-   actions LdRuleActions[]
+   num         Int
+   closeStatus String          @default("")
+   actions     LdRuleActions[]
 }
 
 model LdRuleCompleteLeadAction {
@@ -13705,6 +13723,9 @@ model LdLeadCompleted {
    VonageGUID  String? @db.NVarChar(100)
    closeStatus String?
 
+   UserKey String? @db.UniqueIdentifier
+   user    Users?  @relation(fields: [UserKey], references: [UserKey])
+
    logs               LdLeadLog[]
    notificationQueues LdLeadNotificationsQueue[]
    messages           LdLeadMessage[]
@@ -13720,7 +13741,7 @@ model LdLeadLog {
    leadId          String?
    lead            LdLead?          @relation(fields: [leadId], references: [id])
    completedLeadId String?
-   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
+   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id])
 
    log String
 }
@@ -13733,7 +13754,7 @@ model LdLeadNotificationsQueue {
    leadId          String?
    lead            LdLead?          @relation(fields: [leadId], references: [id])
    completedLeadId String?
-   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
+   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
    isCompleted Boolean
    type        String
@@ -13753,7 +13774,7 @@ model LdLeadNotificationAttempt {
    updatedAt DateTime @updatedAt
 
    notificationQueueId String
-   notificationQueue   LdLeadNotificationsQueue @relation(fields: [notificationQueueId], references: [id], onUpdate: NoAction)
+   notificationQueue   LdLeadNotificationsQueue @relation(fields: [notificationQueueId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
    attemptId String?
    attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
@@ -13773,7 +13794,7 @@ model LdLeadMessage {
    leadId          String?
    lead            LdLead?          @relation(fields: [leadId], references: [id])
    completedLeadId String?
-   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
+   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id])
 
    message String
 }
@@ -13786,7 +13807,7 @@ model LdLeadCall {
    leadId          String?
    lead            LdLead?          @relation(fields: [leadId], references: [id])
    completedLeadId String?
-   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
+   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
@@ -13800,7 +13821,7 @@ model LdLeadResponse {
    leadId          String?
    lead            LdLead?          @relation(fields: [leadId], references: [id])
    completedLeadId String?
-   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onDelete: Cascade)
+   completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id])
 
    isCompleted   Boolean
    type          String

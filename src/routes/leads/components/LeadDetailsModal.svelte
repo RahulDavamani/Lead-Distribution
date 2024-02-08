@@ -22,7 +22,7 @@
 
 {#if id}
 	<Modal
-		title="Lead Details{leadDetails?.ProspectId ? `: ${leadDetails.ProspectId}` : ''}"
+		title="Lead Details {leadDetails?.ProspectId ? `(${leadDetails.ProspectId})` : ''}"
 		showModal={id !== undefined}
 		closeModal={() => (id = undefined)}
 		boxClasses="max-w-full"

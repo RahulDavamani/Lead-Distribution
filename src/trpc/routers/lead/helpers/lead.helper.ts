@@ -74,7 +74,7 @@ export const createLeadNotificationQueue = async (queueType: string, ProspectKey
 	};
 };
 
-export const completeLead = async (ProspectKey: string, closeStatus?: string) => {
+export const completeLead = async (ProspectKey: string, closeStatus?: string, UserKey?: string) => {
 	const lead = await prisma.ldLead
 		.findUniqueOrThrow({
 			where: { ProspectKey },
@@ -82,7 +82,7 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 				logs: { select: { id: true } },
 				notificationQueues: { select: { id: true } },
 				messages: { select: { id: true } },
-				calls: { select: { id: true } },
+				calls: { orderBy: { createdAt: 'desc' }, select: { id: true, UserKey: true } },
 				responses: { select: { id: true } }
 			}
 		})
@@ -92,11 +92,12 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 		data: {
 			id: lead.id,
 			createdAt: lead.createdAt,
+			ruleId: lead?.ruleId,
 			VonageGUID: lead.VonageGUID,
 			ProspectKey,
 			state: closeStatus ? 'CLOSED' : 'COMPLETED',
 			closeStatus,
-			ruleId: lead?.ruleId
+			UserKey: UserKey ? UserKey : closeStatus ? null : lead.calls[0]?.UserKey
 		}
 	});
 
@@ -157,7 +158,6 @@ export const completeLead = async (ProspectKey: string, closeStatus?: string) =>
 			});
 		})
 	);
-	console.log(await prisma.ldLead.findUnique({ where: { ProspectKey }, select: { _count: true } }));
 	await prisma.ldLead.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
 };
 

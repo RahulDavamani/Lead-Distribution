@@ -42,11 +42,12 @@ export const auth = (() => {
 				const roleType = user?.userRole.find(({ ID }) => [5, 9].includes(ID))
 					? 'ADMIN'
 					: user?.userRole.find(({ ID }) => [41, 43, 44].includes(ID))
-					  ? 'SUPERVISOR'
-					  : 'AGENT';
+						? 'SUPERVISOR'
+						: 'AGENT';
 				set({ token, user, roleType });
 			}
 		}
+		// hemanth
 		// set({
 		// 	token: 'abc',
 		// 	user: {
@@ -56,6 +57,23 @@ export const auth = (() => {
 		// 		userRole: [
 		// 			{
 		// 				ID: 5,
+		// 				Role: 'Agent'
+		// 			}
+		// 		]
+		// 	},
+		// 	roleType: 'ADMIN'
+		// });
+
+		// Davamani@yopmail.com
+		// set({
+		// 	token: 'abc',
+		// 	user: {
+		// 		Message: 'Success',
+		// 		UserKey: '74bedd5f-c117-474c-90d5-5a13eedd068f',
+		// 		CompanyKey: '4f82d8a1-3933-4a02-8c6a-ebfaa2763a6b',
+		// 		userRole: [
+		// 			{
+		// 				ID: 9,
 		// 				Role: 'Agent'
 		// 			}
 		// 		]

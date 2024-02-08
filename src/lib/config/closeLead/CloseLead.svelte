@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import type { CloseLead } from '../closeLead/closeLead.schema';
+	import FormControl from '../../../routes/components/FormControl.svelte';
 
 	export let action: CloseLead;
 	export let actionsCount: number;
@@ -30,5 +31,10 @@
 				{/if}
 			</div>
 		</div>
+		<div class="divider m-0" />
+
+		<FormControl label="Close Status">
+			<input type="text" placeholder="Type here" class="input input-bordered" bind:value={action.closeStatus} />
+		</FormControl>
 	</div>
 </li>

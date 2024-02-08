@@ -84,7 +84,7 @@
 							{/if}
 						</div>
 					</div>
-					<div class="flex gap-10">
+					<div class="flex gap-6">
 						<FormControl
 							label="Notification Message Template"
 							classes="w-full"

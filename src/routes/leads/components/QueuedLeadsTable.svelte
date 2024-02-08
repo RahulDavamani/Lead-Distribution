@@ -29,6 +29,29 @@
 		new DataTable('#queuedLeadsTable', { order: [], ordering: false });
 	});
 
+	const showRequeueAlert = (ProspectKey: string) => {
+		$ui.alertModal = {
+			title: 'Are you sure to requeue this lead?',
+			body: 'This lead has already been picked by another agent',
+
+			actions: [
+				{
+					name: 'Cancel',
+					class: 'btn-error',
+					onClick: () => ($ui.alertModal = undefined)
+				},
+				{
+					name: 'Requeue',
+					class: 'btn-warning',
+					onClick: async () => {
+						$ui.alertModal = undefined;
+						await requeue(ProspectKey);
+					}
+				}
+			]
+		};
+	};
+
 	const requeue = async (ProspectKey: string) => {
 		ui.setLoader({ title: 'Requeueing Lead' });
 		const interval = setInterval(() => {
@@ -63,17 +86,17 @@
 				<th class="w-1">Updated On</th>
 				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
 				<th class="w-32">Customer</th>
+				<th>Customer SMS Response</th>
 				<th>Lead Status</th>
 				<th>Log Message</th>
-				<th>Customer SMS Response</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, latestNotificationQueue, log, isNotificationQueue, isPicked, latestCustomerResponse, latestCallUser }, i}
+			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationQueue, log, isNotificationQueue, isPicked, customerResponse, callUser }, i}
 				{@const disableViewLead =
-					(roleType === 'AGENT' && i !== agentFirstLead && latestCallUser?.UserKey !== UserKey) ||
-					(isPicked ? latestCallUser?.UserKey !== UserKey : false)}
+					(roleType === 'AGENT' && i !== agentFirstLead && callUser?.UserKey !== UserKey) ||
+					(isPicked ? callUser?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
 					roleType === 'ADMIN' ||
@@ -91,7 +114,11 @@
 							? 'Queueing'
 							: 'Requeue'}
 
-				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
+				{@const statusBtnClick = () => {
+					if (canRequeue)
+						if (isPicked) showRequeueAlert(ProspectKey);
+						else requeue(ProspectKey);
+				}}
 
 				{#if i === 0 || i === firstNewLead}
 					<tr class="hover">
@@ -143,20 +170,20 @@
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
+					<td>{customerResponse ?? 'No response yet'}</td>
 					<td>
-						<div class="font-semibold">{latestNotificationQueue?.type ?? 'NEW LEAD'}</div>
-						{#if latestNotificationQueue}
+						<div class="font-semibold">{notificationQueue?.type ?? 'NEW LEAD'}</div>
+						{#if notificationQueue}
 							{#if isPicked}
-								<div>Picked by {latestCallUser?.userStr}</div>
-							{:else if latestNotificationQueue.isCompleted}
+								<div>Picked by {callUser?.userStr}</div>
+							{:else if notificationQueue.isCompleted}
 								<div>Escalated to supervisor</div>
-							{:else if latestNotificationQueue.notificationAttempts.length > 0}
-								<div>Attempt {latestNotificationQueue.notificationAttempts.length}</div>
+							{:else if notificationQueue.notificationAttempts.length > 0}
+								<div>Attempt {notificationQueue.notificationAttempts.length}</div>
 							{/if}
 						{/if}
 					</td>
 					<td>{log}</td>
-					<td>{latestCustomerResponse ?? 'No response yet'}</td>
 					<td>
 						<div class="flex flex-col justify-center">
 							<!-- Status Btn -->

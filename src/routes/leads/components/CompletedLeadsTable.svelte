@@ -55,11 +55,13 @@
 				<th>Customer Talk Time</th>
 				<th class="w-32">Customer</th>
 				<th>Close Status</th>
+				<th>Completed/Closed By</th>
+				<th>Log Message</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus, customerTalkTime }}
+			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus, customerTalkTime, user, log }}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
@@ -94,6 +96,8 @@
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
 					<td>{closeStatus ?? 'N/A'}</td>
+					<td>{user ?? 'N/A'}</td>
+					<td>{log}</td>
 					<td>
 						<div class="flex justify-center items-center">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
