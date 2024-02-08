@@ -13,9 +13,12 @@ export const ruleSchema = z.object({
 	operators: z.array(
 		z.object({
 			num: z.number(),
-			UserKey: z.string().min(1)
+			UserKey: z.string().min(1),
+			assignNewLeads: z.boolean(),
+			assignCallbackLeads: z.boolean()
 		})
 	),
+
 	affiliates: z.array(
 		z.object({
 			num: z.number(),

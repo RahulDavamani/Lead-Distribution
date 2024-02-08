@@ -22,7 +22,7 @@
 		queuedLeads.length > 0
 			? Math.floor(
 					queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, new Date()), 0) / queuedLeads.length
-			  )
+				)
 			: 0;
 
 	onMount(() => {
@@ -88,8 +88,8 @@
 							? 'Lead Picked'
 							: 'Available'
 						: isNotificationQueue
-						  ? 'Queueing'
-						  : 'Requeue'}
+							? 'Queueing'
+							: 'Requeue'}
 
 				{@const statusBtnClick = () => canRequeue && requeue(ProspectKey)}
 

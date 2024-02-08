@@ -30,7 +30,7 @@ export const getProspectDetails = async (ProspectKey: string) => {
 				(CompanyKey
 					? await prisma.$queryRaw`select CompanyName from v_AffilateLeadDistribution where CompanyKey=${CompanyKey}`.catch(
 							prismaErrorHandler
-					  )
+						)
 					: []) as (Affiliate | undefined)[]
 			)[0]?.CompanyName;
 		} catch (error) {
@@ -122,7 +122,7 @@ export const getQueuedProcedure = procedure
 						? {
 								...lead.calls[0],
 								userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
-						  }
+							}
 						: undefined
 				};
 			})
@@ -166,7 +166,7 @@ export const getCompletedProcedure = procedure
 									prismaErrorHandler
 								)) as { Duration: string | null }[]
 							)?.[0]?.Duration ?? '0'
-					  )
+						)
 					: 0;
 				return {
 					...lead,

@@ -4,6 +4,7 @@
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
+	import type { Rule } from '../../../../zod/rule.schema';
 
 	afterUpdate(() => new DataTable('#operatorsTable'));
 
@@ -23,10 +24,13 @@
 	};
 
 	const addOperator = () => {
-		$ruleConfig.rule.operators = [
-			...operators,
-			...selectedOperators.map((UserKey, i) => ({ num: operators.length + i + 1, UserKey }))
-		];
+		const newOperators: Rule['operators'] = selectedOperators.map((UserKey, i) => ({
+			num: operators.length + i + 1,
+			UserKey,
+			assignNewLeads: true,
+			assignCallbackLeads: true
+		}));
+		$ruleConfig.rule.operators = [...operators, ...newOperators];
 		showModal = false;
 		selectedOperators = [];
 	};

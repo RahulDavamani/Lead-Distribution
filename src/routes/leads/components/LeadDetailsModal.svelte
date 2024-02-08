@@ -132,12 +132,12 @@
 																{requeueLead
 																	? 'Requeue Lead'
 																	: sendSMS
-																	  ? 'Send SMS'
-																	  : closeLead
-																	    ? 'Close Lead'
-																	    : completeLead
-																	      ? 'Complete Lead'
-																	      : ''}
+																		? 'Send SMS'
+																		: closeLead
+																			? 'Close Lead'
+																			: completeLead
+																				? 'Complete Lead'
+																				: ''}
 															</li>
 														{/each}
 													</ul>

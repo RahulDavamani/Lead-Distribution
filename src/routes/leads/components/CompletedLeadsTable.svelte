@@ -16,7 +16,7 @@
 			? Math.floor(
 					completedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, cur.updatedAt), 0) /
 						completedLeads.length
-			  )
+				)
 			: 0;
 
 	$: avgCustomerTalkTime =

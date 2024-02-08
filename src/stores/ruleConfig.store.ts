@@ -63,7 +63,6 @@ export const ruleConfig = (() => {
 	});
 
 	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
-		console.log('hey');
 		update((state) => ({
 			...state,
 			init: true,

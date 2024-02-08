@@ -31,10 +31,10 @@ export type ActionLabels<K extends ActionKey> = {
 export type Action<K extends ActionKey> = K extends 'requeueLead'
 	? RequeueLead
 	: K extends 'sendSMS'
-	  ? SendSMS
-	  : K extends 'closeLead'
-	    ? CloseLead
-	    : CompleteLead;
+		? SendSMS
+		: K extends 'closeLead'
+			? CloseLead
+			: CompleteLead;
 
 export const actionsConfig: ActionsConfig = {
 	...requeueLeadConfig,

@@ -110,13 +110,13 @@
 			<Operators />
 			<Affiliates />
 		</div>
-		<div class="divider" />
+		<div class="divider mb-0" />
 
 		<NotificationAttempts />
-		<div class="divider" />
+		<div class="divider m-0" />
 
 		<Supervisors />
-		<div class="divider" />
+		<div class="divider m-0" />
 
 		<Responses />
 	</div>

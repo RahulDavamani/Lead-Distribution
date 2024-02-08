@@ -20,6 +20,20 @@
 		showAddAction = false;
 	};
 
+	const moveAction = (num: number, dir: 'up' | 'down') => {
+		actionsConfigList.forEach(({ labels: { keyActions } }) => {
+			actions[keyActions].forEach((a, i) => {
+				if (dir === 'up') {
+					if (a.num === num) actions[keyActions][i].num = num - 1;
+					else if (a.num === num - 1) actions[keyActions][i].num = num;
+				} else if (dir === 'down') {
+					if (a.num === num) actions[keyActions][i].num = num + 1;
+					else if (a.num === num + 1) actions[keyActions][i].num = num;
+				}
+			});
+		});
+	};
+
 	const deleteAction = (id: string) => {
 		let deletedNum = 0;
 		for (const k of keyActionsList) {
@@ -55,13 +69,13 @@
 		<ul class="steps steps-vertical px-4 w-full overflow-visible">
 			{#each actionsList as actions}
 				{#if actions.requeueLead}
-					<RequeueLead action={actions.requeueLead} {deleteAction} />
+					<RequeueLead action={actions.requeueLead} {actionsCount} {deleteAction} {moveAction} />
 				{:else if actions.sendSMS}
-					<SendSMS action={actions.sendSMS} {deleteAction} />
+					<SendSMS action={actions.sendSMS} {actionsCount} {deleteAction} {moveAction} />
 				{:else if actions.closeLead}
-					<CloseLead action={actions.closeLead} {deleteAction} />
+					<CloseLead action={actions.closeLead} {actionsCount} {deleteAction} {moveAction} />
 				{:else if actions.completeLead}
-					<CompleteLead action={actions.completeLead} {deleteAction} />
+					<CompleteLead action={actions.completeLead} {actionsCount} {deleteAction} {moveAction} />
 				{/if}
 			{/each}
 			<li data-content="+" class="step step-success">
