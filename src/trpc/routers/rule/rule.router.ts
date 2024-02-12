@@ -79,10 +79,11 @@ export const ruleRouter = router({
 					.findUnique({
 						where: { id },
 						include: {
-							operators: { orderBy: { num: 'asc' } },
 							affiliates: { orderBy: { num: 'asc' } },
-							notificationAttempts: { orderBy: { num: 'asc' } },
+							operators: { orderBy: { num: 'asc' } },
 							supervisors: { orderBy: { num: 'asc' } },
+							notificationAttempts: { orderBy: { num: 'asc' } },
+							escalations: { orderBy: { num: 'asc' } },
 							responses: { include: { actions: actionsInclude }, orderBy: { num: 'asc' } },
 							responseOptions: {
 								include: {
@@ -96,12 +97,12 @@ export const ruleRouter = router({
 					.catch(prismaErrorHandler)
 			: null;
 
-		const operators = await getOperators();
 		const affiliates = await getAffiliates();
+		const operators = await getOperators();
 		return {
 			rule,
-			operators,
 			affiliates,
+			operators,
 			canDelete: (rule?._count?.queuedLeads ?? 0) + (rule?._count?.completedLeads ?? 0) === 0
 		};
 	}),
@@ -110,7 +111,17 @@ export const ruleRouter = router({
 		.input(ruleSchema)
 		.query(
 			async ({
-				input: { id, operators, affiliates, notificationAttempts, supervisors, responses, responseOptions, ...values }
+				input: {
+					id,
+					affiliates,
+					operators,
+					supervisors,
+					notificationAttempts,
+					escalations,
+					responses,
+					responseOptions,
+					...values
+				}
 			}) => {
 				// Upsert Response Options
 				const {
@@ -153,37 +164,42 @@ export const ruleRouter = router({
 						.catch(prismaErrorHandler)
 				).id;
 
-				// Upsert Operators and Affiliates
-				await Promise.all([
-					await prisma.ldRuleOperator.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler),
-					await prisma.ldRuleAffiliate.deleteMany({ where: { ruleId } }).catch(prismaErrorHandler)
-				]);
-
-				await Promise.all([
-					await prisma.ldRuleOperator
-						.createMany({ data: operators.map((operator) => ({ ruleId, ...operator })) })
-						.catch(prismaErrorHandler),
-					await prisma.ldRuleAffiliate
-						.createMany({ data: affiliates.map((affiliate) => ({ ruleId, ...affiliate })) })
-						.catch(prismaErrorHandler)
-				]);
-
-				// Upsert Notification Attempts
-				const existingNotificationAttempts = await prisma.ldRuleNotificationAttempt.findMany({
+				// Upsert Affiliates
+				const existingAffiliates = await prisma.ldRuleAffiliate.findMany({
 					where: { ruleId },
 					select: { id: true }
 				});
-				const deleteNotificationAttemptsId = existingNotificationAttempts
-					.filter((en) => !notificationAttempts.find((n) => n.id === en.id))
+				const deleteAffiliatesId = existingAffiliates
+					.filter((ea) => !affiliates.find((a) => a.id === ea.id))
 					.map(({ id }) => id);
 
-				await prisma.ldRuleNotificationAttempt
-					.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
+				await prisma.ldRuleAffiliate
+					.deleteMany({ where: { id: { in: deleteAffiliatesId } } })
 					.catch(prismaErrorHandler);
-
 				await Promise.all(
-					notificationAttempts.map(async ({ id, ...values }) => {
-						await prisma.ldRuleNotificationAttempt.upsert({
+					affiliates.map(async ({ id, ...values }) => {
+						await prisma.ldRuleAffiliate.upsert({
+							where: { id },
+							create: { ruleId, id, ...values },
+							update: { ruleId, id, ...values },
+							select: { id: true }
+						});
+					})
+				);
+
+				// Upsert Operators
+				const existingOperators = await prisma.ldRuleOperator.findMany({
+					where: { ruleId },
+					select: { id: true }
+				});
+				const deleteOperatorsId = existingOperators
+					.filter((eo) => !operators.find((o) => o.id === eo.id))
+					.map(({ id }) => id);
+
+				await prisma.ldRuleOperator.deleteMany({ where: { id: { in: deleteOperatorsId } } }).catch(prismaErrorHandler);
+				await Promise.all(
+					operators.map(async ({ id, ...values }) => {
+						await prisma.ldRuleOperator.upsert({
 							where: { id },
 							create: { ruleId, id, ...values },
 							update: { ruleId, id, ...values },
@@ -207,6 +223,52 @@ export const ruleRouter = router({
 				await Promise.all(
 					supervisors.map(async ({ id, ...values }) => {
 						await prisma.ldRuleSupervisor.upsert({
+							where: { id },
+							create: { ruleId, id, ...values },
+							update: { ruleId, id, ...values },
+							select: { id: true }
+						});
+					})
+				);
+
+				// Upsert Notification Attempts
+				const existingNotificationAttempts = await prisma.ldRuleNotificationAttempt.findMany({
+					where: { ruleId },
+					select: { id: true }
+				});
+				const deleteNotificationAttemptsId = existingNotificationAttempts
+					.filter((en) => !notificationAttempts.find((n) => n.id === en.id))
+					.map(({ id }) => id);
+
+				await prisma.ldRuleNotificationAttempt
+					.deleteMany({ where: { id: { in: deleteNotificationAttemptsId } } })
+					.catch(prismaErrorHandler);
+				await Promise.all(
+					notificationAttempts.map(async ({ id, ...values }) => {
+						await prisma.ldRuleNotificationAttempt.upsert({
+							where: { id },
+							create: { ruleId, id, ...values },
+							update: { ruleId, id, ...values },
+							select: { id: true }
+						});
+					})
+				);
+
+				// Upsert Escalations
+				const existingEscalations = await prisma.ldRuleEscalation.findMany({
+					where: { ruleId },
+					select: { id: true }
+				});
+				const deleteEscalationsId = existingEscalations
+					.filter((ee) => !escalations.find((e) => e.id === ee.id))
+					.map(({ id }) => id);
+
+				await prisma.ldRuleEscalation
+					.deleteMany({ where: { id: { in: deleteEscalationsId } } })
+					.catch(prismaErrorHandler);
+				await Promise.all(
+					escalations.map(async ({ id, ...values }) => {
+						await prisma.ldRuleEscalation.upsert({
 							where: { id },
 							create: { ruleId, id, ...values },
 							update: { ruleId, id, ...values },

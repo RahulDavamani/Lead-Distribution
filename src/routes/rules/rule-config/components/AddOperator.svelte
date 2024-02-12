@@ -5,6 +5,7 @@
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import type { Rule } from '../../../../zod/rule.schema';
+	import { nanoid } from 'nanoid';
 
 	afterUpdate(() => new DataTable('#operatorsTable'));
 
@@ -25,6 +26,7 @@
 
 	const addOperator = () => {
 		const newOperators: Rule['operators'] = selectedOperators.map((UserKey, i) => ({
+			id: nanoid(),
 			num: operators.length + i + 1,
 			UserKey,
 			assignNewLeads: true,

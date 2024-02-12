@@ -4,6 +4,7 @@
 	import DataTable from 'datatables.net-dt';
 	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
+	import { nanoid } from 'nanoid';
 
 	afterUpdate(() => {
 		new DataTable('#affiliatesTable');
@@ -27,7 +28,11 @@
 	const addAffiliate = () => {
 		$ruleConfig.rule.affiliates = [
 			...affiliates,
-			...selectedAffiliates.map((CompanyKey, i) => ({ num: affiliates.length + i + 1, CompanyKey }))
+			...selectedAffiliates.map((CompanyKey, i) => ({
+				id: nanoid(),
+				num: affiliates.length + i + 1,
+				CompanyKey
+			}))
 		];
 		showModal = false;
 		selectedAffiliates = [];

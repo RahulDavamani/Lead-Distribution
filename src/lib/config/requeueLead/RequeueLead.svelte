@@ -11,7 +11,7 @@
 </script>
 
 <li class="step step-primary">
-	<div class="card border shadow-sm p-4 my-2 w-full text-left">
+	<div class="w-full my-card my-2">
 		<div class="flex justify-between">
 			<div class="flex items-center">
 				<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAction(action.id)}>

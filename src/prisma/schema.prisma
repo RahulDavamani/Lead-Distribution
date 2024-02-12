@@ -9505,11 +9505,11 @@ model Users {
    LMSId                      String?                     @db.VarChar(100)
    LMSPassword                String?                     @db.VarChar(100)
    LdLeadCalls                LdLeadCall[]
+   LdLeadCompleted            LdLeadCompleted[]
    LdLeadNotificationAttempts LdLeadNotificationAttempt[]
    LdLeadNotificationsQueues  LdLeadNotificationsQueue[]
    LdRuleOperators            LdRuleOperator[]
    LdRuleSupervisors          LdRuleSupervisor[]
-   LdLeadCompleted            LdLeadCompleted[]
 }
 
 model UsersArc {
@@ -13312,7 +13312,7 @@ model PlanCalcRecord {
    CreSeq         Int
    PlanId         String?   @db.VarChar(50)
    PeriodKey      String?   @db.UniqueIdentifier
-   CreKey         String?   @db.UniqueIdentifier
+   CreKey         String    @id(map: "PK_PlanCalcRecord") @db.UniqueIdentifier
    CreatedOn      DateTime  @default(now(), map: "DF__PlanCalcR__Creat__698AB386") @db.DateTime
    ComType        String    @db.Char(1)
    ComGrossAmount Decimal?  @db.Decimal(10, 2)
@@ -13322,8 +13322,6 @@ model PlanCalcRecord {
    EscrowPayOn    DateTime? @db.Date
    ComJson        String?   @db.VarChar(255)
    RefCreKey      String?   @db.UniqueIdentifier
-
-   @@id([CreSeq, ComType], map: "PK_PlanCalcRecord")
 }
 
 model PlanCreditRecord {
@@ -13351,6 +13349,7 @@ model PlanCreditRecord {
    CancelOn              DateTime? @db.Date
    IsConfirmed           Boolean
    IsInstalled           Boolean
+   HLevelId              Int?
    CreatedOn             DateTime  @default(now(), map: "DF__PlanCredi__Creat__61E991BE") @db.DateTime
    RefCreKey             String?   @db.UniqueIdentifier
 
@@ -13365,13 +13364,16 @@ model PlanCurrentPeriod {
 }
 
 model PlanParticipant {
-   PlanSeq    Int       @default(autoincrement())
-   PlanId     String    @db.VarChar(50)
-   PeriodKey  String    @db.UniqueIdentifier
-   CompanyKey String    @db.UniqueIdentifier
-   UserKey    String    @db.UniqueIdentifier
-   CreatedOn  DateTime? @default(now(), map: "DF__PlanParti__Creat__3EA05581") @db.DateTime
-   ModifiedOn DateTime? @db.DateTime
+   PlanSeq      Int       @default(autoincrement())
+   PlanId       String    @db.VarChar(50)
+   PeriodKey    String    @db.UniqueIdentifier
+   CompanyKey   String    @db.UniqueIdentifier
+   HLevelId     Int?
+   UserKey      String    @db.UniqueIdentifier
+   CreatedOn    DateTime? @default(now(), map: "DF__PlanParti__Creat__3EA05581") @db.DateTime
+   CreditRuleId String?   @db.VarChar(50)
+   ModifiedOn   DateTime? @db.DateTime
+   ComJson      String?   @db.VarChar(Max)
 
    @@id([PlanId, PeriodKey, CompanyKey], map: "pk_PlanParticipant")
 }
@@ -13386,6 +13388,7 @@ model PlanProcessLog {
    ProcessBy     String?   @db.UniqueIdentifier
    ProcessStatus String?   @db.VarChar(50)
    ExceptionAny  String?   @db.VarChar(1000)
+   ProcessLog    String?   @db.VarChar(Max)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -13393,7 +13396,7 @@ model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
    CreSeq           Int
    PlanId           String?   @db.VarChar(50)
    PeriodKey        String?   @db.UniqueIdentifier
-   CreKey           String?   @db.UniqueIdentifier
+   CreKey           String    @db.UniqueIdentifier
    CreatedOn        DateTime  @db.DateTime
    ComType          String    @db.Char(1)
    ComGrossAmount   Decimal?  @db.Decimal(10, 2)
@@ -13407,6 +13410,7 @@ model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
    ComAmount        String?   @db.VarChar(1000)
    DerivedPackage   String?   @db.VarChar(1000)
    FinalNetAmount   String?   @db.VarChar(1000)
+   PortalFee        String?   @db.VarChar(1000)
 
    @@map("ZPlanCalcRecord_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13438,6 +13442,7 @@ model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
    CancelOn              DateTime? @db.Date
    IsConfirmed           Boolean
    IsInstalled           Boolean
+   HLevelId              Int?
    CreatedOn             DateTime  @db.DateTime
    RefCreKey             String?   @db.UniqueIdentifier
 
@@ -13447,14 +13452,17 @@ model ZPlanCreditRecord_wqVF5Cw8gEGT_21IdUVgZ {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanParticipant_wqVF5Cw8gEGT_21IdUVgZ {
-   PlanSeq    Int       @default(autoincrement())
-   PlanId     String    @db.VarChar(50)
-   PeriodKey  String    @db.UniqueIdentifier
-   CompanyKey String    @db.UniqueIdentifier
-   UserKey    String    @db.UniqueIdentifier
-   CreatedOn  DateTime? @db.DateTime
-   ModifiedOn DateTime? @db.DateTime
-   TierName   String?   @db.VarChar(1000)
+   PlanSeq      Int       @default(autoincrement())
+   PlanId       String    @db.VarChar(50)
+   PeriodKey    String    @db.UniqueIdentifier
+   CompanyKey   String    @db.UniqueIdentifier
+   HLevelId     Int?
+   UserKey      String    @db.UniqueIdentifier
+   CreatedOn    DateTime? @db.DateTime
+   CreditRuleId String?   @db.VarChar(50)
+   ModifiedOn   DateTime? @db.DateTime
+   ComJson      String?   @db.VarChar(Max)
+   TierName     String?   @db.VarChar(1000)
 
    @@map("ZPlanParticipant_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13490,7 +13498,7 @@ model CompanyTierMap {
 model PlanRule {
    PlanId    String  @db.VarChar(50)
    PeriodKey String  @db.UniqueIdentifier
-   PlanRules String? @db.VarChar(Max)
+   ComJson   String? @db.VarChar(Max)
 
    @@id([PlanId, PeriodKey], map: "PK_PlanRule")
 }
@@ -13499,7 +13507,7 @@ model PlanRule {
 model ZPlanRule_wqVF5Cw8gEGT_21IdUVgZ {
    PlanId    String  @db.VarChar(50)
    PeriodKey String  @db.UniqueIdentifier
-   PlanRules String? @db.VarChar(Max)
+   ComJson   String? @db.VarChar(Max)
    TierTable String? @db.VarChar(Max)
 
    @@map("ZPlanRule_wqVF5Cw8gEGT-21IdUVgZ")
@@ -13518,10 +13526,12 @@ model LdRule {
    outboundCallNumber String
    smsTemplate        String
 
-   operators            LdRuleOperator[]
-   affiliates           LdRuleAffiliate[]
+   operators   LdRuleOperator[]
+   affiliates  LdRuleAffiliate[]
+   supervisors LdRuleSupervisor[]
+
    notificationAttempts LdRuleNotificationAttempt[]
-   supervisors          LdRuleSupervisor[]
+   escalations          LdRuleEscalation[]
 
    responses         LdRuleResponse[]
    responseOptionsId String                @unique
@@ -13529,6 +13539,20 @@ model LdRule {
 
    queuedLeads    LdLead[]
    completedLeads LdLeadCompleted[]
+}
+
+model LdRuleAffiliate {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+   num        Int
+   CompanyKey String
+
+   @@unique([ruleId, CompanyKey])
 }
 
 model LdRuleOperator {
@@ -13549,7 +13573,7 @@ model LdRuleOperator {
    @@unique([ruleId, UserKey])
 }
 
-model LdRuleAffiliate {
+model LdRuleSupervisor {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13557,10 +13581,14 @@ model LdRuleAffiliate {
    ruleId String
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-   num        Int
-   CompanyKey String
+   num     Int
+   UserKey String @db.UniqueIdentifier
+   user    Users  @relation(fields: [UserKey], references: [UserKey], onDelete: Cascade)
 
-   @@unique([ruleId, CompanyKey])
+   isEscalate Boolean
+   isRequeue  Boolean
+
+   @@unique([ruleId, UserKey])
 }
 
 model LdRuleNotificationAttempt {
@@ -13580,7 +13608,7 @@ model LdRuleNotificationAttempt {
    @@unique([ruleId, num])
 }
 
-model LdRuleSupervisor {
+model LdRuleEscalation {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13588,15 +13616,11 @@ model LdRuleSupervisor {
    ruleId String
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-   num     Int
-   UserKey String @db.UniqueIdentifier
-   user    Users  @relation(fields: [UserKey], references: [UserKey], onDelete: Cascade)
-
+   num             Int
    messageTemplate String
-   isEscalate      Boolean
-   isRequeue       Boolean
+   waitTime        Int
 
-   @@unique([ruleId, UserKey])
+   @@unique([ruleId, num])
 }
 
 model LdRuleResponse {
@@ -13616,7 +13640,7 @@ model LdRuleResponse {
    actions                LdRuleActions              @relation(fields: [actionsId], references: [id])
    leadNotificationQueues LdLeadNotificationsQueue[]
 
-   @@unique([ruleId, num])
+   @@unique([ruleId, type, num])
 }
 
 model LdRuleResponseOptions {
@@ -13646,7 +13670,6 @@ model LdRuleActions {
 
    requeueLeadActions  LdRuleRequeueLeadAction[]
    sendSMSActions      LdRuleSendSMSAction[]
-   closeLeadActions    LdRuleCloseLeadAction[]
    completeLeadActions LdRuleCompleteLeadAction[]
    leadResponses       LdLeadResponse[]
 }
@@ -13657,8 +13680,9 @@ model LdRuleRequeueLeadAction {
    updatedAt DateTime @updatedAt
 
    num          Int
-   scheduleTime Int             @default(30)
-   actions      LdRuleActions[]
+   scheduleTime Int @default(30)
+
+   actions LdRuleActions[]
 }
 
 model LdRuleSendSMSAction {
@@ -13667,19 +13691,10 @@ model LdRuleSendSMSAction {
    updatedAt DateTime @updatedAt
 
    num          Int
-   scheduleTime Int             @default(30)
+   scheduleTime Int    @default(30)
    smsTemplate  String
-   actions      LdRuleActions[]
-}
 
-model LdRuleCloseLeadAction {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
-
-   num         Int
-   closeStatus String          @default("")
-   actions     LdRuleActions[]
+   actions LdRuleActions[]
 }
 
 model LdRuleCompleteLeadAction {
@@ -13687,7 +13702,10 @@ model LdRuleCompleteLeadAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num     Int
+   num            Int
+   success        Boolean @default(false)
+   completeStatus String  @default("Junk/Test Contact")
+
    actions LdRuleActions[]
 }
 

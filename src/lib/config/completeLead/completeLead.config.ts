@@ -9,7 +9,9 @@ const actionConfig: ActionConfig<typeof key> = {
 	client: {
 		getNewAction: (num) => ({
 			id: nanoid(),
-			num
+			num,
+			success: true,
+			completeStatus: ''
 		})
 	}
 };

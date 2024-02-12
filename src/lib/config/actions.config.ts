@@ -1,6 +1,4 @@
 import type { Prisma } from '@prisma/client';
-import closeLeadConfig from './closeLead/closeLead.config';
-import type { CloseLead } from './closeLead/closeLead.schema';
 import completeLeadConfig from './completeLead/completeLead.config';
 import type { CompleteLead } from './completeLead/completeLead.schema';
 import requeueLeadConfig from './requeueLead/requeueLead.config';
@@ -8,7 +6,7 @@ import type { RequeueLead } from './requeueLead/requeueLead.schema';
 import sendSMSConfig from './sendSMS/sendSMS.config';
 import type { SendSMS } from './sendSMS/sendSMS.schema';
 
-export type ActionKey = 'requeueLead' | 'sendSMS' | 'closeLead' | 'completeLead';
+export type ActionKey = 'requeueLead' | 'sendSMS' | 'completeLead';
 
 export type ActionsConfig = {
 	[K in ActionKey]: ActionConfig<K>;
@@ -32,14 +30,11 @@ export type Action<K extends ActionKey> = K extends 'requeueLead'
 	? RequeueLead
 	: K extends 'sendSMS'
 		? SendSMS
-		: K extends 'closeLead'
-			? CloseLead
-			: CompleteLead;
+		: CompleteLead;
 
 export const actionsConfig: ActionsConfig = {
 	...requeueLeadConfig,
 	...sendSMSConfig,
-	...closeLeadConfig,
 	...completeLeadConfig
 };
 

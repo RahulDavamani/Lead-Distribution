@@ -10,8 +10,17 @@ export const ruleSchema = z.object({
 	outboundCallNumber: z.string().min(1),
 	smsTemplate: z.string(),
 
+	affiliates: z.array(
+		z.object({
+			id: z.string().min(1),
+			num: z.number(),
+			CompanyKey: z.string().min(1)
+		})
+	),
+
 	operators: z.array(
 		z.object({
+			id: z.string().min(1),
 			num: z.number(),
 			UserKey: z.string().min(1),
 			assignNewLeads: z.boolean(),
@@ -19,10 +28,13 @@ export const ruleSchema = z.object({
 		})
 	),
 
-	affiliates: z.array(
+	supervisors: z.array(
 		z.object({
+			id: z.string().min(1),
 			num: z.number(),
-			CompanyKey: z.string().min(1)
+			UserKey: z.string().min(1),
+			isEscalate: z.boolean(),
+			isRequeue: z.boolean()
 		})
 	),
 
@@ -35,14 +47,12 @@ export const ruleSchema = z.object({
 		})
 	),
 
-	supervisors: z.array(
+	escalations: z.array(
 		z.object({
 			id: z.string().min(1),
 			num: z.number(),
-			UserKey: z.string().min(1),
 			messageTemplate: z.string(),
-			isEscalate: z.boolean(),
-			isRequeue: z.boolean()
+			waitTime: z.number()
 		})
 	),
 

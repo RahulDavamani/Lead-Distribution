@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import type { CompleteLead } from './completeLead.schema';
+	import FormControl from '../../../routes/components/FormControl.svelte';
+	import { completeLeadStatuses } from './completeLeadStatuses';
 
 	export let action: CompleteLead;
 	export let actionsCount: number;
@@ -9,7 +11,7 @@
 </script>
 
 <li class="step step-primary">
-	<div class="card border shadow-sm p-4 my-2 w-full text-left">
+	<div class="w-full my-card my-2">
 		<div class="flex justify-between">
 			<div class="flex items-center">
 				<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAction(action.id)}>
@@ -29,6 +31,24 @@
 					</button>
 				{/if}
 			</div>
+		</div>
+		<div class="divider m-0" />
+		<div class="flex items-end gap-6">
+			<div class="form-control">
+				<label class="label cursor-pointer gap-3">
+					<span class="font-semibold">Success</span>
+					<input type="checkbox" class="toggle toggle-success" bind:checked={action.success} />
+				</label>
+			</div>
+
+			<FormControl classes="w-full" label="Complete Status">
+				<select placeholder="Type here" class="select select-bordered" bind:value={action.completeStatus}>
+					<option value="" disabled>Select Status</option>
+					{#each completeLeadStatuses as cs}
+						<option value={cs}>{cs}</option>
+					{/each}
+				</select>
+			</FormControl>
 		</div>
 	</div>
 </li>

@@ -47,7 +47,8 @@ export const auth = (() => {
 				set({ token, user, roleType });
 			}
 		}
-		// hemanth
+
+		// hemanth@xyzies.com
 		// set({
 		// 	token: 'abc',
 		// 	user: {

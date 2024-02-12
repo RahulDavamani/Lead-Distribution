@@ -4,13 +4,14 @@
 	import type { Actions } from '$lib/config/actions.schema';
 	import RequeueLead from '$lib/config/requeueLead/RequeueLead.svelte';
 	import SendSMS from '$lib/config/sendSMS/SendSMS.svelte';
-	import CloseLead from '$lib/config/closeLead/CloseLead.svelte';
 	import CompleteLead from '$lib/config/completeLead/CompleteLead.svelte';
 	import { getActionsList } from '$lib/config/utils/getActionsList';
 
 	export let actions: Actions;
 	export let actionsName: string;
+
 	let showAddAction = false;
+	let collapseOpen = false;
 	$: ({ actionsCount, actionsList } = getActionsList(actions));
 
 	const addAction = (key: ActionKey) => {
@@ -57,25 +58,42 @@
 	};
 </script>
 
-<details class="collapse collapse-arrow border shadow-sm overflow-visible">
-	<summary class="collapse-title bg-base-200 rounded-box h-1">
-		<div>
-			<span class="font-semibold">{actionsName}:</span>
-			<span class="font-mono">({actionsCount})</span>
-		</div>
-	</summary>
+<div class="collapse collapse-arrow border shadow-sm overflow-visible">
+	<input type="checkbox" bind:checked={collapseOpen} />
+	<div class="collapse-title bg-base-200 rounded-box {!collapseOpen && actionsList.length !== 0 && 'py-0'}">
+		<div class="flex gap-4 items-center">
+			<div>
+				<span class="font-semibold">{actionsName}:</span>
+				<span class="font-mono">({actionsCount})</span>
+			</div>
 
-	<div class="collapse-content p-0 py-4">
-		<ul class="steps steps-vertical px-4 w-full overflow-visible">
-			{#each actionsList as actions}
-				{#if actions.requeueLead}
-					<RequeueLead action={actions.requeueLead} {actionsCount} {deleteAction} {moveAction} />
-				{:else if actions.sendSMS}
-					<SendSMS action={actions.sendSMS} {actionsCount} {deleteAction} {moveAction} />
-				{:else if actions.closeLead}
-					<CloseLead action={actions.closeLead} {actionsCount} {deleteAction} {moveAction} />
-				{:else if actions.completeLead}
-					<CompleteLead action={actions.completeLead} {actionsCount} {deleteAction} {moveAction} />
+			{#if !collapseOpen}
+				<div class="steps text-sm">
+					{#each actionsList as action}
+						<div class="step step-primary scale-90">
+							{#if action.requeueLead}
+								Requeue Lead
+							{:else if action.sendSMS}
+								Send SMS
+							{:else if action.completeLead}
+								Complete Lead
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
+
+	<div class="collapse-content">
+		<ul class="steps steps-vertical mt-4 px-4 w-full overflow-visible">
+			{#each actionsList as action}
+				{#if action.requeueLead}
+					<RequeueLead action={action.requeueLead} {actionsCount} {deleteAction} {moveAction} />
+				{:else if action.sendSMS}
+					<SendSMS action={action.sendSMS} {actionsCount} {deleteAction} {moveAction} />
+				{:else if action.completeLead}
+					<CompleteLead action={action.completeLead} {actionsCount} {deleteAction} {moveAction} />
 				{/if}
 			{/each}
 			<li data-content="+" class="step step-success">
@@ -83,7 +101,7 @@
 			</li>
 		</ul>
 	</div>
-</details>
+</div>
 
 {#if showAddAction}
 	<Modal title="Add Action" showModal={showAddAction} closeModal={() => (showAddAction = false)}>

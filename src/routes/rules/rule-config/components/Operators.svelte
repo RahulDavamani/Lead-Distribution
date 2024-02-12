@@ -21,12 +21,12 @@
 	};
 </script>
 
-<div class="w-full h-fit card border shadow">
+<div class="w-full h-fit">
 	<details class="collapse collapse-arrow">
-		<summary class="collapse-title pr-0">
+		<summary class="collapse-title px-0">
 			<div class="flex gap-2">
 				<div>
-					<span class="text-lg font-semibold">Campaign Operators:</span>
+					<span class="text-lg font-bold">Campaign Operators:</span>
 					<span class="font-mono">({operators.length})</span>
 				</div>
 				<button class="z-10 text-success" on:click={() => (showModal = true)}>
@@ -34,12 +34,12 @@
 				</button>
 			</div>
 		</summary>
-		<div class="collapse-content px-4">
-			<div class="space-y-2">
+		<div class="collapse-content pl-2">
+			<div class="space-y-3">
 				{#each operators as { UserKey }, i}
 					{@const operator = allOperators.find((o) => o.UserKey === UserKey)}
 
-					<div class="border shadow rounded-lg p-3">
+					<div class="my-card">
 						<div class="flex justify-start items-center">
 							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteOperator(UserKey)}>
 								<Icon icon="mdi:close" class="text-error" width={20} />
@@ -56,19 +56,20 @@
 								{/if}
 							</div>
 						</div>
+						<div class="divider m-0" />
 
-						<div class="grid grid-cols-2">
-							<FormControl inputType="In" label="Assign New Leads">
+						<div class="text-sm flex flex-wrap">
+							<FormControl inputType="In" classes="flex-grow" label="Assign New Leads">
 								<input
 									type="checkbox"
-									class="checkbox checkbox-sm checkbox-primary"
+									class="checkbox checkbox-sm checkbox-primary scale-90"
 									bind:checked={$ruleConfig.rule.operators[i].assignNewLeads}
 								/>
 							</FormControl>
-							<FormControl inputType="In" label="Assign Callback Leads">
+							<FormControl inputType="In" classes="flex-grow" label="Assign Callback Leads">
 								<input
 									type="checkbox"
-									class="checkbox checkbox-sm checkbox-primary"
+									class="checkbox checkbox-sm checkbox-primary scale-90"
 									bind:checked={$ruleConfig.rule.operators[i].assignCallbackLeads}
 								/>
 							</FormControl>

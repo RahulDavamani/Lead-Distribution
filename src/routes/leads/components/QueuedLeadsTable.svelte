@@ -32,7 +32,7 @@
 	const showRequeueAlert = (ProspectKey: string) => {
 		$ui.alertModal = {
 			title: 'Are you sure to requeue this lead?',
-			body: 'This lead has already been picked by another agent',
+			body: 'This lead has already been picked by an agent',
 
 			actions: [
 				{

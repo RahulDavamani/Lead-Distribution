@@ -9,10 +9,11 @@
 	import Responses from './components/Responses.svelte';
 	import Supervisors from './components/Supervisors.svelte';
 	import Variables from './components/Variables.svelte';
+	import Escalations from './components/Escalations.svelte';
 
 	export let data;
-	$: ({ rule, operators, affiliates, canDelete } = data);
-	$: ruleConfig.init(rule, operators, affiliates);
+	$: ({ rule, affiliates, operators, canDelete } = data);
+	$: ruleConfig.init(rule, affiliates, operators);
 </script>
 
 {#if $ruleConfig.init}
@@ -62,60 +63,59 @@
 		<FormControl label="Description" error={zodErrors?.description}>
 			<textarea placeholder="Type here" class="textarea textarea-bordered" bind:value={$ruleConfig.rule.description} />
 		</FormControl>
+		<div class="divider mb-0" />
 
-		<div class="flex gap-4">
-			<!-- Outbound Call Number-->
-			<FormControl label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
-				<input
-					type="text"
-					placeholder="Type here"
-					class="input input-bordered"
-					bind:value={$ruleConfig.rule.outboundCallNumber}
-				/>
-			</FormControl>
+		<div class="flex">
+			<div class="w-2/3">
+				<div class="">
+					<!-- Outbound Call Number-->
+					<FormControl label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
+						<input
+							type="text"
+							placeholder="Type here"
+							class="input input-bordered"
+							bind:value={$ruleConfig.rule.outboundCallNumber}
+						/>
+					</FormControl>
 
-			<!-- GHL Post Data -->
-			<!-- <div class="form-control whitespace-nowrap">
-				<div class="label font-semibold gap-4">
-					<div>GHL Post Data</div>
-					<div class="tooltip" data-tip="This data will sent to ghl at the time lead arrival">
-						<Icon icon="mdi:information-variant-circle" width={22} class="text-info" />
-					</div>
+					<!-- SMS Template -->
+					<FormControl
+						classes="w-full"
+						label="Initial SMS Template"
+						secLabel="(First message upon lead arrival)"
+						secLabelClasses="text-sm"
+						error={zodErrors?.smsTemplate}
+					>
+						<div class="join">
+							<textarea
+								placeholder="Type here"
+								class="textarea textarea-bordered join-item w-full"
+								bind:value={$ruleConfig.rule.smsTemplate}
+								rows={1}
+							/>
+							<Variables insertVariable={(v) => ($ruleConfig.rule.smsTemplate += v)} />
+						</div>
+					</FormControl>
 				</div>
-				<button class="btn btn-primary" on:click={() => (showModal = true)}> Configure Data </button>
-			</div> -->
-
-			<!-- SMS Template -->
-			<FormControl
-				classes="w-full"
-				label="SMS Template"
-				secLabel="(First message upon lead arrival)"
-				secLabelClasses="text-sm"
-				error={zodErrors?.smsTemplate}
-			>
-				<div class="join">
-					<textarea
-						placeholder="Type here"
-						class="textarea textarea-bordered join-item w-full"
-						bind:value={$ruleConfig.rule.smsTemplate}
-						rows={1}
-					/>
-					<Variables insertVariable={(v) => ($ruleConfig.rule.smsTemplate += v)} />
-				</div>
-			</FormControl>
-		</div>
-		<div class="divider" />
-
-		<div class="flex gap-4">
-			<Operators />
-			<Affiliates />
+			</div>
+			<div class="divider divider-horizontal" />
+			<div class="w-1/3">
+				<Affiliates />
+			</div>
 		</div>
 		<div class="divider mb-0" />
+
+		<div class="flex">
+			<Operators />
+			<div class="divider divider-horizontal m-0" />
+			<Supervisors />
+		</div>
+		<div class="divider m-0" />
 
 		<NotificationAttempts />
 		<div class="divider m-0" />
 
-		<Supervisors />
+		<Escalations />
 		<div class="divider m-0" />
 
 		<Responses />

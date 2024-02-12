@@ -17,11 +17,8 @@ export interface RuleConfig {
 	rule: Rule;
 	zodErrors?: TRPCZodErrors<Rule>;
 
-	showAddOperators: boolean;
-	showAddAffiliates: boolean;
-
-	operators: Operator[];
 	affiliates: Affiliate[];
+	operators: Operator[];
 }
 
 export const ruleConfig = (() => {
@@ -37,10 +34,12 @@ export const ruleConfig = (() => {
 		outboundCallNumber: '',
 		smsTemplate: '',
 
-		operators: [],
 		affiliates: [],
-		notificationAttempts: [],
+		operators: [],
 		supervisors: [],
+
+		notificationAttempts: [],
+		escalations: [],
 
 		responses: [],
 		responseOptions: {
@@ -55,21 +54,18 @@ export const ruleConfig = (() => {
 		init: false,
 		rule: cloneDeep(newRule),
 
-		showAddOperators: false,
-		showAddAffiliates: false,
-
-		operators: [],
-		affiliates: []
+		affiliates: [],
+		operators: []
 	});
 
-	const init = (rule: Rule | null, operators: Operator[], affiliates: Affiliate[]) => {
+	const init = (rule: Rule | null, affiliates: Affiliate[], operators: Operator[]) => {
 		update((state) => ({
 			...state,
 			init: true,
 			rule: rule ?? cloneDeep(newRule),
 			zodErrors: undefined,
-			operators,
-			affiliates
+			affiliates,
+			operators
 		}));
 	};
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const requeueLeadSchema = z.object({
-	id: z.string(),
+	id: z.string().min(1),
 	num: z.number(),
 	scheduleTime: z.number()
 });
