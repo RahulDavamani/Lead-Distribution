@@ -1,1 +1,1 @@
-export const completeLeadStatuses = ['Successfully Completed', 'DNC', 'Manual Lead Management', 'Junk/Test Contact'];
+export const completeLeadStatuses = ['Sale Made', 'Manual Lead Management', 'DNC', 'Invalid Lead', 'Junk/Test Contact'];

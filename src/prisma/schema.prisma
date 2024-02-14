@@ -5558,6 +5558,9 @@ model ImportSpectrumPaymentSFTP {
    Mobile_PSU_Bounty_Rate Float?    @map("Mobile PSU Bounty Rate")
    OriginalAccount        String?   @db.VarChar(50)
    ProviderKey            String    @db.UniqueIdentifier
+   Xumo_Boxes_Rate        Decimal?  @map("Xumo Boxes Rate") @db.Decimal(10, 2)
+   Xumo_Bounty_Amount     Decimal?  @map("Xumo Bounty Amount") @db.Decimal(10, 2)
+   Xumo_Boxes             Int?      @map("Xumo Boxes")
 
    @@ignore
 }
@@ -9446,70 +9449,71 @@ model UserRole {
 }
 
 model Users {
-   UserId                     Int                         @default(autoincrement())
-   UserKey                    String                      @id(map: "PK__Users__296ADCF124968E96") @db.UniqueIdentifier
-   ParentUserKey              String?                     @db.UniqueIdentifier
-   CompanyId                  Int
-   CompanyKey                 String                      @db.UniqueIdentifier
-   FirstName                  String?                     @db.VarChar(250)
-   LastName                   String?                     @db.VarChar(250)
-   Role                       Int?
-   UserStatusKey              String?                     @db.UniqueIdentifier
-   UserStatusChangedOn        DateTime?                   @db.DateTime
-   Mobile1                    String?                     @db.VarChar(20)
-   Mobile2                    String?                     @db.VarChar(20)
-   Address                    String?                     @db.VarChar(250)
-   State                      String?                     @db.VarChar(100)
-   City                       String?                     @db.VarChar(100)
-   Zipcode                    String?                     @db.VarChar(10)
-   AdsObjId                   String?                     @unique(map: "uk_adsobjid") @db.UniqueIdentifier
-   CRMContactKey              String?                     @db.UniqueIdentifier
-   CreatedBy                  Int?
-   IsEmailVerified            Boolean?
-   IsPhoneVerified            Boolean?
-   Email                      String?                     @unique(map: "uk_email") @db.VarChar(250)
-   UserStatusChangedBy        String?                     @db.UniqueIdentifier
-   RegUser                    Boolean?
-   ValidFrom                  DateTime
-   ValidTo                    DateTime
-   CreatedDate                DateTime?                   @db.DateTime
-   CRMContactId               String?                     @db.UniqueIdentifier
-   XYZPaysEnabled             Boolean?                    @default(false, map: "DF__Users__XYZPaysEn__0FEC5ADD")
-   XYZPaysEnabledBy           String?                     @db.UniqueIdentifier
-   CRMAccountId               String?                     @db.UniqueIdentifier
-   XYZPaysRepId               Int?
-   CityOfBirth                String?                     @db.VarChar(20)
-   SecurityPin                Int?
-   ChatrhubCampaignId         String?                     @db.VarChar(100)
-   ChatrHubPhoneNumber        String?                     @db.VarChar(20)
-   ChatrQRCodeUrl             String?                     @db.VarChar(255)
-   ChatrFlyerUrl              String?                     @db.VarChar(2000)
-   BirthDate                  DateTime?                   @db.Date
-   ChatrHubUniqueId           String?                     @db.VarChar(100)
-   ChatrWhatsappFlyer         String?                     @db.VarChar(2000)
-   ChatrRedditFlyer           String?                     @db.VarChar(2000)
-   aff_userpilot              Int                         @default(0, map: "DF__Users__aff_userp__57FD0775")
-   ModifiedBy                 String?                     @db.UniqueIdentifier
-   ModifiedOn                 DateTime?                   @db.DateTime
-   ReportingUserKey           String?                     @db.UniqueIdentifier
-   VonageAgentId              String?                     @db.VarChar(20)
-   StpCampaignKey             String?                     @db.UniqueIdentifier
-   StpPhoneNumber             String?                     @db.VarChar(15)
-   StpCampaignUrl             String?                     @db.VarChar(255)
-   StpQRCodeUrl               String?                     @db.VarChar(255)
-   GoogleExtnToken            String?                     @db.UniqueIdentifier
-   QrPhoneNumber              String?                     @db.VarChar(15)
-   QrPhoneNumberUrl           String?                     @db.VarChar(1000)
-   RegOrigin                  String?                     @db.VarChar(55)
-   CitizenshipId              Int?
-   LMSId                      String?                     @db.VarChar(100)
-   LMSPassword                String?                     @db.VarChar(100)
-   LdLeadCalls                LdLeadCall[]
-   LdLeadCompleted            LdLeadCompleted[]
-   LdLeadNotificationAttempts LdLeadNotificationAttempt[]
-   LdLeadNotificationsQueues  LdLeadNotificationsQueue[]
-   LdRuleOperators            LdRuleOperator[]
-   LdRuleSupervisors          LdRuleSupervisor[]
+   UserId                      Int                         @default(autoincrement())
+   UserKey                     String                      @id(map: "PK__Users__296ADCF124968E96") @db.UniqueIdentifier
+   ParentUserKey               String?                     @db.UniqueIdentifier
+   CompanyId                   Int
+   CompanyKey                  String                      @db.UniqueIdentifier
+   FirstName                   String?                     @db.VarChar(250)
+   LastName                    String?                     @db.VarChar(250)
+   Role                        Int?
+   UserStatusKey               String?                     @db.UniqueIdentifier
+   UserStatusChangedOn         DateTime?                   @db.DateTime
+   Mobile1                     String?                     @db.VarChar(20)
+   Mobile2                     String?                     @db.VarChar(20)
+   Address                     String?                     @db.VarChar(250)
+   State                       String?                     @db.VarChar(100)
+   City                        String?                     @db.VarChar(100)
+   Zipcode                     String?                     @db.VarChar(10)
+   AdsObjId                    String?                     @unique(map: "uk_adsobjid") @db.UniqueIdentifier
+   CRMContactKey               String?                     @db.UniqueIdentifier
+   CreatedBy                   Int?
+   IsEmailVerified             Boolean?
+   IsPhoneVerified             Boolean?
+   Email                       String?                     @unique(map: "uk_email") @db.VarChar(250)
+   UserStatusChangedBy         String?                     @db.UniqueIdentifier
+   RegUser                     Boolean?
+   ValidFrom                   DateTime
+   ValidTo                     DateTime
+   CreatedDate                 DateTime?                   @db.DateTime
+   CRMContactId                String?                     @db.UniqueIdentifier
+   XYZPaysEnabled              Boolean?                    @default(false, map: "DF__Users__XYZPaysEn__0FEC5ADD")
+   XYZPaysEnabledBy            String?                     @db.UniqueIdentifier
+   CRMAccountId                String?                     @db.UniqueIdentifier
+   XYZPaysRepId                Int?
+   CityOfBirth                 String?                     @db.VarChar(20)
+   SecurityPin                 Int?
+   ChatrhubCampaignId          String?                     @db.VarChar(100)
+   ChatrHubPhoneNumber         String?                     @db.VarChar(20)
+   ChatrQRCodeUrl              String?                     @db.VarChar(255)
+   ChatrFlyerUrl               String?                     @db.VarChar(2000)
+   BirthDate                   DateTime?                   @db.Date
+   ChatrHubUniqueId            String?                     @db.VarChar(100)
+   ChatrWhatsappFlyer          String?                     @db.VarChar(2000)
+   ChatrRedditFlyer            String?                     @db.VarChar(2000)
+   aff_userpilot               Int                         @default(0, map: "DF__Users__aff_userp__57FD0775")
+   ModifiedBy                  String?                     @db.UniqueIdentifier
+   ModifiedOn                  DateTime?                   @db.DateTime
+   ReportingUserKey            String?                     @db.UniqueIdentifier
+   VonageAgentId               String?                     @db.VarChar(20)
+   StpCampaignKey              String?                     @db.UniqueIdentifier
+   StpPhoneNumber              String?                     @db.VarChar(15)
+   StpCampaignUrl              String?                     @db.VarChar(255)
+   StpQRCodeUrl                String?                     @db.VarChar(255)
+   GoogleExtnToken             String?                     @db.UniqueIdentifier
+   QrPhoneNumber               String?                     @db.VarChar(15)
+   QrPhoneNumberUrl            String?                     @db.VarChar(1000)
+   RegOrigin                   String?                     @db.VarChar(55)
+   CitizenshipId               Int?
+   LMSId                       String?                     @db.VarChar(100)
+   LMSPassword                 String?                     @db.VarChar(100)
+   LdLeadCalls                 LdLeadCall[]
+   LdLeadCompleted             LdLeadCompleted[]
+   LdLeadEscalation            LdLeadEscalation[]
+   LdLeadNotificationAttempts  LdLeadNotificationAttempt[]
+   LdLeadNotificationProcesses LdLeadNotificationProcess[]
+   LdRuleOperators             LdRuleOperator[]
+   LdRuleSupervisors           LdRuleSupervisor[]
 }
 
 model UsersArc {
@@ -13185,6 +13189,7 @@ model PlanCreditPull {
    source               String
    dateType             String
    name                 String
+   additionalCriteria   String                 @default("")
    Plan                 Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
    PlanCreditPullFilter PlanCreditPullFilter[]
 }
@@ -13620,6 +13625,8 @@ model LdRuleEscalation {
    messageTemplate String
    waitTime        Int
 
+   leadEscalations LdLeadEscalation[]
+
    @@unique([ruleId, num])
 }
 
@@ -13636,9 +13643,10 @@ model LdRuleResponse {
    maxAttempt Int
    values     String
 
-   actionsId              String                     @unique
-   actions                LdRuleActions              @relation(fields: [actionsId], references: [id])
-   leadNotificationQueues LdLeadNotificationsQueue[]
+   actionsId String        @unique
+   actions   LdRuleActions @relation(fields: [actionsId], references: [id])
+
+   notificationProcesses LdLeadNotificationProcess[]
 
    @@unique([ruleId, type, num])
 }
@@ -13680,7 +13688,7 @@ model LdRuleRequeueLeadAction {
    updatedAt DateTime @updatedAt
 
    num          Int
-   scheduleTime Int @default(30)
+   scheduleTime Int
 
    actions LdRuleActions[]
 }
@@ -13691,7 +13699,7 @@ model LdRuleSendSMSAction {
    updatedAt DateTime @updatedAt
 
    num          Int
-   scheduleTime Int    @default(30)
+   scheduleTime Int
    smsTemplate  String
 
    actions LdRuleActions[]
@@ -13703,8 +13711,8 @@ model LdRuleCompleteLeadAction {
    updatedAt DateTime @updatedAt
 
    num            Int
-   success        Boolean @default(false)
-   completeStatus String  @default("Junk/Test Contact")
+   completeStatus String
+   success        Boolean
 
    actions LdRuleActions[]
 }
@@ -13714,18 +13722,19 @@ model LdLead {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
+   ProspectKey String  @unique
+   VonageGUID  String? @db.NVarChar(100)
+
    ruleId String?
    rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
-   ProspectKey String  @unique
-   isPicked    Boolean
-   VonageGUID  String? @db.NVarChar(100)
+   isPicked Boolean
 
-   logs               LdLeadLog[]
-   notificationQueues LdLeadNotificationsQueue[]
-   messages           LdLeadMessage[]
-   calls              LdLeadCall[]
-   responses          LdLeadResponse[]
+   logs                  LdLeadLog[]
+   notificationProcesses LdLeadNotificationProcess[]
+   messages              LdLeadMessage[]
+   calls                 LdLeadCall[]
+   responses             LdLeadResponse[]
 }
 
 model LdLeadCompleted {
@@ -13733,22 +13742,23 @@ model LdLeadCompleted {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
+   ProspectKey String  @unique
+   VonageGUID  String? @db.NVarChar(100)
+
    ruleId String?
    rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
-   ProspectKey String  @unique
-   state       String
-   VonageGUID  String? @db.NVarChar(100)
-   closeStatus String?
+   success        Boolean
+   completeStatus String
 
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
 
-   logs               LdLeadLog[]
-   notificationQueues LdLeadNotificationsQueue[]
-   messages           LdLeadMessage[]
-   calls              LdLeadCall[]
-   responses          LdLeadResponse[]
+   logs                  LdLeadLog[]
+   notificationProcesses LdLeadNotificationProcess[]
+   messages              LdLeadMessage[]
+   calls                 LdLeadCall[]
+   responses             LdLeadResponse[]
 }
 
 model LdLeadLog {
@@ -13764,7 +13774,7 @@ model LdLeadLog {
    log String
 }
 
-model LdLeadNotificationsQueue {
+model LdLeadNotificationProcess {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
@@ -13774,8 +13784,9 @@ model LdLeadNotificationsQueue {
    completedLeadId String?
    completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
-   isCompleted Boolean
-   type        String
+   callbackNum Int
+   requeueNum  Int
+   status      String
 
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
@@ -13784,6 +13795,7 @@ model LdLeadNotificationsQueue {
    response   LdRuleResponse? @relation(fields: [responseId], references: [id])
 
    notificationAttempts LdLeadNotificationAttempt[]
+   escalations          LdLeadEscalation[]
 }
 
 model LdLeadNotificationAttempt {
@@ -13791,8 +13803,8 @@ model LdLeadNotificationAttempt {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   notificationQueueId String
-   notificationQueue   LdLeadNotificationsQueue @relation(fields: [notificationQueueId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+   notificationProcessId String
+   notificationProcess   LdLeadNotificationProcess @relation(fields: [notificationProcessId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
    attemptId String?
    attempt   LdRuleNotificationAttempt? @relation(fields: [attemptId], references: [id])
@@ -13800,8 +13812,24 @@ model LdLeadNotificationAttempt {
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
 
-   userType String
-   message  String
+   message String
+}
+
+model LdLeadEscalation {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   notificationProcessId String
+   notificationProcess   LdLeadNotificationProcess @relation(fields: [notificationProcessId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   escalationId String?
+   escalation   LdRuleEscalation? @relation(fields: [escalationId], references: [id])
+
+   UserKey String? @db.UniqueIdentifier
+   user    Users?  @relation(fields: [UserKey], references: [UserKey])
+
+   message String
 }
 
 model LdLeadMessage {

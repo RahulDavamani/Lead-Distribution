@@ -6,6 +6,7 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getActionsList } from '$lib/config/utils/getActionsList';
+	import { getProcessName } from '../../../trpc/routers/lead/helpers/notificationProcess';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
@@ -44,20 +45,24 @@
 				</div>
 
 				<div class="grid grid-cols-4 col-span-4 gap-4">
-					<div class="text-lg font-semibold col-span-4">Notification Queues:</div>
+					<div class="text-lg font-semibold col-span-4">Notification Dispatch Process:</div>
 
-					{#each leadDetails.notificationQueues as { type, createdAt, isCompleted, notificationAttempts }}
+					{#each leadDetails.notificationProcesses as { callbackNum, requeueNum, createdAt, status, notificationAttempts, escalations }}
 						<details class="collapse collapse-arrow border shadow-sm col-span-4">
 							<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
 								<div class="flex justify-between items-center">
 									<div>
-										<div class="font-semibold">{type}</div>
+										<div class="font-semibold">{getProcessName(callbackNum, requeueNum)}</div>
 										<div>{createdAt.toLocaleString()}</div>
 									</div>
-									{#if isCompleted}
-										<div class="badge badge-success">Completed</div>
-									{:else}
+									{#if status === 'SCHEDULED'}
+										<div class="badge badge-info">Scheduled</div>
+									{:else if status === 'ACTIVE'}
 										<div class="badge badge-warning">In Progress</div>
+									{:else if status === 'COMPLETED'}
+										<div class="badge badge-success">Completed</div>
+									{:else if status === 'CANCELLED'}
+										<div class="badge badge-error">Cancelled</div>
 									{/if}
 								</div>
 							</summary>
@@ -75,6 +80,33 @@
 										</thead>
 										<tbody>
 											{#each notificationAttempts as { createdAt, userValues, message }, i}
+												<tr>
+													<td>{i + 1}</td>
+													<td>{createdAt.toLocaleString()}</td>
+													<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
+													<td>{message}</td>
+												</tr>
+											{:else}
+												<tr>
+													<td class="text-center" colspan={4}>No Notification Attempts Found</td>
+												</tr>
+											{/each}
+										</tbody>
+									</div>
+								</div>
+								<div class="overflow-x-auto col-span-4 mt-4">
+									<div class="text-lg font-semibold mb-1">Escalations:</div>
+									<div class="table table-zebra border rounded-none">
+										<thead class="bg-base-200">
+											<tr>
+												<th>#</th>
+												<th>Date Time</th>
+												<th>Operator / Supervisor</th>
+												<th>Message</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#each escalations as { createdAt, userValues, message }, i}
 												<tr>
 													<td>{i + 1}</td>
 													<td>{createdAt.toLocaleString()}</td>
@@ -132,17 +164,15 @@
 												</summary>
 												<div class="collapse-content flex justify-center">
 													<ul class="steps">
-														{#each actionsList as { requeueLead, sendSMS, closeLead, completeLead }}
+														{#each actionsList as { requeueLead, sendSMS, completeLead }}
 															<li class="step step-accent">
 																{requeueLead
 																	? 'Requeue Lead'
 																	: sendSMS
 																		? 'Send SMS'
-																		: closeLead
-																			? 'Close Lead'
-																			: completeLead
-																				? 'Complete Lead'
-																				: ''}
+																		: completeLead
+																			? 'Complete Lead'
+																			: ''}
 															</li>
 														{/each}
 													</ul>

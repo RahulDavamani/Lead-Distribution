@@ -4,7 +4,7 @@ import type { Affiliate } from '../../../../zod/affiliate.schema';
 import { procedure } from '../../../server';
 import { roleTypeSchema } from '../../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
-import { getUserStr, getUserValues } from '../helpers/user.helper';
+import { getUserStr, getUserValues } from '../helpers/user';
 import { actionsInclude } from '$lib/config/actions.config';
 import { getLeadsWhere } from '../helpers/getLeadsWhere';
 
@@ -75,16 +75,26 @@ export const getQueuedProcedure = procedure
 								select: { log: true }
 							},
 
-							notificationQueues: {
-								orderBy: { updatedAt: 'desc' },
+							notificationProcesses: {
+								orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
 								select: {
-									isCompleted: true,
-									type: true,
+									createdAt: true,
+									status: true,
+									callbackNum: true,
+									requeueNum: true,
 									notificationAttempts: {
 										select: {
 											id: true,
 											UserKey: true,
 											attempt: { select: { num: true } }
+										},
+										orderBy: { createdAt: 'desc' }
+									},
+									escalations: {
+										select: {
+											id: true,
+											UserKey: true,
+											escalation: { select: { num: true } }
 										},
 										orderBy: { createdAt: 'desc' }
 									}
@@ -110,25 +120,22 @@ export const getQueuedProcedure = procedure
 				return {
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
-					isNewLead: lead.notificationQueues.length <= 1,
-					customerResponse: lead.responses?.[0]?.responseValue,
-					isNotificationQueue:
-						lead.notificationQueues.length === 0
-							? true
-							: lead.notificationQueues.filter(({ isCompleted }) => !isCompleted).length > 0,
-					notificationQueue: lead.notificationQueues?.[0],
-					callUser: lead.calls[0]
-						? {
-								...lead.calls[0],
-								userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
-							}
-						: undefined,
-					log: lead.logs[0].log
+					isNewLead: lead.notificationProcesses.length === 0 || lead.notificationProcesses[0].callbackNum === 0,
+					log: lead.logs.length > 0 ? lead.logs[0].log : undefined,
+					notificationProcess: lead.notificationProcesses.length > 0 ? lead.notificationProcesses[0] : undefined,
+					callUser:
+						lead.calls.length > 0
+							? {
+									...lead.calls[0],
+									userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
+								}
+							: undefined,
+					customerResponse: lead.responses.length > 0 ? lead.responses[0].responseValue : undefined
 				};
 			})
 		);
-		queuedLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
 
+		// Filter Leads
 		if (roleType === 'AGENT') {
 			const leads = queuedLeads.filter((lead) => lead.id === '');
 			for (const lead of queuedLeads) {
@@ -143,6 +150,15 @@ export const getQueuedProcedure = procedure
 			}
 			queuedLeads = leads;
 		}
+
+		// Sort Leads
+		const newLeads = queuedLeads.filter((lead) => lead.isNewLead);
+		const callbackLeads = queuedLeads.filter((lead) => !lead.isNewLead);
+		newLeads.sort((a, b) => (a.prospectDetails.ProspectId ?? 0) - (b.prospectDetails.ProspectId ?? 0));
+		callbackLeads.sort(
+			(a, b) => (b.notificationProcess?.createdAt.getTime() ?? 0) - (a.notificationProcess?.createdAt.getTime() ?? 0)
+		);
+		queuedLeads = [...newLeads, ...callbackLeads];
 
 		return { queuedLeads };
 	});
@@ -196,7 +212,7 @@ export const getCompletedProcedure = procedure
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
 					customerTalkTime,
 					user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined,
-					log: lead.logs[0].log
+					log: lead.logs[0]?.log
 				};
 			})
 		);
@@ -216,9 +232,12 @@ export const getLeadDetailsProcedure = procedure
 					select: {
 						ProspectKey: true,
 						logs: { orderBy: { createdAt: 'asc' } },
-						notificationQueues: {
-							orderBy: { createdAt: 'asc' },
-							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }
+						notificationProcesses: {
+							orderBy: [{ callbackNum: 'asc' }, { requeueNum: 'asc' }],
+							include: {
+								notificationAttempts: { orderBy: { createdAt: 'asc' } },
+								escalations: { orderBy: { createdAt: 'asc' } }
+							}
 						},
 						messages: { orderBy: { createdAt: 'asc' } },
 						calls: { orderBy: { createdAt: 'asc' } },
@@ -233,9 +252,12 @@ export const getLeadDetailsProcedure = procedure
 					select: {
 						ProspectKey: true,
 						logs: { orderBy: { createdAt: 'asc' } },
-						notificationQueues: {
+						notificationProcesses: {
 							orderBy: { createdAt: 'asc' },
-							include: { notificationAttempts: { orderBy: { createdAt: 'asc' } } }
+							include: {
+								notificationAttempts: { orderBy: { createdAt: 'asc' } },
+								escalations: { orderBy: { createdAt: 'asc' } }
+							}
 						},
 						messages: { orderBy: { createdAt: 'asc' } },
 						calls: { orderBy: { createdAt: 'asc' } },
@@ -252,7 +274,7 @@ export const getLeadDetailsProcedure = procedure
 			.catch(prismaErrorHandler);
 
 		const notificationAttempts = [];
-		for (const notificationAttempt of lead.notificationQueues.flatMap(
+		for (const notificationAttempt of lead.notificationProcesses.flatMap(
 			({ notificationAttempts }) => notificationAttempts
 		)) {
 			notificationAttempts.push({
@@ -260,8 +282,17 @@ export const getLeadDetailsProcedure = procedure
 				userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
 			});
 		}
-		const notificationQueues = [];
-		for (const notificationQueue of lead.notificationQueues) {
+
+		const escalations = [];
+		for (const escalation of lead.notificationProcesses.flatMap(({ escalations }) => escalations)) {
+			escalations.push({
+				...escalation,
+				userValues: escalation.UserKey ? await getUserValues(escalation.UserKey) : undefined
+			});
+		}
+
+		const notificationProcesses = [];
+		for (const notificationQueue of lead.notificationProcesses) {
 			const notificationAttempts = [];
 			for (const notificationAttempt of notificationQueue.notificationAttempts)
 				notificationAttempts.push({
@@ -269,9 +300,17 @@ export const getLeadDetailsProcedure = procedure
 					userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
 				});
 
-			notificationQueues.push({
+			const escalations = [];
+			for (const escalation of notificationQueue.escalations)
+				escalations.push({
+					...escalation,
+					userValues: escalation.UserKey ? await getUserValues(escalation.UserKey) : undefined
+				});
+
+			notificationProcesses.push({
 				...notificationQueue,
-				notificationAttempts
+				notificationAttempts,
+				escalations
 			});
 		}
 
@@ -282,5 +321,5 @@ export const getLeadDetailsProcedure = procedure
 				userValues: call?.UserKey ? await getUserValues(call.UserKey) : undefined
 			});
 
-		return { ...lead, ProspectId, calls, notificationQueues };
+		return { ...lead, ProspectId, calls, notificationProcesses };
 	});

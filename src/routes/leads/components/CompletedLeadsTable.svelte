@@ -6,11 +6,28 @@
 	import { onMount } from 'svelte';
 	import DataTable from 'datatables.net-dt';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
+	import Flatpickr from 'svelte-flatpickr';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
 	export let completedLeads: CompletedLead[];
 	export let leadDetailsModelId: string | undefined;
+	export let dateRange: Date[];
+	export let fetchCompletedLeads: (dateRange: Date[]) => void;
+
+	let completeStatusSelect: string | undefined;
+	$: completeLeadStatuses = completedLeads.reduce(
+		(acc, cur) => (acc.includes(cur.completeStatus) ? acc : [...acc, cur.completeStatus]),
+		[] as string[]
+	);
+	$: ((completeStatusSelect: string | undefined) => {
+		new DataTable('#completedLeadsTable').destroy();
+		new DataTable('#completedLeadsTable', { order: [] });
+	})(completeStatusSelect);
+	$: leads = completedLeads.filter((lead) =>
+		completeStatusSelect ? lead.completeStatus === completeStatusSelect : true
+	);
+
 	$: avgLeadResponseTime =
 		completedLeads.length > 0
 			? Math.floor(
@@ -30,15 +47,44 @@
 </script>
 
 <div class="overflow-x-auto">
-	<div class="flex justify-center text-sm">
-		<div>
-			<span class="font-semibold">Avg. Lead Response Time:</span>
-			<span class="">{timeToText(avgLeadResponseTime)}</span>
+	<div class="flex justify-between mb-2">
+		<div class="flex text-sm">
+			<div>
+				<span class="font-semibold">Avg. Lead Response Time:</span>
+				<span class="">{timeToText(avgLeadResponseTime)}</span>
+			</div>
+			<div class="divider divider-horizontal" />
+			<div>
+				<span class="font-semibold">Avg. Customer Talk Time:</span>
+				<span class="">{timeToText(avgCustomerTalkTime)}</span>
+			</div>
 		</div>
-		<div class="divider divider-horizontal" />
-		<div>
-			<span class="font-semibold">Avg. Customer Talk Time:</span>
-			<span class="">{timeToText(avgCustomerTalkTime)}</span>
+		<div class="flex flex-grow justify-end gap-4">
+			<select
+				class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
+				bind:value={completeStatusSelect}
+			>
+				<option value={undefined}>All Complete Status</option>
+				{#each completeLeadStatuses as completeStatus}
+					{@const count = completedLeads.filter((l) => l.completeStatus === completeStatus).length}
+					<option value={completeStatus}>
+						{completeStatus} ({count})
+					</option>
+				{/each}
+			</select>
+			<Flatpickr
+				placeholder="Choose Date"
+				class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full"
+				bind:value={dateRange}
+				on:close={() => fetchCompletedLeads(dateRange)}
+				options={{
+					mode: 'range',
+					altInput: true,
+					altFormat: 'F j, Y',
+					dateFormat: 'Y-m-d',
+					allowInput: true
+				}}
+			/>
 		</div>
 	</div>
 
@@ -54,24 +100,24 @@
 				<th>Lead Response Time</th>
 				<th>Customer Talk Time</th>
 				<th class="w-32">Customer</th>
-				<th>Close Status</th>
+				<th>Complete Status</th>
 				<th>Completed/Closed By</th>
 				<th>Log Message</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each completedLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, closeStatus, customerTalkTime, user, log }}
+			{#each leads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user, log }}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
-							{#if closeStatus}
-								<div class="badge badge-sm badge-error">
-									<Icon icon="mdi:close" />
-								</div>
-							{:else}
+							{#if success}
 								<div class="badge badge-sm badge-success">
 									<Icon icon="mdi:check" />
+								</div>
+							{:else}
+								<div class="badge badge-sm badge-error">
+									<Icon icon="mdi:close" />
 								</div>
 							{/if}
 							{ProspectId}
@@ -95,7 +141,7 @@
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
-					<td>{closeStatus ?? 'N/A'}</td>
+					<td>{completeStatus ?? 'N/A'}</td>
 					<td>{user ?? 'N/A'}</td>
 					<td>{log}</td>
 					<td>

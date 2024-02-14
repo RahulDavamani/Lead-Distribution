@@ -91,6 +91,7 @@
 	};
 
 	let interval: NodeJS.Timeout | undefined;
+	let init = false;
 	onMount(async () => {
 		window.stop();
 
@@ -100,6 +101,7 @@
 		ui.setLoader();
 
 		interval = setInterval(fetchQueuedLeads, 1000);
+		init = true;
 	});
 
 	onDestroy(() => {
@@ -144,21 +146,6 @@
 					<option value={companyName}>{companyName} ({count})</option>
 				{/each}
 			</select>
-			{#if tab === 2}
-				<Flatpickr
-					placeholder="Choose Date"
-					class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full ml-3"
-					bind:value={dateRange}
-					on:close={() => fetchCompletedLeads(dateRange)}
-					options={{
-						mode: 'range',
-						altInput: true,
-						altFormat: 'F j, Y',
-						dateFormat: 'Y-m-d',
-						allowInput: true
-					}}
-				/>
-			{/if}
 
 			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={reloadLeads}>
 				<Icon icon="mdi:refresh" class="text-info" width={22} />
@@ -176,20 +163,24 @@
 	</div>
 	<div class="divider mt-1" />
 
-	{#if tab === 1}
-		<QueuedLeadsTable
-			queuedLeads={queuedLeads.filter(({ prospectDetails: { CompanyName } }) =>
-				affiliateSelect ? CompanyName === affiliateSelect : true
-			)}
-			bind:leadDetailsModelId
-		/>
-	{:else}
-		<CompletedLeadsTable
-			completedLeads={completedLeads.filter(({ prospectDetails: { CompanyName } }) =>
-				affiliateSelect ? CompanyName === affiliateSelect : true
-			)}
-			bind:leadDetailsModelId
-		/>
+	{#if init}
+		{#if tab === 1}
+			<QueuedLeadsTable
+				queuedLeads={queuedLeads.filter(({ prospectDetails: { CompanyName } }) =>
+					affiliateSelect ? CompanyName === affiliateSelect : true
+				)}
+				bind:leadDetailsModelId
+			/>
+		{:else}
+			<CompletedLeadsTable
+				completedLeads={completedLeads.filter(({ prospectDetails: { CompanyName } }) =>
+					affiliateSelect ? CompanyName === affiliateSelect : true
+				)}
+				bind:leadDetailsModelId
+				bind:dateRange
+				{fetchCompletedLeads}
+			/>
+		{/if}
 	{/if}
 </div>
 

@@ -3,8 +3,11 @@ import { procedure } from '../../../server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { TRPCError } from '@trpc/server';
 import { actionsInclude } from '$lib/config/actions.config';
-import { createLeadResponse, updateLeadFunc } from '../helpers/lead.helper';
+import { upsertLeadFunc } from '../helpers/lead';
 import { executeActions } from '../helpers/executeActions';
+import { ruleResponseTypes } from '$lib/data/ruleResponseTypes';
+import { createLeadResponse } from '../helpers/leadResponse';
+import type { Actions } from '$lib/config/actions.schema';
 
 export const validateResponseProcedure = procedure
 	.input(
@@ -15,7 +18,7 @@ export const validateResponseProcedure = procedure
 		})
 	)
 	.query(async ({ input: { ProspectKey, ResponseType, Response } }) => {
-		const updateLead = updateLeadFunc(ProspectKey);
+		const upsertLead = upsertLeadFunc(ProspectKey);
 		// Check if Lead is already in Queue
 		const lead = await prisma.ldLead
 			.findUniqueOrThrow({
@@ -37,18 +40,19 @@ export const validateResponseProcedure = procedure
 			})
 			.catch(prismaErrorHandler);
 
-		const validateResponseType = `VALIDATING ${ResponseType.toUpperCase()} RESPONSE #${lead.responses.length + 1}`;
-		await updateLead({
-			log: { log: `${validateResponseType}: ${Response}` }
+		await upsertLead({
+			log: {
+				log: `VALIDATING RESPONSE #${lead.responses.length + 1}: ${Response} (${ruleResponseTypes[ResponseType]})`
+			}
 		});
 
 		if (!lead.rule) {
-			await updateLead({ log: { log: `${validateResponseType}: Rule not found` } });
+			await upsertLead({ log: { log: `Rule not found` } });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 
 		if (!lead.rule.isActive) {
-			await updateLead({ log: { log: `${validateResponseType}: Rule is inactive` } });
+			await upsertLead({ log: { log: `Rule is inactive` } });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 
@@ -56,47 +60,37 @@ export const validateResponseProcedure = procedure
 		const response = lead.rule.responses.find(({ values }) =>
 			values.split(',').some((value) => Response.toLowerCase().includes(value.toLowerCase()))
 		);
+		const responseAttempts = lead.responses.filter(({ actionsId }) => actionsId === response?.actionsId).length;
 
-		// Execute No Match Actions
-		if (!response) {
-			await updateLead({ log: { log: `${validateResponseType}: Executing response no match actions` } });
-			const { completeLeadResponse } = await createLeadResponse(ProspectKey, {
-				isCompleted: false,
-				type: ResponseType,
-				responseValue: Response,
+		let responseActions: { actionType: 'MATCH' | 'NO MATCH' | 'LIMIT EXCEED'; actions: Actions };
+		if (!response)
+			responseActions = {
 				actionType: 'NO MATCH',
-				actions: { connect: { id: lead.rule.responseOptions.responsesNoMatchActions.id } }
-			});
-			await executeActions(validateResponseType, ProspectKey, lead.rule.responseOptions.responsesNoMatchActions);
-			await completeLeadResponse();
-			return;
-		}
-
-		// Execute Limit Exceed Actions
-		const responseAttempts = lead.responses.filter(({ actionsId }) => actionsId === response.actionsId).length;
-		if (lead.responses.length >= lead.rule.responseOptions.totalMaxAttempt || responseAttempts >= response.maxAttempt) {
-			await updateLead({ log: { log: `${validateResponseType}: Executing response limit exceed actions` } });
-			const { completeLeadResponse } = await createLeadResponse(ProspectKey, {
-				isCompleted: false,
-				type: ResponseType,
-				responseValue: Response,
+				actions: lead.rule.responseOptions.responsesNoMatchActions
+			};
+		else if (
+			lead.responses.length >= lead.rule.responseOptions.totalMaxAttempt ||
+			responseAttempts >= response.maxAttempt
+		)
+			responseActions = {
 				actionType: 'LIMIT EXCEED',
-				actions: { connect: { id: lead.rule.responseOptions.responsesLimitExceedActions.id } }
-			});
-			await executeActions(validateResponseType, ProspectKey, lead.rule.responseOptions.responsesLimitExceedActions);
-			await completeLeadResponse();
-			return;
-		}
+				actions: lead.rule.responseOptions.responsesLimitExceedActions
+			};
+		else
+			responseActions = {
+				actionType: 'MATCH',
+				actions: response.actions
+			};
 
-		// Execute Response Actions
-		await updateLead({ log: { log: `${validateResponseType}: Executing response match actions` } });
+		await upsertLead({ log: { log: `Executing response ${responseActions.actionType.toLowerCase()} actions` } });
+
 		const { completeLeadResponse } = await createLeadResponse(ProspectKey, {
 			isCompleted: false,
 			type: ResponseType,
 			responseValue: Response,
-			actionType: `RESPONSE #${lead.responses.length + 1}`,
-			actions: { connect: { id: response.actions.id } }
+			actionType: responseActions.actionType,
+			actions: { connect: { id: responseActions.actions.id } }
 		});
-		await executeActions(validateResponseType, ProspectKey, response.actions);
+		await executeActions(ProspectKey, responseActions.actions);
 		await completeLeadResponse();
 	});

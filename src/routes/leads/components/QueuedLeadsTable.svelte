@@ -9,6 +9,7 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
+	import { getProcessNameSplit } from '../../../trpc/routers/lead/helpers/notificationProcess';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
@@ -29,10 +30,13 @@
 		new DataTable('#queuedLeadsTable', { order: [], ordering: false });
 	});
 
-	const showRequeueAlert = (ProspectKey: string) => {
+	const showRequeueAlert = (ProspectKey: string, alertType: 'picked' | 'scheduled') => {
 		$ui.alertModal = {
 			title: 'Are you sure to requeue this lead?',
-			body: 'This lead has already been picked by an agent',
+			body:
+				alertType === 'picked'
+					? 'This lead has already been picked by an agent'
+					: 'This lead has already been scheduled for a callback. Requeuing this lead will cancel the previously scheduled requeues',
 
 			actions: [
 				{
@@ -55,7 +59,7 @@
 	const requeue = async (ProspectKey: string) => {
 		ui.setLoader({ title: 'Requeueing Lead' });
 		const interval = setInterval(() => {
-			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.isNotificationQueue) {
+			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.notificationProcess?.status === 'ACTIVE') {
 				ui.setLoader();
 				clearInterval(interval);
 			}
@@ -63,12 +67,12 @@
 		await trpc($page).lead.redistribute.query({ ProspectKey, UserKey });
 	};
 
-	$: agentFirstLead = queuedLeads.findIndex((lead) => !lead.isPicked);
-	$: firstNewLead = queuedLeads.findIndex((lead) => lead.isNewLead);
+	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
+	$: firstCallback = queuedLeads.findIndex((lead) => !lead.isNewLead);
 </script>
 
 <div class="overflow-x-auto">
-	<div class="flex justify-center text-sm">
+	<div class="flex justify-start text-sm">
 		<div>
 			<span class="font-semibold">Avg. Lead Time Elapsed:</span>
 			<span class="">{timeToText(avgLeadTimeElapsed)}</span>
@@ -78,14 +82,14 @@
 	<table id="queuedLeadsTable" class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
-				<th class="w-1">Prospect ID</th>
-				<th class="w-1">Vonage GUID</th>
+				<th>Prospect ID</th>
+				<th>Vonage GUID</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
-				<th class="w-1">Created On</th>
-				<th class="w-1">Updated On</th>
+				<th>Created On</th>
+				<th>Updated On</th>
 				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
-				<th class="w-32">Customer</th>
+				<th>Customer</th>
 				<th>Customer SMS Response</th>
 				<th>Lead Status</th>
 				<th>Log Message</th>
@@ -93,9 +97,18 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { isNewLead, id, VonageGUID, createdAt, updatedAt, ProspectKey, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationQueue, log, isNotificationQueue, isPicked, customerResponse, callUser }, i}
+			{#each queuedLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, callUser, customerResponse }, i}
+				{@const processName = getProcessNameSplit(
+					notificationProcess?.callbackNum ?? 0,
+					notificationProcess?.requeueNum ?? 0
+				)}
+
 				{@const disableViewLead =
-					(roleType === 'AGENT' && i !== agentFirstLead && callUser?.UserKey !== UserKey) ||
+					(roleType === 'AGENT' &&
+						callUser?.UserKey !== UserKey &&
+						(isNewLead
+							? i !== agentFirstNewLead
+							: notificationProcess?.createdAt.toLocaleDateString() !== new Date().toLocaleDateString())) ||
 					(isPicked ? callUser?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
@@ -103,32 +116,39 @@
 					(roleType === 'SUPERVISOR' && rule?.supervisors.find((s) => s.UserKey === UserKey)?.isRequeue)}
 
 				{@const statusBtnEnable =
-					roleType === 'AGENT' ? (isPicked ? false : true) : isNotificationQueue ? false : canRequeue}
+					roleType === 'AGENT'
+						? isPicked
+							? false
+							: true
+						: notificationProcess?.status === 'ACTIVE'
+							? false
+							: canRequeue}
 
 				{@const statusBtnText =
 					roleType === 'AGENT'
 						? isPicked
 							? 'Lead Picked'
 							: 'Available'
-						: isNotificationQueue
+						: notificationProcess?.status === 'ACTIVE'
 							? 'Queueing'
 							: 'Requeue'}
 
 				{@const statusBtnClick = () => {
 					if (canRequeue)
-						if (isPicked) showRequeueAlert(ProspectKey);
+						if (isPicked) showRequeueAlert(ProspectKey, 'picked');
+						else if (notificationProcess?.status === 'SCHEDULED') showRequeueAlert(ProspectKey, 'scheduled');
 						else requeue(ProspectKey);
 				}}
 
-				{#if i === 0 || i === firstNewLead}
+				{#if i === 0 || i === firstCallback}
 					<tr class="hover">
-						{#if i == 0 && queuedLeads.filter((lead) => !lead.isNewLead).length > 0}
-							<td colspan="12" class="text-center bg-info text-info-content bg-opacity-90 font-semibold">
-								Callback Leads
-							</td>
-						{:else}
+						{#if i == 0 && queuedLeads.filter((lead) => lead.isNewLead).length > 0}
 							<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold">
 								New Leads
+							</td>
+						{:else}
+							<td colspan="12" class="text-center bg-info text-info-content bg-opacity-90 font-semibold">
+								Callback Leads
 							</td>
 						{/if}
 						<td style="display: none;" />
@@ -148,9 +168,13 @@
 					<td>
 						<div class="flex justify-center items-center gap-2">
 							{#if isPicked}
-								<div class="badge badge-sm badge-warning" />
-							{:else if isNewLead}
 								<div class="badge badge-sm badge-success" />
+							{:else if isNewLead}
+								<div class="badge badge-sm badge-error" />
+							{:else if notificationProcess?.requeueNum === 0}
+								<div class="badge badge-sm bg-orange-400" />
+							{:else}
+								<div class="badge badge-sm badge-warning" />
 							{/if}
 							{ProspectId}
 						</div>
@@ -172,16 +196,21 @@
 					</td>
 					<td>{customerResponse ?? 'No response yet'}</td>
 					<td>
-						<div class="font-semibold">{notificationQueue?.type ?? 'NEW LEAD'}</div>
-						{#if notificationQueue}
-							{#if isPicked}
-								<div>Picked by {callUser?.userStr}</div>
-							{:else if notificationQueue.isCompleted}
-								<div>Escalated to supervisor</div>
-							{:else if notificationQueue.notificationAttempts.length > 0}
-								<div>Attempt {notificationQueue.notificationAttempts.length}</div>
+						<div class="font-semibold whitespace-nowrap">{processName[0]}</div>
+						<div class="font-semibold whitespace-nowrap">{processName[1]}</div>
+						<div class="">
+							{#if notificationProcess}
+								{#if isPicked}
+									Picked by {callUser?.userStr}
+								{:else if notificationProcess.status === 'SCHEDULED'}
+									Scheduled in {getTimeElapsedText(new Date(), notificationProcess.createdAt)}
+								{:else if notificationProcess.escalations.length > 0}
+									Escalation #{notificationProcess.escalations[0].escalation?.num}
+								{:else if notificationProcess.notificationAttempts.length > 0}
+									Attempt #{notificationProcess.notificationAttempts[0].attempt?.num}
+								{/if}
 							{/if}
-						{/if}
+						</div>
 					</td>
 					<td>{log}</td>
 					<td>

@@ -8,6 +8,8 @@
 	import type { AppRouter } from '../../trpc/routers/app.router';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
+	import FormControl from '../components/FormControl.svelte';
+	import { completeLeadStatuses } from '$lib/config/completeLead/completeLeadStatuses';
 
 	type Lead = inferProcedureOutput<AppRouter['lead']['view']>['lead'];
 	type Prospect = inferProcedureOutput<AppRouter['lead']['view']>['prospect'];
@@ -15,7 +17,8 @@
 	let lead: Lead | undefined;
 	let prospect: Prospect | undefined;
 	let UserKey: string | undefined;
-	let closeStatus: string | undefined;
+	let success = true;
+	let completeStatus = 'Sale Made';
 
 	const fetchLead = async () => {
 		ui.setLoader({ title: 'Fetching Lead' });
@@ -77,17 +80,18 @@
 		}
 	};
 
-	const closeLead = async () => {
-		if (lead && prospect && closeStatus) {
-			ui.setLoader({ title: 'Closing Lead' });
+	const completeLead = async () => {
+		if (lead && prospect && completeStatus) {
+			ui.setLoader({ title: 'Completing Lead' });
 			await trpc($page)
-				.lead.close.query({
+				.lead.complete.query({
 					ProspectKey: prospect.ProspectKey,
 					UserKey: UserKey ?? $auth.user?.UserKey ?? '',
-					closeStatus
+					success,
+					completeStatus
 				})
 				.catch(trpcClientErrorHandler);
-			ui.showToast({ title: 'Lead Closed Successfully', class: 'alert-success' });
+			ui.showToast({ title: 'Lead completed Successfully', class: 'alert-success' });
 			ui.setLoader();
 			ui.navigate('/leads');
 		}
@@ -143,12 +147,34 @@
 
 			{#if $auth.roleType !== 'AGENT'}
 				<div class="divider" />
-				<div class="flex gap-6">
-					<select class="select select-bordered w-full" bind:value={closeStatus}>
+				<!-- <div class="flex gap-6">
+					<select class="select select-bordered w-full" bind:value={completeStatus}>
 						<option disabled selected value={undefined}>Select Status</option>
 						<option value="Junk/Test Contact">Junk/Test Contact</option>
 					</select>
-					<button class="btn btn-error {!closeStatus && 'btn-disabled'}" on:click={closeLead}>Close Lead</button>
+				</div> -->
+
+				<div class="flex items-end gap-6">
+					<div class="form-control">
+						<label class="label cursor-pointer gap-3">
+							<span class="font-semibold text-sm">Success</span>
+							<input type="checkbox" class="toggle toggle-success toggle-sm" bind:checked={success} />
+						</label>
+					</div>
+
+					<FormControl classes="w-full">
+						<select placeholder="Type here" class="select select-bordered" bind:value={completeStatus}>
+							{#each completeLeadStatuses as cs}
+								<option value={cs}>{cs}</option>
+							{/each}
+						</select>
+					</FormControl>
+					<button
+						class="btn {success ? 'btn-success' : 'btn-error'} {!completeStatus && 'btn-disabled'}"
+						on:click={completeLead}
+					>
+						Complete Lead
+					</button>
 				</div>
 			{/if}
 		</div>

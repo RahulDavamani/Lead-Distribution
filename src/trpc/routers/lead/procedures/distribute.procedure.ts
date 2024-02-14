@@ -2,11 +2,11 @@ import { z } from 'zod';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { procedure } from '../../../server';
 import { TRPCError } from '@trpc/server';
-import { sendNotifications } from '../helpers/sendNotifications';
+import { sendNotifications } from '../helpers/dispatchNotifications';
 import { getCompanyKey } from '../helpers/getCompanyKey';
-import { createLead, updateLeadFunc } from '../helpers/lead.helper';
+import { createLead, updateLeadFunc } from '../helpers/lead';
 import { generateMessage } from '../helpers/generateMessage';
-import { getUserStr } from '../helpers/user.helper';
+import { getUserStr } from '../helpers/user';
 import { sendSMS } from '../helpers/twilio';
 
 export const distributeProcedure = procedure

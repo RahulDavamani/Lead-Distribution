@@ -7,10 +7,10 @@ import { getCompletedProcedure, getLeadDetailsProcedure, getQueuedProcedure } fr
 import { getCompanyKey } from './helpers/getCompanyKey';
 import { roleTypeSchema } from '../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
-import { completeLead, updateLeadFunc } from './helpers/lead.helper';
-import { getUserStr, getUserValues } from './helpers/user.helper';
+import { completeLead, upsertLeadFunc } from './helpers/lead';
+import { getUserStr, getUserValues } from './helpers/user';
 import { validateResponseProcedure } from './procedures/validateResponse.procedure';
-import { distributeLead, redistributeLead } from './helpers/distributeLead';
+import { distributeLead, supervisorRedistribute } from './helpers/distributeLead';
 import { getLeadsWhere } from './helpers/getLeadsWhere';
 
 export const leadRouter = router({
@@ -28,7 +28,7 @@ export const leadRouter = router({
 	redistribute: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
-			await redistributeLead(ProspectKey, UserKey);
+			await supervisorRedistribute(ProspectKey, UserKey);
 			return { ProspectKey };
 		}),
 
@@ -66,7 +66,7 @@ export const leadRouter = router({
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
 			const userValues = await getUserValues(UserKey);
-			const updateLead = updateLeadFunc(ProspectKey);
+			const upsertLead = upsertLeadFunc(ProspectKey);
 
 			// Check if Lead is Completed/Closed
 			const lead = await prisma.ldLead
@@ -93,28 +93,44 @@ export const leadRouter = router({
 
 			// Update Lead
 			const userStr = await getUserStr(UserKey);
-			await updateLead({
+			await upsertLead({
 				log: { log: `Lead picked by "${userStr}"` },
 				isPicked: true,
 				call: { user: { connect: { UserKey } } }
 			});
 
-			// Complete Lead Notification Queue
-			await prisma.ldLead.update({
-				where: { ProspectKey },
-				data: {
-					notificationQueues: {
-						updateMany: { where: {}, data: { isCompleted: true } }
-					}
+			// Complete Lead Notification Processes
+			const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
+				where: {
+					lead: { ProspectKey },
+					status: { in: ['SCHEDULED', 'ACTIVE'] }
 				}
 			});
+			await Promise.all(
+				notificationProcesses.map(async ({ id, status }) => {
+					await prisma.ldLeadNotificationProcess.update({
+						where: { id },
+						data: {
+							status: status === 'SCHEDULED' ? 'CANCELLED' : 'COMPLETED'
+						}
+					});
+				})
+			);
+
 			return { ProspectKey };
 		}),
 
-	close: procedure
-		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1), closeStatus: z.string().min(1) }))
-		.query(async ({ input: { ProspectKey, UserKey, closeStatus } }) => {
-			const updateLead = updateLeadFunc(ProspectKey);
+	complete: procedure
+		.input(
+			z.object({
+				ProspectKey: z.string().min(1),
+				UserKey: z.string().min(1),
+				success: z.boolean(),
+				completeStatus: z.string().min(1)
+			})
+		)
+		.query(async ({ input: { ProspectKey, UserKey, success, completeStatus } }) => {
+			const upsertLead = upsertLeadFunc(ProspectKey);
 
 			// Check if Lead is Completed/Closed
 			const lead = await prisma.ldLead
@@ -124,8 +140,8 @@ export const leadRouter = router({
 
 			// Update Lead Log
 			const userStr = await getUserStr(UserKey);
-			await updateLead({ log: { log: `Lead closed by "${userStr}": ${closeStatus}` } });
-			await completeLead(ProspectKey, closeStatus, UserKey);
+			await upsertLead({ log: { log: `Lead completed by "${userStr}": ${completeStatus}` } });
+			await completeLead({ ProspectKey, success, completeStatus, user: { connect: { UserKey } } });
 			return { ProspectKey };
 		}),
 

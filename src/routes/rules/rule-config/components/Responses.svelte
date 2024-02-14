@@ -59,17 +59,12 @@
 
 <details class="collapse collapse-arrow">
 	<summary class="collapse-title px-0">
-		<div class="flex gap-2">
-			<div>
-				<span class="text-lg font-bold">Responses:</span>
-				<span class="font-mono">({responses.length})</span>
-			</div>
-		</div>
+		<div class="text-lg font-bold">Call Back Disposition & Prospect SMS Verification:</div>
 	</summary>
 
 	<div class="collapse-content px-2">
 		<FormControl
-			label="Total Max Response Check"
+			label="Total Max Verification Check"
 			classes="w-1/2 mb-4 px-2"
 			error={zodErrors?.responseOptions?.totalMaxAttempt}
 		>
@@ -118,7 +113,7 @@
 							</FormControl>
 
 							<FormControl
-								label="Max Response Check"
+								label="Max Verification Check"
 								classes="max-w-xs w-full"
 								error={zodErrors?.responses?.[i]?.maxAttempt}
 							>

@@ -11,7 +11,7 @@ const actionConfig: ActionConfig<typeof key> = {
 			id: nanoid(),
 			num,
 			success: true,
-			completeStatus: ''
+			completeStatus: 'Sale Made'
 		})
 	}
 };
