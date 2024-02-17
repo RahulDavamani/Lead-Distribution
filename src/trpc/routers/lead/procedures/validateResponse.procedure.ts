@@ -60,7 +60,6 @@ export const validateResponseProcedure = procedure
 		const response = lead.rule.responses.find(({ values }) =>
 			values.split(',').some((value) => Response.toLowerCase().includes(value.toLowerCase()))
 		);
-		const responseAttempts = lead.responses.filter(({ actionsId }) => actionsId === response?.actionsId).length;
 
 		let responseActions: { actionType: 'MATCH' | 'NO MATCH' | 'LIMIT EXCEED'; actions: Actions };
 		if (!response)
@@ -68,10 +67,7 @@ export const validateResponseProcedure = procedure
 				actionType: 'NO MATCH',
 				actions: lead.rule.responseOptions.responsesNoMatchActions
 			};
-		else if (
-			lead.responses.length >= lead.rule.responseOptions.totalMaxAttempt ||
-			responseAttempts >= response.maxAttempt
-		)
+		else if (lead.responses.length >= lead.rule.responseOptions.totalMaxAttempt)
 			responseActions = {
 				actionType: 'LIMIT EXCEED',
 				actions: lead.rule.responseOptions.responsesLimitExceedActions

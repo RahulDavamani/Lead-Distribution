@@ -12,11 +12,19 @@ export const load = async (event) => {
 
 	const { ProspectKey } = await prisma.leadProspect
 		.findFirstOrThrow({
-			where: { Phone: From },
+			where: { Phone: { contains: From.slice(-10) } },
 			select: { ProspectKey: true },
 			orderBy: { CreatedOn: 'desc' }
 		})
 		.catch(prismaErrorHandler);
+
+	const { rule } = await prisma.ldLead.findUniqueOrThrow({
+		where: { ProspectKey },
+		select: {
+			rule: { select: { messagingService: true } }
+		}
+	});
+	if (rule?.messagingService !== 'twilio') throw error(409, 'Messaging Service not supported');
 
 	const trpc = await createCaller(event);
 	await trpc.lead.validateResponse({ ProspectKey, ResponseType: 'sms', Response: Body }).catch(trpcServerErrorHandler);

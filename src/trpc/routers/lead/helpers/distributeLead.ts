@@ -1,12 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { upsertLeadFunc } from './lead';
+import { unCompleteLead, upsertLeadFunc } from './lead';
 import { getCompanyKey } from './getCompanyKey';
 import { getUserStr } from './user';
 import { dispatchNotifications } from './dispatchNotifications';
-import { generateMessage } from './generateMessage';
-import { sendSMS } from './twilio';
 import { scheduleJob } from 'node-schedule';
+import { sendSMS, watchGhlSMS } from './message';
 
 export const distributeLead = async (ProspectKey: string) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
@@ -34,6 +33,7 @@ export const distributeLead = async (ProspectKey: string) => {
 			select: {
 				id: true,
 				isActive: true,
+				messagingService: true,
 				smsTemplate: true
 			},
 			orderBy: { createdAt: 'desc' }
@@ -54,15 +54,10 @@ export const distributeLead = async (ProspectKey: string) => {
 	await upsertLead({ ruleId: rule.id, log: { log: 'Lead Queued' } });
 
 	// Send SMS
-	const { Phone } = await prisma.leadProspect
-		.findFirstOrThrow({ where: { ProspectKey }, select: { Phone: true } })
-		.catch(prismaErrorHandler);
-	const message = await generateMessage(ProspectKey, rule.smsTemplate);
-	await sendSMS(Phone ?? '', message);
-	await upsertLead({
-		log: { log: 'SMS #1: Text message sent to customer' },
-		message: { message }
-	});
+	await sendSMS(ProspectKey, rule.smsTemplate);
+
+	// Watch SMS
+	if (rule.messagingService === 'ghl') watchGhlSMS(ProspectKey);
 
 	// Send Notification to Operators
 	await dispatchNotifications(ProspectKey, 0, 0);
@@ -156,4 +151,37 @@ export const callbackRedistribute = async (ProspectKey: string, scheduleTime: nu
 		// Send Notification to Operators
 		await dispatchNotifications(ProspectKey, notificationProcesses[0].callbackNum + 1, 0);
 	});
+};
+
+export const completedRedistribute = async (ProspectKey: string) => {
+	const upsertLead = upsertLeadFunc(ProspectKey);
+	await unCompleteLead(ProspectKey);
+
+	const { rule, notificationProcesses } = await prisma.ldLead
+		.findFirstOrThrow({
+			where: { ProspectKey },
+			select: {
+				rule: { select: { id: true, isActive: true } },
+				notificationProcesses: {
+					orderBy: { createdAt: 'desc' },
+					select: { callbackNum: true }
+				}
+			}
+		})
+		.catch(prismaErrorHandler);
+
+	await upsertLead({ log: { log: `Lead requeued by callback` } });
+
+	// Rule Not Found / Inactive
+	if (!rule) {
+		await upsertLead({ log: { log: `Rule not found` } });
+		throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
+	}
+	if (!rule.isActive) {
+		await upsertLead({ log: { log: `Rule is inactive` } });
+		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
+	}
+
+	// Send Notification to Operators
+	await dispatchNotifications(ProspectKey, notificationProcesses[0].callbackNum + 1, 0);
 };

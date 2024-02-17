@@ -2,15 +2,22 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		// await prisma.ldLeadLog.deleteMany({});
-		// await prisma.ldLeadNotificationAttempt.deleteMany({});
-		// await prisma.ldLeadEscalation.deleteMany({});
-		// await prisma.ldLeadNotificationProcess.deleteMany({});
-		// await prisma.ldLeadCall.deleteMany({});
-		// await prisma.ldLeadMessage.deleteMany({});
-		// await prisma.ldLeadResponse.deleteMany({});
-		// await prisma.ldLead.deleteMany({});
-		// await prisma.ldLeadCompleted.deleteMany({});
+		await prisma.ldLeadLog.deleteMany({});
+		await prisma.ldLeadNotificationAttempt.deleteMany({});
+		await prisma.ldLeadEscalation.deleteMany({});
+		await prisma.ldLeadNotificationProcess.deleteMany({});
+		await prisma.ldLeadCall.deleteMany({});
+		await prisma.ldLeadMessage.deleteMany({});
+		await prisma.ldLeadResponse.deleteMany({});
+		await prisma.ldLead.deleteMany({});
+		await prisma.ldLeadCompleted.deleteMany({});
+		// const prospect = await prisma.leadProspect
+		// 	.findFirstOrThrow({
+		// 		where: { Email: 'c5@gmail.com' },
+		// 		orderBy: { CreatedOn: 'desc' }
+		// 	})
+		// 	.catch();
+		// console.log(prospect);
 		// console.log(await prisma.leadProspect.findMany({ where: { Email: 'abcd@gmail.com' } }));
 		// const operators = (await prisma.$queryRaw`
 		//    select Users.UserKey, Users.FirstName, Users.LastName, Users.Email, Users.VonageAgentId

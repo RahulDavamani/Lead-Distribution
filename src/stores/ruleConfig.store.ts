@@ -32,6 +32,7 @@ export const ruleConfig = (() => {
 		description: '',
 
 		outboundCallNumber: '',
+		messagingService: 'ghl',
 		smsTemplate: '',
 
 		affiliates: [],

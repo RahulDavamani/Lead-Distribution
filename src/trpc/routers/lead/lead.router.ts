@@ -130,8 +130,6 @@ export const leadRouter = router({
 			})
 		)
 		.query(async ({ input: { ProspectKey, UserKey, success, completeStatus } }) => {
-			const upsertLead = upsertLeadFunc(ProspectKey);
-
 			// Check if Lead is Completed/Closed
 			const lead = await prisma.ldLead
 				.findFirst({ where: { ProspectKey }, select: { id: true } })
@@ -139,8 +137,6 @@ export const leadRouter = router({
 			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found in queue' });
 
 			// Update Lead Log
-			const userStr = await getUserStr(UserKey);
-			await upsertLead({ log: { log: `Lead completed by "${userStr}": ${completeStatus}` } });
 			await completeLead({ ProspectKey, success, completeStatus, user: { connect: { UserKey } } });
 			return { ProspectKey };
 		}),

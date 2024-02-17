@@ -25,7 +25,6 @@
 			responses: responses.filter((r) => r.type === 'sms')
 		}
 	} as { [key: string]: { type: ResponseType; name: string; responses: Rule['responses'] } };
-	$: console.log(responseGroups);
 
 	const addResponse = (type: ResponseType) => {
 		$ruleConfig.rule.responses = [
@@ -35,7 +34,6 @@
 				num: responses.filter((r) => r.type === type).length + 1,
 				type,
 				values: '',
-				maxAttempt: 0,
 				actions: ruleConfig.getNewActions()
 			}
 		];
@@ -77,7 +75,7 @@
 		</FormControl>
 
 		{#each Object.values(responseGroups) as { type, name, responses }}
-			<div class="flex gap-2 mb-2">
+			<div class="flex gap-2">
 				<div>
 					<span class="font-semibold">{name} Responses:</span>
 					<span class="font-mono">({responses.length})</span>
@@ -85,6 +83,11 @@
 				<button class="z-10 text-success" on:click={() => addResponse(type)}>
 					<Icon icon="mdi:add-circle" width={24} />
 				</button>
+			</div>
+			<div class="mb-2 text-sm">
+				{#if type === 'sms'}
+					(Only applicable with twilio messaging service)
+				{/if}
 			</div>
 
 			<div class="space-y-4 px-2 mb-6">
@@ -98,33 +101,14 @@
 							<div class="font-semibold">Response #{num}</div>
 						</div>
 
-						<div class="flex gap-6 mb-4">
-							<FormControl
-								classes="w-full"
-								label="Response Values (Contains)"
-								error={zodErrors?.responses?.[i]?.values}
-							>
-								<textarea
-									placeholder="Type here"
-									class="textarea textarea-bordered"
-									bind:value={$ruleConfig.rule.responses[i].values}
-									rows={1}
-								/>
-							</FormControl>
-
-							<FormControl
-								label="Max Verification Check"
-								classes="max-w-xs w-full"
-								error={zodErrors?.responses?.[i]?.maxAttempt}
-							>
-								<input
-									type="number"
-									placeholder="Type here"
-									class="input input-bordered w-full join-item"
-									bind:value={$ruleConfig.rule.responses[i].maxAttempt}
-								/>
-							</FormControl>
-						</div>
+						<FormControl classes="mb-4" label="Response Values (Contains)" error={zodErrors?.responses?.[i]?.values}>
+							<textarea
+								placeholder="Type here"
+								class="textarea textarea-bordered"
+								bind:value={$ruleConfig.rule.responses[i].values}
+								rows={1}
+							/>
+						</FormControl>
 
 						<Actions actionsName="Actions" bind:actions={$ruleConfig.rule.responses[i].actions} />
 					</div>

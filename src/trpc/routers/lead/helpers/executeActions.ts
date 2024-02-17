@@ -3,10 +3,8 @@ import { getActionsList } from '$lib/config/utils/getActionsList';
 import { scheduleJob } from 'node-schedule';
 import { callbackRedistribute } from './distributeLead';
 import { completeLead, upsertLeadFunc } from './lead';
-import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { generateMessage } from './generateMessage';
-import { sendSMS } from './twilio';
 import type { Actions } from '$lib/config/actions.schema';
+import { sendSMS } from './message';
 
 export const executeActions = async (ProspectKey: string, actions: Actions) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
@@ -28,22 +26,8 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 
 			const scheduleTimeText = timeToText(scheduleTime);
 			const scheduledTime = new Date(Date.now() + scheduleTime * 1000);
-			scheduleJob(scheduledTime, async () => {
-				const { Phone } = await prisma.leadProspect
-					.findFirstOrThrow({ where: { ProspectKey }, select: { Phone: true } })
-					.catch(prismaErrorHandler);
-				const message = await generateMessage(ProspectKey, smsTemplate);
-				await sendSMS(Phone ?? '', message);
-				const {
-					_count: { messages }
-				} = await prisma.ldLead
-					.findUniqueOrThrow({ where: { ProspectKey }, select: { _count: { select: { messages: true } } } })
-					.catch(prismaErrorHandler);
-				await upsertLead({
-					log: { log: `SMS #${messages + 1}: Text message sent to customer ` },
-					message: { message }
-				});
-			});
+
+			scheduleJob(scheduledTime, async () => await sendSMS(ProspectKey, smsTemplate));
 			await upsertLead({ log: { log: `Action #${i}: Send SMS scheduled in ${scheduleTimeText}` } });
 		}
 

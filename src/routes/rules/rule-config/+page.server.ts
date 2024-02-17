@@ -5,7 +5,7 @@ export const load = async (event) => {
 	const trpc = await createCaller(event);
 
 	const id = event.url.searchParams.get('id');
-	const { ...data } = await trpc.rule.getById({ id }).catch(trpcServerErrorHandler);
+	const data = await trpc.rule.getById({ id }).catch(trpcServerErrorHandler);
 
-	return { ...data };
+	return data;
 };

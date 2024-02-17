@@ -8,6 +8,7 @@ export const ruleSchema = z.object({
 	description: z.string(),
 
 	outboundCallNumber: z.string().min(1),
+	messagingService: z.string().min(1),
 	smsTemplate: z.string(),
 
 	affiliates: z.array(
@@ -61,7 +62,6 @@ export const ruleSchema = z.object({
 			id: z.string().min(1),
 			num: z.number(),
 			type: z.string().min(1),
-			maxAttempt: z.number(),
 			values: z.string().min(1),
 			actions: actionsSchema
 		})

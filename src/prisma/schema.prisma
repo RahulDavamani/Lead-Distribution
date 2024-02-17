@@ -13358,7 +13358,7 @@ model PlanCreditRecord {
    CreatedOn             DateTime  @default(now(), map: "DF__PlanCredi__Creat__61E991BE") @db.DateTime
    RefCreKey             String?   @db.UniqueIdentifier
 
-   @@id([ComType, PlanId, PeriodKey, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord")
+   @@id([ComType, PlanId, Account, SubAccount, ProductKey], map: "PK_PlanCreditRecord_1")
 }
 
 model PlanCurrentPeriod {
@@ -13519,6 +13519,87 @@ model ZPlanRule_wqVF5Cw8gEGT_21IdUVgZ {
    @@ignore
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanCalcRecord_42AXxjZxhSlZTDekXGgTW {
+   CreSeq         Int
+   PlanId         String?   @db.VarChar(50)
+   PeriodKey      String?   @db.UniqueIdentifier
+   CreKey         String    @db.UniqueIdentifier
+   CreatedOn      DateTime  @db.DateTime
+   ComType        String    @db.Char(1)
+   ComGrossAmount Decimal?  @db.Decimal(10, 2)
+   ComNetAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowRate     Decimal?  @db.Decimal(5, 2)
+   EscrowAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowPayOn    DateTime? @db.Date
+   ComJson        String?   @db.VarChar(255)
+   RefCreKey      String?   @db.UniqueIdentifier
+   CalcAmount     String?   @db.VarChar(1000)
+   DerivedPackage String?   @db.VarChar(1000)
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanCreditRecord_42AXxjZxhSlZTDekXGgTW {
+   CreSeq                Int       @default(autoincrement())
+   ComType               String    @db.Char(1)
+   CreKey                String?   @db.UniqueIdentifier
+   PlanId                String    @db.VarChar(50)
+   PeriodKey             String    @db.UniqueIdentifier
+   CreditRuleId          String?   @db.VarChar(50)
+   CreditRuleName        String?   @db.VarChar(255)
+   CompanyKey            String    @db.UniqueIdentifier
+   UserKey               String    @db.UniqueIdentifier
+   CreditRefKey          String    @db.VarChar(50)
+   SalesRepKey           String    @db.UniqueIdentifier
+   ProviderKey           String?   @db.UniqueIdentifier
+   Account               String    @db.VarChar(50)
+   SubAccount            String    @db.VarChar(50)
+   ProductKey            String    @db.UniqueIdentifier
+   ProductName           String    @db.VarChar(100)
+   PackageName           String?   @db.VarChar(100)
+   CommissionPackageName String?   @db.VarChar(100)
+   SaleOn                DateTime? @db.Date
+   InstallOn             DateTime? @db.Date
+   DisconnectOn          DateTime? @db.Date
+   CancelOn              DateTime? @db.Date
+   IsConfirmed           Boolean
+   IsInstalled           Boolean
+   HLevelId              Int?
+   CreatedOn             DateTime  @db.DateTime
+   RefCreKey             String?   @db.UniqueIdentifier
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanParticipant_42AXxjZxhSlZTDekXGgTW {
+   PlanSeq      Int       @default(autoincrement())
+   PlanId       String    @db.VarChar(50)
+   PeriodKey    String    @db.UniqueIdentifier
+   CompanyKey   String    @db.UniqueIdentifier
+   HLevelId     Int?
+   UserKey      String    @db.UniqueIdentifier
+   CreatedOn    DateTime? @db.DateTime
+   CreditRuleId String?   @db.VarChar(50)
+   ModifiedOn   DateTime? @db.DateTime
+   ComJson      String?   @db.VarChar(Max)
+   TierName     String?   @db.VarChar(1000)
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanRule_42AXxjZxhSlZTDekXGgTW {
+   PlanId    String  @db.VarChar(50)
+   PeriodKey String  @db.UniqueIdentifier
+   ComJson   String? @db.VarChar(Max)
+   TierTable String? @db.VarChar(Max)
+
+   @@ignore
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -13529,6 +13610,7 @@ model LdRule {
    description String
 
    outboundCallNumber String
+   messagingService   String
    smsTemplate        String
 
    operators   LdRuleOperator[]
@@ -13638,10 +13720,9 @@ model LdRuleResponse {
    ruleId String
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-   num        Int
-   type       String
-   maxAttempt Int
-   values     String
+   num    Int
+   type   String
+   values String
 
    actionsId String        @unique
    actions   LdRuleActions @relation(fields: [actionsId], references: [id])

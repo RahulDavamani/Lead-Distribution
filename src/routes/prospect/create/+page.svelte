@@ -34,6 +34,7 @@
 			!Phone.length ||
 			!Address.length ||
 			!ZipCode.length ||
+			!prospect.LeadID.length ||
 			!agreeToTerms
 		)
 			return false;

@@ -4,7 +4,6 @@
 	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
 	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
 	import { trpc } from '../../trpc/client';
-	import Flatpickr from 'svelte-flatpickr';
 	import { ui } from '../../stores/ui.store';
 	import { auth } from '../../stores/auth.store';
 	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
@@ -54,7 +53,12 @@
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		queuedLeads = leads.queuedLeads;
-		if (oldQueuedLeads.length !== queuedLeads.length) {
+		if (
+			oldQueuedLeads.filter(({ isNewLead }) => isNewLead).length !==
+				queuedLeads.filter(({ isNewLead }) => isNewLead).length ||
+			oldQueuedLeads.filter(({ isNewLead }) => !isNewLead).length !==
+				queuedLeads.filter(({ isNewLead }) => !isNewLead).length
+		) {
 			new DataTable('#queuedLeadsTable').destroy();
 			await tick();
 			new DataTable('#queuedLeadsTable', { order: [] });
@@ -74,7 +78,6 @@
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
 		if (dateRange.length !== 2) return;
 		new DataTable('#completedLeadsTable').destroy();
-		ui.setLoader({ title: 'Fetching Leads' });
 
 		const leads = await trpc($page)
 			.lead.getCompleted.query({
@@ -85,7 +88,6 @@
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		completedLeads = leads.completedLeads;
-		ui.setLoader();
 		await tick();
 		new DataTable('#completedLeadsTable', { order: [] });
 	};

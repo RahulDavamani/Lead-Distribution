@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { getUserStr } from './user';
 
 export const createLead = async (ProspectKey: string, ruleId?: string) =>
 	await prisma.ldLead
@@ -49,6 +50,7 @@ export const completeLead = async ({
 	completeStatus,
 	user
 }: Prisma.LdLeadCompletedCreateInput) => {
+	const upsertLead = upsertLeadFunc(ProspectKey);
 	const { id, createdAt, ruleId, VonageGUID, logs, notificationProcesses, messages, calls, responses } =
 		await prisma.ldLead
 			.findUniqueOrThrow({
@@ -62,6 +64,11 @@ export const completeLead = async ({
 				}
 			})
 			.catch(prismaErrorHandler);
+
+	let log;
+	if (user?.connect?.UserKey) log = `Lead completed by "${await getUserStr(user.connect.UserKey)}": ${completeStatus}`;
+	else log = `Lead completed: ${completeStatus}`;
+	await upsertLead({ log: { log } });
 	await prisma.ldLead.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
 
 	const UserKey = user?.connect?.UserKey ?? calls[0]?.UserKey;
@@ -136,4 +143,90 @@ export const completeLead = async ({
 			});
 		})
 	);
+};
+
+export const unCompleteLead = async (ProspectKey: string) => {
+	const { id, createdAt, ruleId, VonageGUID, logs, notificationProcesses, messages, calls, responses } =
+		await prisma.ldLeadCompleted
+			.findUniqueOrThrow({
+				where: { ProspectKey },
+				include: {
+					logs: { select: { id: true } },
+					notificationProcesses: { select: { id: true } },
+					messages: { select: { id: true } },
+					calls: { select: { id: true } },
+					responses: { select: { id: true } }
+				}
+			})
+			.catch(prismaErrorHandler);
+
+	const { id: leadId } = await prisma.ldLead.create({
+		data: {
+			id,
+			createdAt,
+			ruleId,
+			VonageGUID,
+			ProspectKey,
+			isPicked: false
+		},
+		select: { id: true }
+	});
+
+	await Promise.all(
+		logs.map(async ({ id }) => {
+			await prisma.ldLeadLog.update({
+				where: { id },
+				data: {
+					completedLead: { disconnect: true },
+					lead: { connect: { id: leadId } }
+				}
+			});
+		})
+	);
+	await Promise.all(
+		notificationProcesses.map(async ({ id }) => {
+			await prisma.ldLeadNotificationProcess.update({
+				where: { id },
+				data: {
+					completedLead: { disconnect: true },
+					lead: { connect: { id: leadId } }
+				}
+			});
+		})
+	);
+	await Promise.all(
+		messages.map(async ({ id }) => {
+			await prisma.ldLeadMessage.update({
+				where: { id },
+				data: {
+					completedLead: { disconnect: true },
+					lead: { connect: { id: leadId } }
+				}
+			});
+		})
+	);
+	await Promise.all(
+		calls.map(async ({ id }) => {
+			await prisma.ldLeadCall.update({
+				where: { id },
+				data: {
+					completedLead: { disconnect: true },
+					lead: { connect: { id: leadId } }
+				}
+			});
+		})
+	);
+	await Promise.all(
+		responses.map(async ({ id }) => {
+			await prisma.ldLeadResponse.update({
+				where: { id },
+				data: {
+					completedLead: { disconnect: true },
+					lead: { connect: { id: leadId } }
+				}
+			});
+		})
+	);
+
+	await prisma.ldLeadCompleted.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
 };

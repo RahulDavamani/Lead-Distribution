@@ -20,10 +20,6 @@
 		(acc, cur) => (acc.includes(cur.completeStatus) ? acc : [...acc, cur.completeStatus]),
 		[] as string[]
 	);
-	$: ((completeStatusSelect: string | undefined) => {
-		new DataTable('#completedLeadsTable').destroy();
-		new DataTable('#completedLeadsTable', { order: [] });
-	})(completeStatusSelect);
 	$: leads = completedLeads.filter((lead) =>
 		completeStatusSelect ? lead.completeStatus === completeStatusSelect : true
 	);

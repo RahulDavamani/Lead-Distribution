@@ -72,7 +72,7 @@
 </script>
 
 <div class="overflow-x-auto">
-	<div class="flex justify-start text-sm">
+	<div class="flex justify-start text-sm mb-2">
 		<div>
 			<span class="font-semibold">Avg. Lead Time Elapsed:</span>
 			<span class="">{timeToText(avgLeadTimeElapsed)}</span>

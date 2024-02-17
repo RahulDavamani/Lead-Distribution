@@ -67,9 +67,9 @@
 
 		<div class="flex">
 			<div class="w-2/3">
-				<div class="">
-					<!-- Outbound Call Number-->
-					<FormControl label="Outbound Call Number" error={zodErrors?.outboundCallNumber}>
+				<div class="flex gap-6">
+					<!-- Outbound Call Number -->
+					<FormControl label="Outbound Call Number" classes="w-full" error={zodErrors?.outboundCallNumber}>
 						<input
 							type="text"
 							placeholder="Type here"
@@ -78,25 +78,49 @@
 						/>
 					</FormControl>
 
-					<!-- SMS Template -->
-					<FormControl
-						classes="w-full"
-						label="Initial SMS Template"
-						secLabel="(First message upon lead arrival)"
-						secLabelClasses="text-sm"
-						error={zodErrors?.smsTemplate}
-					>
-						<div class="join">
-							<textarea
-								placeholder="Type here"
-								class="textarea textarea-bordered join-item w-full"
-								bind:value={$ruleConfig.rule.smsTemplate}
-								rows={1}
-							/>
-							<Variables insertVariable={(v) => ($ruleConfig.rule.smsTemplate += v)} />
+					<!-- Messaging Service -->
+					<FormControl label="SMS Messaging Service" classes="w-full" error={zodErrors?.messagingService}>
+						<div class="flex gap-4">
+							<FormControl inputType="In" label="GHL">
+								<input
+									type="radio"
+									name="messagingService"
+									class="radio radio-primary"
+									value="ghl"
+									bind:group={$ruleConfig.rule.messagingService}
+								/>
+							</FormControl>
+							<FormControl inputType="In" label="Twilio">
+								<input
+									type="radio"
+									name="messagingService"
+									class="radio radio-primary"
+									value="twilio"
+									bind:group={$ruleConfig.rule.messagingService}
+								/>
+							</FormControl>
 						</div>
 					</FormControl>
 				</div>
+
+				<!-- SMS Template -->
+				<FormControl
+					classes="w-full"
+					label="Initial SMS Template"
+					secLabel="(First message upon lead arrival)"
+					secLabelClasses="text-sm"
+					error={zodErrors?.smsTemplate}
+				>
+					<div class="join">
+						<textarea
+							placeholder="Type here"
+							class="textarea textarea-bordered join-item w-full"
+							bind:value={$ruleConfig.rule.smsTemplate}
+							rows={1}
+						/>
+						<Variables insertVariable={(v) => ($ruleConfig.rule.smsTemplate += v)} />
+					</div>
+				</FormControl>
 			</div>
 			<div class="divider divider-horizontal" />
 			<div class="w-1/3">
