@@ -76,8 +76,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="text-center absolute inset-0 top-1/2">No Supervisors</div>
-					<div class="py-4" />
+					<div class="text-center mt-4">No Supervisors</div>
 				{/each}
 			</div>
 		</div>

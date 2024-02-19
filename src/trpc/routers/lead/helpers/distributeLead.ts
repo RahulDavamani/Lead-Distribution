@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { unCompleteLead, upsertLeadFunc } from './lead';

@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import type { Operator } from '../../../../zod/operator.schema';
 
 export const getOperators = async () =>

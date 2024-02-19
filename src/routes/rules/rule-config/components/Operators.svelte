@@ -76,8 +76,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="text-center absolute inset-0 top-1/2">No Operators</div>
-					<div class="py-4" />
+					<div class="text-center mt-4">No Operators</div>
 				{/each}
 			</div>
 		</div>

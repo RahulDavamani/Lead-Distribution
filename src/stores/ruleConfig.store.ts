@@ -76,7 +76,7 @@ export const ruleConfig = (() => {
 		const { rule } = get(ruleConfig);
 
 		const { ruleId } = await trpc($page)
-			.rule.saveRule.query(rule)
+			.rule.saveRule.mutate(rule)
 			.catch((e) => trpcClientErrorHandler<Rule>(e, (e) => update((state) => ({ ...state, zodErrors: e.zodErrors }))));
 
 		window.history.replaceState(history.state, '', `/rules/rule-config?id=${ruleId}`);
@@ -96,7 +96,7 @@ export const ruleConfig = (() => {
 			rule: { id }
 		} = get(ruleConfig);
 
-		if (id) await trpc($page).rule.deleteRole.query({ id }).catch(trpcClientErrorHandler);
+		if (id) await trpc($page).rule.delete.query({ id }).catch(trpcClientErrorHandler);
 
 		ui.navigate('/rules');
 		ui.showToast({

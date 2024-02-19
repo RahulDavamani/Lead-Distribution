@@ -1,3 +1,4 @@
+import { prisma } from '../../prisma/prisma';
 import { error } from '@sveltejs/kit';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler';
 import { createCaller } from '../../trpc/routers/app.router';

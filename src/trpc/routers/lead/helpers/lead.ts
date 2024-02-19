@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr } from './user';

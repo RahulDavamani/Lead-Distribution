@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { ui } from '../../../stores/ui.store';
 	import { trpc } from '../../../trpc/client';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 	import type { ProspectInput } from '../../../zod/prospectInput.schema';
 	import FormControl from '../../components/FormControl.svelte';
 
-	let AccessKey = '9A40BA85-78C1-4327-9021-A1AFC06CE9B9';
+	export let data;
+	$: ({ affiliates } = data);
+	onMount(() => (AccessKey = affiliates[0].Value));
+
+	let AccessKey = '';
 	let prospect: ProspectInput = {
 		LeadID: '',
 		CustomerInfo: {
@@ -86,10 +91,11 @@
 <div class="flex h-screen justify-center items-center">
 	<div class="card border max-w-5xl w-full p-4 px-6">
 		<div class="flex justify-between items-end">
-			<div class="text-3xl font-bold w-full">Submit Prospect</div>
+			<div class="text-3xl font-bold w-full">Submit Prospect (Testing)</div>
 			<select bind:value={AccessKey} class="select select-bordered select-sm w-full text-center">
-				<option value="9A40BA85-78C1-4327-9021-A1AFC06CE9B9">Raka Affiliate</option>
-				<option value="FAAEE713-6AC2-4DB3-A11D-EB8E13471BDE">Pointer</option>
+				{#each affiliates as { Text, Value }}
+					<option value={Value}>{Text.replace(/([A-Z])/g, ' $1').trim()}</option>
+				{/each}
 			</select>
 		</div>
 		<div class="divider mt-2" />
@@ -135,6 +141,6 @@
 		</div>
 
 		<button class="btn btn-primary {!enableSubmit && 'btn-disabled'} w-full mt-6" on:click={submit}>Submit</button>
-		<!-- <button class="btn btn-primary w-full mt-6" on:click={submitDummy}>Submit Dummy</button> -->
+		<button class="btn btn-primary w-full mt-6 hidden" on:click={submitDummy}>Submit Dummy</button>
 	</div>
 </div>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { procedure, router } from '../../server';
 import { TRPCError } from '@trpc/server';
+import { prisma } from '../../../prisma/prisma';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import { prospectInputSchema } from '../../../zod/prospectInput.schema';
 import { getCompletedProcedure, getLeadDetailsProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';

@@ -43,8 +43,7 @@
 				<div>{affiliateName}</div>
 			</div>
 		{:else}
-			<div class="text-center absolute inset-0 top-1/2">No Affiliates</div>
-			<div class="py-4" />
+			<div class="text-center mt-4">No Affiliates</div>
 		{/each}
 	</div>
 </div>

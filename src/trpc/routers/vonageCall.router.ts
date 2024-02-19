@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { procedure, router } from '../server';
+import { prisma } from '../../prisma/prisma';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler';
 import { TRPCError } from '@trpc/server';
 import azureGenerateSasUrl from '$lib/server/generateAzureSasUrl';

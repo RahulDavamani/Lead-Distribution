@@ -5,7 +5,7 @@ export const load = async (event) => {
 	const ProspectKey = event.url.searchParams.get('ProspectKey');
 	if (!ProspectKey) throw error(400, 'Bad Request: Missing params "ProspectKey"');
 
-	await completeLead({ ProspectKey, success: false, completeStatus: 'Manual Lead Management' });
+	await completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
 
 	return {};
 };

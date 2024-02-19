@@ -1,3 +1,4 @@
+import { prisma } from '../../prisma/prisma';
 import { procedure, router } from '../server';
 
 export const testRouter = router({

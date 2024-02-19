@@ -6,7 +6,6 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getActionsList } from '$lib/config/utils/getActionsList';
-	import { getProcessName } from '../../../trpc/routers/lead/helpers/notificationProcess';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
@@ -47,12 +46,12 @@
 				<div class="grid grid-cols-4 col-span-4 gap-4">
 					<div class="text-lg font-semibold col-span-4">Notification Dispatch Process:</div>
 
-					{#each leadDetails.notificationProcesses as { callbackNum, requeueNum, createdAt, status, notificationAttempts, escalations }}
+					{#each leadDetails.notificationProcesses as { processName, createdAt, status, notificationAttempts, escalations }}
 						<details class="collapse collapse-arrow border shadow-sm col-span-4">
 							<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
 								<div class="flex justify-between items-center">
 									<div>
-										<div class="font-semibold">{getProcessName(callbackNum, requeueNum)}</div>
+										<div class="font-semibold">{processName}</div>
 										<div>{createdAt.toLocaleString()}</div>
 									</div>
 									{#if status === 'SCHEDULED'}

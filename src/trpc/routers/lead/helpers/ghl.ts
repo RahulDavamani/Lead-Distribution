@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { generateMessage } from './generateMessage';
 
@@ -6,14 +7,12 @@ export const getGHLStatus = async (ProspectKey: string) => {
 		const ghlResponse = (await prisma.$queryRaw`Exec [p_GHL_GetProspect] ${ProspectKey}`.catch(prismaErrorHandler)) as {
 			Response?: string;
 		}[];
-		console.log(ghlResponse);
 		const ghlData = JSON.parse(ghlResponse?.[0]?.Response ?? 'undefined') as {
 			contact?: { customFields?: { id: string; value: string }[] };
 		};
 		const ghlStatus = ghlData?.contact?.customFields?.find((cf) => cf.id === '5DyNSCM7X3blCAWJSteM')?.value;
 		return ghlStatus ?? 'Not Found';
 	} catch (error) {
-		console.log(error);
 		return 'Not Found';
 	}
 };

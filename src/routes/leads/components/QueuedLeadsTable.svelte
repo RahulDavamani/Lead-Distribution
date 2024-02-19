@@ -9,7 +9,6 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
-	import { getProcessNameSplit } from '../../../trpc/routers/lead/helpers/notificationProcess';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
@@ -97,12 +96,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, callUser, customerResponse }, i}
-				{@const processName = getProcessNameSplit(
-					notificationProcess?.callbackNum ?? 0,
-					notificationProcess?.requeueNum ?? 0
-				)}
-
+			{#each queuedLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, notificationProcessName, callUser, customerResponse }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						callUser?.UserKey !== UserKey &&
@@ -177,6 +171,7 @@
 								<div class="badge badge-sm badge-warning" />
 							{/if}
 							{ProspectId}
+							{ProspectKey}
 						</div>
 					</td>
 					<td
@@ -196,8 +191,8 @@
 					</td>
 					<td>{customerResponse ?? 'No response yet'}</td>
 					<td>
-						<div class="font-semibold whitespace-nowrap">{processName[0]}</div>
-						<div class="font-semibold whitespace-nowrap">{processName[1]}</div>
+						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>
+						<div class="font-semibold whitespace-nowrap">{notificationProcessName[1]}</div>
 						<div class="">
 							{#if notificationProcess}
 								{#if isPicked}

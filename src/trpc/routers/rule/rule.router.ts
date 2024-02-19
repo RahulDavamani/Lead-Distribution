@@ -7,9 +7,31 @@ import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import { actionsInclude } from '$lib/config/actions.config';
 import { getOperators } from './helpers/getOperators';
 import { getAffiliates } from './helpers/getAffiliates';
-import { upsertActions } from './helpers/upsertActions';
+import { createActions, upsertActions } from './helpers/upsertActions';
 import { roleTypeSchema } from '../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
+
+export const getRuleById = async (id: string) =>
+	await prisma.ldRule
+		.findUniqueOrThrow({
+			where: { id },
+			include: {
+				affiliates: { orderBy: { num: 'asc' } },
+				operators: { orderBy: { num: 'asc' } },
+				supervisors: { orderBy: { num: 'asc' } },
+				notificationAttempts: { orderBy: { num: 'asc' } },
+				escalations: { orderBy: { num: 'asc' } },
+				responses: { include: { actions: actionsInclude }, orderBy: { num: 'asc' } },
+				responseOptions: {
+					include: {
+						responsesLimitExceedActions: actionsInclude,
+						responsesNoMatchActions: actionsInclude
+					}
+				},
+				_count: { select: { queuedLeads: true, completedLeads: true } }
+			}
+		})
+		.catch(prismaErrorHandler);
 
 export const ruleRouter = router({
 	getAll: procedure.query(async () => {
@@ -20,6 +42,19 @@ export const ruleRouter = router({
 			})
 			.catch(prismaErrorHandler);
 		return { rules };
+	}),
+
+	getById: procedure.input(z.object({ id: z.string().min(1).nullable() })).query(async ({ input: { id } }) => {
+		const rule = id ? await getRuleById(id) : null;
+		const affiliates = await getAffiliates();
+		const operators = await getOperators();
+
+		return {
+			rule,
+			affiliates,
+			operators,
+			canDelete: (rule?._count?.queuedLeads ?? 0) + (rule?._count?.completedLeads ?? 0) === 0
+		};
 	}),
 
 	getForSettings: procedure
@@ -73,43 +108,9 @@ export const ruleRouter = router({
 			}
 		}),
 
-	getById: procedure.input(z.object({ id: z.string().min(1).nullable() })).query(async ({ input: { id } }) => {
-		const rule = id
-			? await prisma.ldRule
-					.findUnique({
-						where: { id },
-						include: {
-							affiliates: { orderBy: { num: 'asc' } },
-							operators: { orderBy: { num: 'asc' } },
-							supervisors: { orderBy: { num: 'asc' } },
-							notificationAttempts: { orderBy: { num: 'asc' } },
-							escalations: { orderBy: { num: 'asc' } },
-							responses: { include: { actions: actionsInclude }, orderBy: { num: 'asc' } },
-							responseOptions: {
-								include: {
-									responsesLimitExceedActions: actionsInclude,
-									responsesNoMatchActions: actionsInclude
-								}
-							},
-							_count: { select: { queuedLeads: true, completedLeads: true } }
-						}
-					})
-					.catch(prismaErrorHandler)
-			: null;
-
-		const affiliates = await getAffiliates();
-		const operators = await getOperators();
-		return {
-			rule,
-			affiliates,
-			operators,
-			canDelete: (rule?._count?.queuedLeads ?? 0) + (rule?._count?.completedLeads ?? 0) === 0
-		};
-	}),
-
 	saveRule: procedure
 		.input(ruleSchema)
-		.query(
+		.mutation(
 			async ({
 				input: {
 					id,
@@ -304,7 +305,144 @@ export const ruleRouter = router({
 			}
 		),
 
-	deleteRole: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
+	duplicate: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
+		const {
+			id: rId,
+			createdAt: rCreatedAt,
+			updatedAt: rUpdatedAt,
+			affiliates,
+			operators,
+			supervisors,
+			notificationAttempts,
+			escalations,
+			responses,
+			responseOptions,
+			_count,
+			...values
+		} = await getRuleById(id);
+
+		// Upsert Response Options
+		const {
+			id: roId,
+			createdAt,
+			updatedAt,
+			responsesNoMatchActions,
+			responsesLimitExceedActions,
+			...responseOptionsValues
+		} = responseOptions;
+
+		const responsesNoMatchActionsId = await createActions(responsesNoMatchActions);
+		const responsesLimitExceedActionsId = await createActions(responsesLimitExceedActions);
+
+		const { id: responseOptionsId } = await prisma.ldRuleResponseOptions
+			.create({
+				data: {
+					...responseOptionsValues,
+					responsesNoMatchActionsId,
+					responsesLimitExceedActionsId
+				},
+				select: { id: true }
+			})
+			.catch(prismaErrorHandler);
+
+		// Create Rule
+		const rules = await prisma.ldRule.findMany({ select: { name: true } }).catch(prismaErrorHandler);
+		let name = 'New Rule';
+		for (let i = 1; i <= rules.length + 1; i++)
+			if (!rules.find((r) => r.name === name)) break;
+			else name = `New Rule ${i}`;
+
+		const { id: ruleId } = await prisma.ldRule
+			.create({
+				data: {
+					...values,
+					responseOptionsId,
+					name
+				},
+				select: { id: true }
+			})
+			.catch(prismaErrorHandler);
+
+		// Create Affiliates
+		await Promise.all(
+			affiliates.map(
+				async ({ id, createdAt, updatedAt, ...values }) =>
+					await prisma.ldRuleAffiliate
+						.create({
+							data: { ...values, ruleId },
+							select: { id: true }
+						})
+						.catch(prismaErrorHandler)
+			)
+		);
+
+		// Create Operators
+		await Promise.all(
+			operators.map(
+				async ({ id, createdAt, updatedAt, ...values }) =>
+					await prisma.ldRuleOperator
+						.create({
+							data: { ...values, ruleId },
+							select: { id: true }
+						})
+						.catch(prismaErrorHandler)
+			)
+		);
+
+		// Create Supervisors
+		await Promise.all(
+			supervisors.map(
+				async ({ id, createdAt, updatedAt, ...values }) =>
+					await prisma.ldRuleSupervisor
+						.create({
+							data: { ...values, ruleId },
+							select: { id: true }
+						})
+						.catch(prismaErrorHandler)
+			)
+		);
+
+		// Create Notification Attempts
+		await Promise.all(
+			notificationAttempts.map(
+				async ({ id, createdAt, updatedAt, ...values }) =>
+					await prisma.ldRuleNotificationAttempt
+						.create({
+							data: { ...values, ruleId },
+							select: { id: true }
+						})
+						.catch(prismaErrorHandler)
+			)
+		);
+
+		// Create Escalations
+		await Promise.all(
+			escalations.map(
+				async ({ id, createdAt, updatedAt, ...values }) =>
+					await prisma.ldRuleEscalation
+						.create({
+							data: { ...values, ruleId },
+							select: { id: true }
+						})
+						.catch(prismaErrorHandler)
+			)
+		);
+
+		// Create responses
+		await Promise.all(
+			responses.map(async ({ id, actions, ...values }) => {
+				const actionsId = await createActions(actions);
+				await prisma.ldRuleResponse
+					.create({
+						data: { ...values, ruleId, actionsId },
+						select: { id: true }
+					})
+					.catch(prismaErrorHandler);
+			})
+		);
+	}),
+
+	delete: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
 		await prisma.ldRule.delete({ where: { id } }).catch(prismaErrorHandler);
 		return { id };
 	})

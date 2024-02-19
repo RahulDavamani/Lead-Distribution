@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import { getTimeElapsedText } from '$lib/client/DateTime';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 

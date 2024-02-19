@@ -1,9 +1,50 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { ui } from '../../stores/ui.store';
+	import { trpc } from '../../trpc/client';
+	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	export let data;
 	$: ({ rules } = data);
+
+	let clickTimer: NodeJS.Timeout | undefined;
+
+	const ruleMouseDown = (id: string) => {
+		clickTimer = setTimeout(() => {
+			clearTimeout(clickTimer);
+			clickTimer = undefined;
+			$ui.alertModal = {
+				title: `Do you want to duplicate ${name}?`,
+				actions: [
+					{
+						name: 'Cancel',
+						class: 'btn-error',
+						onClick: () => ($ui.alertModal = undefined)
+					},
+					{
+						name: 'Duplicate',
+						class: 'btn-success',
+						onClick: async () => {
+							$ui.alertModal = undefined;
+							ui.setLoader({ title: 'Duplicating Rule' });
+							await trpc($page).rule.duplicate.query({ id });
+							await invalidateAll();
+							ui.setLoader();
+						}
+					}
+				]
+			};
+		}, 500);
+	};
+
+	const ruleMouseUp = (id: string) => {
+		if (clickTimer) {
+			clearTimeout(clickTimer);
+			clickTimer = undefined;
+			ui.navigate(`/rules/rule-config?id=${id}`);
+		}
+	};
 </script>
 
 <div class="container mx-auto">
@@ -25,7 +66,8 @@
 				<span class="indicator-item badge badge-sm {isActive ? 'badge-success' : 'badge-error'} mt-0.5 mr-0.5" />
 				<button
 					class="card border shadow px-4 py-2 flex flex-row justify-between items-center w-full"
-					on:click={() => ui.navigate(`/rules/rule-config?id=${id}`)}
+					on:mousedown={() => ruleMouseDown(id)}
+					on:mouseup={() => ruleMouseUp(id)}
 				>
 					<div class="max-w-xs w-full">
 						<div class="text-lg font-semibold">{name}</div>

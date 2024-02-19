@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const getCompanyKey = async (ProspectKey: string) => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { prisma } from '../../../../prisma/prisma';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import type { Affiliate } from '../../../../zod/affiliate.schema';
 import { procedure } from '../../../server';
@@ -7,6 +8,7 @@ import type { Prisma } from '@prisma/client';
 import { getUserStr, getUserValues } from '../helpers/user';
 import { actionsInclude } from '$lib/config/actions.config';
 import { getLeadsWhere } from '../helpers/getLeadsWhere';
+import { getProcessName, getProcessNameSplit } from '../helpers/notificationProcess';
 
 export const getProspectDetails = async (ProspectKey: string) => {
 	try {
@@ -117,12 +119,17 @@ export const getQueuedProcedure = procedure
 					})
 					.catch(prismaErrorHandler)
 			).map(async (lead) => {
+				const notificationProcess = lead.notificationProcesses.length > 0 ? lead.notificationProcesses[0] : undefined;
 				return {
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
 					isNewLead: lead.notificationProcesses.length === 0 || lead.notificationProcesses[0].callbackNum === 0,
 					log: lead.logs.length > 0 ? lead.logs[0].log : undefined,
-					notificationProcess: lead.notificationProcesses.length > 0 ? lead.notificationProcesses[0] : undefined,
+					notificationProcess,
+					notificationProcessName: getProcessNameSplit(
+						notificationProcess?.callbackNum ?? 0,
+						notificationProcess?.requeueNum ?? 0
+					),
 					callUser:
 						lead.calls.length > 0
 							? {
@@ -292,23 +299,24 @@ export const getLeadDetailsProcedure = procedure
 		}
 
 		const notificationProcesses = [];
-		for (const notificationQueue of lead.notificationProcesses) {
+		for (const notificationProcess of lead.notificationProcesses) {
 			const notificationAttempts = [];
-			for (const notificationAttempt of notificationQueue.notificationAttempts)
+			for (const notificationAttempt of notificationProcess.notificationAttempts)
 				notificationAttempts.push({
 					...notificationAttempt,
 					userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
 				});
 
 			const escalations = [];
-			for (const escalation of notificationQueue.escalations)
+			for (const escalation of notificationProcess.escalations)
 				escalations.push({
 					...escalation,
 					userValues: escalation.UserKey ? await getUserValues(escalation.UserKey) : undefined
 				});
 
 			notificationProcesses.push({
-				...notificationQueue,
+				...notificationProcess,
+				processName: getProcessName(notificationProcess.callbackNum, notificationProcess.requeueNum),
 				notificationAttempts,
 				escalations
 			});

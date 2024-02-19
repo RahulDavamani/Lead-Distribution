@@ -1,3 +1,4 @@
+import { prisma } from '../../../../prisma/prisma';
 import { scheduleJob } from 'node-schedule';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { generateMessage } from './generateMessage';
@@ -27,7 +28,6 @@ export const sendSMS = async (ProspectKey: string, smsTemplate: string) => {
 		.findFirstOrThrow({ where: { ProspectKey }, select: { Phone: true } })
 		.catch(prismaErrorHandler);
 
-	console.log(rule.messagingService);
 	if (rule.messagingService === 'twilio') await twilioSendSMS(Phone ?? '', message);
 	else await updateGHLTemplates(ProspectKey, { bundlesmstemplate: message });
 
@@ -49,11 +49,10 @@ export const watchGhlSMS = async (ProspectKey: string) => {
 		}
 
 		const ghlStatus = await getGHLStatus(ProspectKey);
-		console.log(`GHL: ${ghlStatus}`);
 		if (ghlStatus === 'Text Received') {
 			job.cancel();
 			await upsertLead({ log: { log: 'GHL: Text Received' } });
-			await completeLead({ ProspectKey, success: false, completeStatus: 'Manual Lead Management' });
+			await completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
 		}
 	});
 };
