@@ -5,15 +5,23 @@ import { callbackRedistribute } from './distributeLead';
 import { completeLead, upsertLeadFunc } from './lead';
 import type { Actions } from '$lib/config/actions.schema';
 import { sendSMS } from './message';
+import { prisma } from '../../../../prisma/prisma';
+import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const executeActions = async (ProspectKey: string, actions: Actions) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
+	const responseCount = await prisma.ldLeadResponse.count().catch(prismaErrorHandler);
 	const { actionsList } = getActionsList(actions);
 
 	let i = 1;
 	for (const action of actionsList) {
 		if (action.requeueLead) {
-			const { scheduleTime } = action.requeueLead;
+			const scheduleTimes = action.requeueLead.scheduleTimes.split('|');
+			const scheduleTime = Number(
+				responseCount <= scheduleTimes.length
+					? scheduleTimes[responseCount - 1]
+					: scheduleTimes[scheduleTimes.length - 1]
+			);
 			const scheduleTimeText = timeToText(scheduleTime);
 
 			await callbackRedistribute(ProspectKey, scheduleTime);
@@ -22,7 +30,13 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 
 		// Send SMS
 		if (action.sendSMS) {
-			const { scheduleTime, smsTemplate } = action.sendSMS;
+			const { smsTemplate } = action.sendSMS;
+			const scheduleTimes = action.sendSMS.scheduleTimes.split('|');
+			const scheduleTime = Number(
+				responseCount <= scheduleTimes.length
+					? scheduleTimes[responseCount - 1]
+					: scheduleTimes[scheduleTimes.length - 1]
+			);
 
 			const scheduleTimeText = timeToText(scheduleTime);
 			const scheduledTime = new Date(Date.now() + scheduleTime * 1000);

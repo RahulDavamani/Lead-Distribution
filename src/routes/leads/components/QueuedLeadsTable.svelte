@@ -9,6 +9,7 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
+	import FormControl from '../../components/FormControl.svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
@@ -68,17 +69,53 @@
 
 	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
 	$: firstCallback = queuedLeads.findIndex((lead) => !lead.isNewLead);
+
+	let tableOpts = {
+		search: '',
+		page: 1,
+		show: 10
+	};
+	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
+	$: endIndex = startIndex + tableOpts.show;
+	$: displayLeads = queuedLeads
+		.filter((l) =>
+			[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
+				.join()
+				.toLowerCase()
+				.includes(tableOpts.search.toLowerCase())
+		)
+		.slice(startIndex, endIndex);
 </script>
 
-<div class="overflow-x-auto">
-	<div class="flex justify-start text-sm mb-2">
-		<div>
-			<span class="font-semibold">Avg. Lead Time Elapsed:</span>
-			<span class="">{timeToText(avgLeadTimeElapsed)}</span>
-		</div>
-	</div>
+<div class="text-sm mb-2">
+	<span class="font-semibold">Avg. Lead Time Elapsed:</span>
+	<span class="">{timeToText(avgLeadTimeElapsed)}</span>
+</div>
 
-	<table id="queuedLeadsTable" class="table table-zebra border rounded-t-none">
+<div class="flex justify-between items-center">
+	<FormControl>
+		<div class="flex items-center gap-2">
+			Show
+			<select class="select select-xs select-bordered" bind:value={tableOpts.show}>
+				{#each [10, 25, 50, 100] as show}
+					<option value={show}>{show}</option>
+				{/each}
+			</select>
+			Entries
+		</div>
+	</FormControl>
+
+	<FormControl>
+		<div class="input input-sm input-bordered flex items-center gap-2">
+			<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
+
+			<Icon icon="mdi:search" width={18} />
+		</div>
+	</FormControl>
+</div>
+
+<div class="overflow-x-auto my-3">
+	<table class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
 				<th>Prospect ID</th>
@@ -96,7 +133,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each queuedLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, notificationProcessName, callUser, customerResponse }, i}
+			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, notificationProcessName, callUser, customerResponse }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						callUser?.UserKey !== UserKey &&
@@ -145,17 +182,6 @@
 								Callback Leads
 							</td>
 						{/if}
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
-						<td style="display: none;" />
 					</tr>
 				{/if}
 				<tr class="hover">
@@ -171,7 +197,6 @@
 								<div class="badge badge-sm badge-warning" />
 							{/if}
 							{ProspectId}
-							{ProspectKey}
 						</div>
 					</td>
 					<td
@@ -240,7 +265,29 @@
 						</div>
 					</td>
 				</tr>
+			{:else}
+				<tr><td colspan="13" class="text-center">No Leads Found</td></tr>
 			{/each}
 		</tbody>
 	</table>
+</div>
+
+<div class="flex justify-between items-center">
+	<div>Showing {startIndex + 1} to {endIndex} entries</div>
+	<div class="join">
+		<button
+			class="btn btn-sm {tableOpts.page === 1 && 'btn-disabled'} join-item"
+			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page - 1 })}
+		>
+			<Icon icon="mdi:navigate-before" width={18} />
+		</button>
+		<button class="btn btn-sm no-animation join-item">Page {tableOpts.page}</button>
+		<button
+			class="btn btn-sm
+         {tableOpts.page === Math.floor(displayLeads.length / tableOpts.show) + 1 && 'btn-disabled'} join-item"
+			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page + 1 })}
+		>
+			<Icon icon="mdi:navigate-next" width={18} />
+		</button>
+	</div>
 </div>

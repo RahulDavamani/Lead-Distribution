@@ -10,7 +10,7 @@ const actionConfig: ActionConfig<typeof key> = {
 		getNewAction: (num) => ({
 			id: nanoid(),
 			num,
-			scheduleTime: 0,
+			scheduleTimes: '0',
 			smsTemplate: ''
 		})
 	}

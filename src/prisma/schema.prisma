@@ -1785,6 +1785,7 @@ model CompanyComDetail {
    EscrowDays            Int?
    ActualProviderKey     String?   @db.UniqueIdentifier
    Type                  String    @db.Char(2)
+   DetKey                String?   @default(dbgenerated("newid()"), map: "DF_CompanyComDetail_DetKey") @db.UniqueIdentifier
 
    @@id([ProviderKey, ComType, Account, ProductKey, Type], map: "PK_CompanyComDetail")
 }
@@ -2375,28 +2376,36 @@ model ConfigDetail {
 }
 
 model ConfigElement {
-   ElementSeq   Int      @default(autoincrement())
-   ElementId    String   @db.NVarChar(100)
-   ElementValue String   @db.NVarChar(100)
-   ReferenceKey String   @db.UniqueIdentifier
-   CreatedBy    String?  @db.UniqueIdentifier
-   ModifiedBy   String?  @db.UniqueIdentifier
-   ValidFrom    DateTime
-   ValidTo      DateTime
+   ElementSeq    Int      @default(autoincrement())
+   ElementId     String   @db.NVarChar(100)
+   ElementValue  String   @db.NVarChar(100)
+   ReferenceKey  String   @db.UniqueIdentifier
+   CreatedBy     String?  @db.UniqueIdentifier
+   ModifiedBy    String?  @db.UniqueIdentifier
+   ValidFrom     DateTime
+   ValidTo       DateTime
+   ElementValue2 String?  @db.NVarChar(1024)
+   ElementValue3 String?  @db.NVarChar(1024)
+   ElementValue4 String?  @db.NVarChar(1024)
+   ElementValue5 String?  @db.NVarChar(1024)
 
    @@id([ElementId, ReferenceKey], map: "PK_Element")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ConfigElementHistory {
-   ElementSeq   Int
-   ElementId    String   @db.NVarChar(100)
-   ElementValue String   @db.NVarChar(100)
-   ReferenceKey String   @db.UniqueIdentifier
-   CreatedBy    String?  @db.UniqueIdentifier
-   ModifiedBy   String?  @db.UniqueIdentifier
-   ValidFrom    DateTime
-   ValidTo      DateTime
+   ElementSeq    Int
+   ElementId     String   @db.NVarChar(100)
+   ElementValue  String   @db.NVarChar(100)
+   ReferenceKey  String   @db.UniqueIdentifier
+   CreatedBy     String?  @db.UniqueIdentifier
+   ModifiedBy    String?  @db.UniqueIdentifier
+   ValidFrom     DateTime
+   ValidTo       DateTime
+   ElementValue2 String?  @db.NVarChar(1024)
+   ElementValue3 String?  @db.NVarChar(1024)
+   ElementValue4 String?  @db.NVarChar(1024)
+   ElementValue5 String?  @db.NVarChar(1024)
 
    @@ignore
 }
@@ -13768,8 +13777,8 @@ model LdRuleRequeueLeadAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num          Int
-   scheduleTime Int
+   num           Int
+   scheduleTimes String @default("0")
 
    actions LdRuleActions[]
 }
@@ -13779,9 +13788,9 @@ model LdRuleSendSMSAction {
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
 
-   num          Int
-   scheduleTime Int
-   smsTemplate  String
+   num           Int
+   scheduleTimes String @default("0")
+   smsTemplate   String
 
    actions LdRuleActions[]
 }

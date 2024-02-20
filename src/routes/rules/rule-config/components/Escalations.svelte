@@ -6,6 +6,7 @@
 	import { timeToText } from '$lib/client/DateTime';
 	import { nanoid } from 'nanoid';
 	import { tick } from 'svelte';
+	import DurationPicker from '../../../components/DurationPicker.svelte';
 
 	$: ({
 		rule: { escalations },
@@ -105,21 +106,8 @@
 							</div>
 						</FormControl>
 
-						<FormControl
-							label="Wait Time"
-							classes="max-w-xs w-full"
-							bottomLabel={`Time: ${timeToText($ruleConfig.rule.escalations[i].waitTime)}`}
-							error={zodErrors?.escalations?.[i]?.waitTime}
-						>
-							<div class="join">
-								<input
-									type="number"
-									placeholder="Type here"
-									class="input input-bordered w-full join-item"
-									bind:value={$ruleConfig.rule.escalations[i].waitTime}
-								/>
-								<div class="btn join-item no-animation cursor-default">sec</div>
-							</div>
+						<FormControl label="Wait Time" error={zodErrors?.escalations?.[i]?.waitTime}>
+							<DurationPicker bind:duration={$ruleConfig.rule.escalations[i].waitTime} />
 						</FormControl>
 					</div>
 				</div>

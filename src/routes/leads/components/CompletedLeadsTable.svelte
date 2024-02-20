@@ -7,6 +7,7 @@
 	import DataTable from 'datatables.net-dt';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import Flatpickr from 'svelte-flatpickr';
+	import FormControl from '../../components/FormControl.svelte';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
@@ -19,9 +20,6 @@
 	$: completeLeadStatuses = completedLeads.reduce(
 		(acc, cur) => (acc.includes(cur.completeStatus) ? acc : [...acc, cur.completeStatus]),
 		[] as string[]
-	);
-	$: leads = completedLeads.filter((lead) =>
-		completeStatusSelect ? lead.completeStatus === completeStatusSelect : true
 	);
 
 	$: avgLeadResponseTime =
@@ -40,51 +38,89 @@
 	onMount(() => {
 		new DataTable('#completedLeadsTable', { order: [] });
 	});
+
+	let tableOpts = {
+		search: '',
+		page: 1,
+		show: 10
+	};
+	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
+	$: endIndex = startIndex + tableOpts.show;
+	$: displayLeads = completedLeads
+		.filter((lead) => (completeStatusSelect ? lead.completeStatus === completeStatusSelect : true))
+		.filter((l) =>
+			[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
+				.join()
+				.toLowerCase()
+				.includes(tableOpts.search.toLowerCase())
+		)
+		.slice(startIndex, endIndex);
 </script>
 
-<div class="overflow-x-auto">
-	<div class="flex justify-between mb-2">
-		<div class="flex text-sm">
-			<div>
-				<span class="font-semibold">Avg. Lead Response Time:</span>
-				<span class="">{timeToText(avgLeadResponseTime)}</span>
-			</div>
-			<div class="divider divider-horizontal" />
-			<div>
-				<span class="font-semibold">Avg. Customer Talk Time:</span>
-				<span class="">{timeToText(avgCustomerTalkTime)}</span>
-			</div>
+<div class="flex justify-between items-center mb-2">
+	<div class="flex text-sm">
+		<div>
+			<span class="font-semibold">Avg. Lead Response Time:</span>
+			<span class="">{timeToText(avgLeadResponseTime)}</span>
 		</div>
-		<div class="flex flex-grow justify-end gap-4">
-			<select
-				class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
-				bind:value={completeStatusSelect}
-			>
-				<option value={undefined}>All Complete Status</option>
-				{#each completeLeadStatuses as completeStatus}
-					{@const count = completedLeads.filter((l) => l.completeStatus === completeStatus).length}
-					<option value={completeStatus}>
-						{completeStatus} ({count})
-					</option>
-				{/each}
-			</select>
-			<Flatpickr
-				placeholder="Choose Date"
-				class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full"
-				bind:value={dateRange}
-				on:close={() => fetchCompletedLeads(dateRange)}
-				options={{
-					mode: 'range',
-					altInput: true,
-					altFormat: 'F j, Y',
-					dateFormat: 'Y-m-d',
-					allowInput: true
-				}}
-			/>
+		<div class="divider divider-horizontal" />
+		<div>
+			<span class="font-semibold">Avg. Customer Talk Time:</span>
+			<span class="">{timeToText(avgCustomerTalkTime)}</span>
 		</div>
 	</div>
+	<div class="flex flex-grow justify-end gap-4">
+		<select
+			class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
+			bind:value={completeStatusSelect}
+		>
+			<option value={undefined}>All Complete Status</option>
+			{#each completeLeadStatuses as completeStatus}
+				{@const count = completedLeads.filter((l) => l.completeStatus === completeStatus).length}
+				<option value={completeStatus}>
+					{completeStatus} ({count})
+				</option>
+			{/each}
+		</select>
+		<Flatpickr
+			placeholder="Choose Date"
+			class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full"
+			bind:value={dateRange}
+			on:close={() => fetchCompletedLeads(dateRange)}
+			options={{
+				mode: 'range',
+				altInput: true,
+				altFormat: 'F j, Y',
+				dateFormat: 'Y-m-d',
+				allowInput: true
+			}}
+		/>
+	</div>
+</div>
+<div class="flex justify-between items-center">
+	<FormControl>
+		<div class="flex items-center gap-2">
+			Show
+			<select class="select select-xs select-bordered" bind:value={tableOpts.show}>
+				{#each [10, 25, 50, 100] as show}
+					<option value={show}>{show}</option>
+				{/each}
+			</select>
+			Entries
+		</div>
+	</FormControl>
 
-	<table id="completedLeadsTable" class="table table-zebra border rounded-t-none">
+	<FormControl>
+		<div class="input input-sm input-bordered flex items-center gap-2">
+			<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
+
+			<Icon icon="mdi:search" width={18} />
+		</div>
+	</FormControl>
+</div>
+
+<div class="overflow-x-auto my-3">
+	<table class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
 				<th class="w-1">Prospect ID</th>
@@ -103,7 +139,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each leads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user, log }}
+			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user, log }}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
@@ -148,7 +184,29 @@
 						</div>
 					</td>
 				</tr>
+			{:else}
+				<tr><td colspan="13" class="text-center">No Leads Found</td></tr>
 			{/each}
 		</tbody>
 	</table>
+</div>
+
+<div class="flex justify-between items-center">
+	<div>Showing {startIndex + 1} to {endIndex} entries</div>
+	<div class="join">
+		<button
+			class="btn btn-sm {tableOpts.page === 1 && 'btn-disabled'} join-item"
+			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page - 1 })}
+		>
+			<Icon icon="mdi:navigate-before" width={18} />
+		</button>
+		<button class="btn btn-sm no-animation join-item">Page {tableOpts.page}</button>
+		<button
+			class="btn btn-sm
+         {tableOpts.page === Math.floor(displayLeads.length / tableOpts.show) + 1 && 'btn-disabled'} join-item"
+			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page + 1 })}
+		>
+			<Icon icon="mdi:navigate-next" width={18} />
+		</button>
+	</div>
 </div>

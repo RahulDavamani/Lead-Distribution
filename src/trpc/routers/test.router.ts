@@ -1,17 +1,16 @@
-import { prisma } from '../../prisma/prisma';
 import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		await prisma.ldLeadLog.deleteMany({});
-		await prisma.ldLeadNotificationAttempt.deleteMany({});
-		await prisma.ldLeadEscalation.deleteMany({});
-		await prisma.ldLeadNotificationProcess.deleteMany({});
-		await prisma.ldLeadCall.deleteMany({});
-		await prisma.ldLeadMessage.deleteMany({});
-		await prisma.ldLeadResponse.deleteMany({});
-		await prisma.ldLead.deleteMany({});
-		await prisma.ldLeadCompleted.deleteMany({});
+		// await prisma.ldLeadLog.deleteMany({});
+		// await prisma.ldLeadNotificationAttempt.deleteMany({});
+		// await prisma.ldLeadEscalation.deleteMany({});
+		// await prisma.ldLeadNotificationProcess.deleteMany({});
+		// await prisma.ldLeadCall.deleteMany({});
+		// await prisma.ldLeadMessage.deleteMany({});
+		// await prisma.ldLeadResponse.deleteMany({});
+		// await prisma.ldLead.deleteMany({});
+		// await prisma.ldLeadCompleted.deleteMany({});
 		// const prospect = await prisma.leadProspect
 		// 	.findFirstOrThrow({
 		// 		where: { Email: 'c5@gmail.com' },
