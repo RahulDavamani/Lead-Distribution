@@ -10,7 +10,9 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const executeActions = async (ProspectKey: string, actions: Actions) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
-	const responseCount = await prisma.ldLeadResponse.count().catch(prismaErrorHandler);
+	const responseCount = await prisma.ldLeadResponse
+		.count({ where: { lead: { ProspectKey } } })
+		.catch(prismaErrorHandler);
 	const { actionsList } = getActionsList(actions);
 
 	let i = 1;

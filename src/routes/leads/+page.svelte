@@ -10,8 +10,6 @@
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../trpc/routers/app.router';
 	import Icon from '@iconify/svelte';
-	import DataTable from 'datatables.net-dt';
-	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import LeadDetailsModal from './components/LeadDetailsModal.svelte';
 	import SettingsModal from './components/SettingsModal.svelte';
 
@@ -53,16 +51,6 @@
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		queuedLeads = leads.queuedLeads;
-		if (
-			oldQueuedLeads.filter(({ isNewLead }) => isNewLead).length !==
-				queuedLeads.filter(({ isNewLead }) => isNewLead).length ||
-			oldQueuedLeads.filter(({ isNewLead }) => !isNewLead).length !==
-				queuedLeads.filter(({ isNewLead }) => !isNewLead).length
-		) {
-			new DataTable('#queuedLeadsTable').destroy();
-			await tick();
-			new DataTable('#queuedLeadsTable', { order: [] });
-		}
 
 		const missingLead = oldQueuedLeads.find((lead) => !queuedLeads.find((lead2) => lead2.id === lead.id));
 		if (missingLead) {
@@ -77,7 +65,6 @@
 
 	const fetchCompletedLeads = async (dateRange: Date[]) => {
 		if (dateRange.length !== 2) return;
-		new DataTable('#completedLeadsTable').destroy();
 
 		const leads = await trpc($page)
 			.lead.getCompleted.query({
@@ -88,8 +75,6 @@
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
 		completedLeads = leads.completedLeads;
-		await tick();
-		new DataTable('#completedLeadsTable', { order: [] });
 	};
 
 	let interval: NodeJS.Timeout | undefined;

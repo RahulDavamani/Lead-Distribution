@@ -4,8 +4,6 @@
 	import { ui } from '../../../stores/ui.store';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
-	import { onMount } from 'svelte';
-	import DataTable from 'datatables.net-dt';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
@@ -25,10 +23,6 @@
 					queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, new Date()), 0) / queuedLeads.length
 				)
 			: 0;
-
-	onMount(() => {
-		new DataTable('#queuedLeadsTable', { order: [], ordering: false });
-	});
 
 	const showRequeueAlert = (ProspectKey: string, alertType: 'picked' | 'scheduled') => {
 		$ui.alertModal = {
@@ -126,14 +120,12 @@
 				<th>Updated On</th>
 				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
 				<th>Customer</th>
-				<th>Customer SMS Response</th>
 				<th>Lead Status</th>
-				<th>Log Message</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, log, notificationProcess, notificationProcessName, callUser, customerResponse }, i}
+			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationProcess, notificationProcessName, disposition, callUser }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						callUser?.UserKey !== UserKey &&
@@ -207,14 +199,19 @@
 					</td>
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
-					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
-					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">
+						<div>{createdAt.toLocaleDateString()}</div>
+						<div>{createdAt.toLocaleTimeString()}</div>
+					</td>
+					<td class="text-center">
+						<div>{updatedAt.toLocaleDateString()}</div>
+						<div>{updatedAt.toLocaleTimeString()}</div>
+					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
-					<td>{customerResponse ?? 'No response yet'}</td>
 					<td>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[1]}</div>
@@ -231,8 +228,10 @@
 								{/if}
 							{/if}
 						</div>
+						{#if disposition}
+							<div class="opacity-75 text-xs">(Disposition: {disposition})</div>
+						{/if}
 					</td>
-					<td>{log}</td>
 					<td>
 						<div class="flex flex-col justify-center">
 							<!-- Status Btn -->

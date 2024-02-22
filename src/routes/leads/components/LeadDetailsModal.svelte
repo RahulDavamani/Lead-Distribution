@@ -136,7 +136,7 @@
 										<div class="w-full px-3">Date Time</div>
 										<div class="w-full px-3">Response Type</div>
 										<div class="w-full px-3">Response Value</div>
-										<div class="w-full px-3"></div>
+										<div class="w-full px-3">Actions Status</div>
 									</th>
 								</tr>
 							</thead>

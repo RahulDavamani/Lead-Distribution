@@ -98,6 +98,9 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 		return await upsertLead({ log: { log: `${process.name}: No supervisor found for escalation` } });
 
 	outer: for (const { id, num, messageTemplate, waitTime } of escalations) {
+		const isCompleted = await process.isCompleted();
+		if (isCompleted) break;
+		await upsertLead({ log: { log: `${process.name}: Escalation #${num}` } });
 		for (const { UserKey } of supervisors) {
 			// Check if Lead is already completed
 			const isCompleted = await process.isCompleted();
@@ -110,7 +113,7 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 			await triggerNotification(UserKey, message);
 
 			// Log Escalation
-			process.addEscalation(num, {
+			process.addEscalation({
 				message,
 				user: { connect: { UserKey: UserKey } },
 				escalation: { connect: { id } }

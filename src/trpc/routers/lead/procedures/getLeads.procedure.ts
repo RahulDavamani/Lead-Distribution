@@ -71,12 +71,6 @@ export const getQueuedProcedure = procedure
 								}
 							},
 
-							logs: {
-								orderBy: { createdAt: 'desc' },
-								take: 1,
-								select: { log: true }
-							},
-
 							notificationProcesses: {
 								orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
 								select: {
@@ -110,7 +104,7 @@ export const getQueuedProcedure = procedure
 							},
 
 							responses: {
-								where: { type: 'sms' },
+								where: { type: 'disposition' },
 								orderBy: { createdAt: 'desc' },
 								take: 1,
 								select: { responseValue: true }
@@ -124,20 +118,19 @@ export const getQueuedProcedure = procedure
 					...lead,
 					prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
 					isNewLead: lead.notificationProcesses.length === 0 || lead.notificationProcesses[0].callbackNum === 0,
-					log: lead.logs.length > 0 ? lead.logs[0].log : undefined,
 					notificationProcess,
 					notificationProcessName: getProcessNameSplit(
 						notificationProcess?.callbackNum ?? 0,
 						notificationProcess?.requeueNum ?? 0
 					),
+					disposition: lead.responses.length > 0 ? lead.responses[0].responseValue : undefined,
 					callUser:
 						lead.calls.length > 0
 							? {
 									...lead.calls[0],
 									userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : null
 								}
-							: undefined,
-					customerResponse: lead.responses.length > 0 ? lead.responses[0].responseValue : undefined
+							: undefined
 				};
 			})
 		);

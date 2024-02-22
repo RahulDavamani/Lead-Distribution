@@ -8,6 +8,9 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 	const name = getProcessName(callbackNum, requeueNum);
 	const upsertLead = upsertLeadFunc(ProspectKey);
 
+	// Cancel all active/scheduled processes
+	await endNotificationProcesses(ProspectKey);
+
 	// Upsert Notification Process
 	let process = await prisma.ldLeadNotificationProcess.findFirst({
 		where: { lead: { ProspectKey }, callbackNum, requeueNum },
@@ -31,16 +34,6 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 	}
 	const { id } = process;
 
-	await prisma.ldLeadNotificationProcess.updateMany({
-		where: {
-			lead: { ProspectKey },
-			id: { not: id },
-			status: { in: ['ACTIVE', 'SCHEDULED'] },
-			OR: [{ callbackNum: { lt: callbackNum } }, { callbackNum: callbackNum, requeueNum: { lt: requeueNum } }]
-		},
-		data: { status: 'CANCELLED' }
-	});
-
 	await upsertLead({
 		log: { log: `${name}: Sending notifications` },
 		isPicked: false
@@ -61,17 +54,11 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		});
 	};
 
-	const addEscalation = async (
-		num: number,
-		escalation: Prisma.LdLeadEscalationCreateWithoutNotificationProcessInput
-	) => {
-		const userStr = await getUserStr(escalation.user?.connect?.UserKey ?? '');
-		await upsertLead({ log: { log: `${name}: Escalation #${num} to supervisor "${userStr}"` } });
+	const addEscalation = async (escalation: Prisma.LdLeadEscalationCreateWithoutNotificationProcessInput) =>
 		await prisma.ldLeadNotificationProcess.update({
 			where: { id },
 			data: { escalations: { create: escalation } }
 		});
-	};
 
 	const isCompleted = async () =>
 		(
@@ -97,6 +84,26 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		isCompleted,
 		completeProcess
 	};
+};
+
+export const endNotificationProcesses = async (ProspectKey: string) => {
+	const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
+		where: {
+			lead: { ProspectKey },
+			status: { in: ['SCHEDULED', 'ACTIVE'] }
+		},
+		select: { id: true, status: true }
+	});
+	await Promise.all(
+		notificationProcesses.map(async ({ id, status }) => {
+			await prisma.ldLeadNotificationProcess.update({
+				where: { id },
+				data: {
+					status: status === 'SCHEDULED' ? 'CANCELLED' : 'COMPLETED'
+				}
+			});
+		})
+	);
 };
 
 export const getProcessName = (callbackNum: number, requeueNum: number) => {

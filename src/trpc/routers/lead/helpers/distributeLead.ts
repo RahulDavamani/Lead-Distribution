@@ -7,6 +7,7 @@ import { getUserStr } from './user';
 import { dispatchNotifications } from './dispatchNotifications';
 import { scheduleJob } from 'node-schedule';
 import { sendSMS, watchGhlSMS } from './message';
+import { endNotificationProcesses } from './notificationProcess';
 
 export const distributeLead = async (ProspectKey: string) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
@@ -74,7 +75,8 @@ export const supervisorRedistribute = async (ProspectKey: string, UserKey: strin
 			select: {
 				rule: { select: { id: true, isActive: true } },
 				notificationProcesses: {
-					orderBy: { createdAt: 'desc' },
+					orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
+					take: 1,
 					select: { callbackNum: true, requeueNum: true }
 				}
 			}
@@ -95,7 +97,11 @@ export const supervisorRedistribute = async (ProspectKey: string, UserKey: strin
 	}
 
 	// Send Notification to Operators
-	await dispatchNotifications(ProspectKey, notificationProcesses[0].callbackNum, notificationProcesses[0].callbackNum);
+	await dispatchNotifications(
+		ProspectKey,
+		notificationProcesses[0].callbackNum,
+		notificationProcesses[0].requeueNum + 1
+	);
 };
 
 export const callbackRedistribute = async (ProspectKey: string, scheduleTime: number) => {
@@ -108,13 +114,15 @@ export const callbackRedistribute = async (ProspectKey: string, scheduleTime: nu
 			select: {
 				rule: { select: { id: true, isActive: true } },
 				notificationProcesses: {
-					orderBy: { createdAt: 'desc' },
-					select: { callbackNum: true }
+					orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
+					take: 1,
+					select: { id: true, status: true, callbackNum: true }
 				}
 			}
 		})
 		.catch(prismaErrorHandler);
 
+	await endNotificationProcesses(ProspectKey);
 	const { id } = await prisma.ldLeadNotificationProcess.create({
 		data: {
 			lead: { connect: { ProspectKey } },
@@ -164,14 +172,15 @@ export const completedRedistribute = async (ProspectKey: string) => {
 			select: {
 				rule: { select: { id: true, isActive: true } },
 				notificationProcesses: {
-					orderBy: { createdAt: 'desc' },
-					select: { callbackNum: true }
+					orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
+					take: 1,
+					select: { callbackNum: true, requeueNum: true }
 				}
 			}
 		})
 		.catch(prismaErrorHandler);
 
-	await upsertLead({ log: { log: `Lead requeued by callback` } });
+	await upsertLead({ log: { log: `Lead requeued from GHL` } });
 
 	// Rule Not Found / Inactive
 	if (!rule) {
@@ -184,5 +193,9 @@ export const completedRedistribute = async (ProspectKey: string) => {
 	}
 
 	// Send Notification to Operators
-	await dispatchNotifications(ProspectKey, notificationProcesses[0].callbackNum + 1, 0);
+	await dispatchNotifications(
+		ProspectKey,
+		notificationProcesses[0].callbackNum,
+		notificationProcesses[0].requeueNum + 1
+	);
 };

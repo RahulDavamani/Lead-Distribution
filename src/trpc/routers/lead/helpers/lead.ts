@@ -105,7 +105,7 @@ export const completeLead = async ({
 				data: {
 					completedLead: { connect: { id: completedLeadId } },
 					lead: { disconnect: true },
-					status: status === 'SCHEDULED' ? 'CANCELLED' : status === 'ACTIVE' ? 'COMPLETED' : status
+					status: status === 'SCHEDULED' || status === 'CANCELLED' ? 'CANCELLED' : 'COMPLETED'
 				}
 			});
 		})

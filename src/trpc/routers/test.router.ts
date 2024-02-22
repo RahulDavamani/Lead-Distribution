@@ -2,22 +2,34 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		// await prisma.ldLeadLog.deleteMany({});
+		// console.log(await prisma.users.findFirst({ where: { VonageAgentId: '1009' } }));
+		// console.log(await getAvailableOperators());
+		// const result =
+		// 	(await prisma.$queryRaw`select top 1 * from leadprospect where source=1 order by createdon desc`) as {
+		// 		ProspectKey: string;
+		// 	}[];
+		// console.log(result);
+		// await prisma.$queryRaw`Exec [p_LDMS_PushLeadInToQueue] ${result[0].ProspectKey}`;
+		// const today = new Date();
+		// const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		// const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+		// await prisma.ldLeadLog.deleteMany({
+		// 	where: { lead: { createdAt: { not: { gte: startOfDay, lt: endOfDay } } } }
+		// });
 		// await prisma.ldLeadNotificationAttempt.deleteMany({});
 		// await prisma.ldLeadEscalation.deleteMany({});
 		// await prisma.ldLeadNotificationProcess.deleteMany({});
 		// await prisma.ldLeadCall.deleteMany({});
 		// await prisma.ldLeadMessage.deleteMany({});
 		// await prisma.ldLeadResponse.deleteMany({});
-		// await prisma.ldLead.deleteMany({});
-		// await prisma.ldLeadCompleted.deleteMany({});
 		// const prospect = await prisma.leadProspect
 		// 	.findFirstOrThrow({
-		// 		where: { Email: 'c5@gmail.com' },
+		// 		where: { ProspectId: 48821 },
 		// 		orderBy: { CreatedOn: 'desc' }
 		// 	})
 		// 	.catch();
 		// console.log(prospect);
+		// await prisma.ldLeadCompleted.deleteMany({});
 		// console.log(await prisma.leadProspect.findMany({ where: { Email: 'abcd@gmail.com' } }));
 		// const operators = (await prisma.$queryRaw`
 		//    select Users.UserKey, Users.FirstName, Users.LastName, Users.Email, Users.VonageAgentId

@@ -4,7 +4,6 @@
 	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { ui } from '../../../stores/ui.store';
 	import { onMount } from 'svelte';
-	import DataTable from 'datatables.net-dt';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import Flatpickr from 'svelte-flatpickr';
 	import FormControl from '../../components/FormControl.svelte';
@@ -34,10 +33,6 @@
 		completedLeads.length > 0
 			? Math.floor(completedLeads.reduce((acc, cur) => acc + cur.customerTalkTime, 0) / completedLeads.length)
 			: 0;
-
-	onMount(() => {
-		new DataTable('#completedLeadsTable', { order: [] });
-	});
 
 	let tableOpts = {
 		search: '',
@@ -165,8 +160,14 @@
 					</td>
 					<td>{CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
-					<td class="text-center">{createdAt.toLocaleString().replaceAll(',', '')}</td>
-					<td class="text-center">{updatedAt.toLocaleString().replaceAll(',', '')}</td>
+					<td class="text-center">
+						<div>{createdAt.toLocaleDateString()}</div>
+						<div>{createdAt.toLocaleTimeString()}</div>
+					</td>
+					<td class="text-center">
+						<div>{updatedAt.toLocaleDateString()}</div>
+						<div>{updatedAt.toLocaleTimeString()}</div>
+					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>

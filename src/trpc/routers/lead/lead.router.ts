@@ -13,6 +13,7 @@ import { getUserStr, getUserValues } from './helpers/user';
 import { validateResponseProcedure } from './procedures/validateResponse.procedure';
 import { distributeLead, supervisorRedistribute } from './helpers/distributeLead';
 import { getLeadsWhere } from './helpers/getLeadsWhere';
+import { endNotificationProcesses } from './helpers/notificationProcess';
 
 export const leadRouter = router({
 	getQueued: getQueuedProcedure,
@@ -101,22 +102,7 @@ export const leadRouter = router({
 			});
 
 			// Complete Lead Notification Processes
-			const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
-				where: {
-					lead: { ProspectKey },
-					status: { in: ['SCHEDULED', 'ACTIVE'] }
-				}
-			});
-			await Promise.all(
-				notificationProcesses.map(async ({ id, status }) => {
-					await prisma.ldLeadNotificationProcess.update({
-						where: { id },
-						data: {
-							status: status === 'SCHEDULED' ? 'CANCELLED' : 'COMPLETED'
-						}
-					});
-				})
-			);
+			await endNotificationProcesses(ProspectKey);
 
 			return { ProspectKey };
 		}),
