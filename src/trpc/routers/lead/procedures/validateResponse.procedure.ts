@@ -59,7 +59,7 @@ export const validateResponseProcedure = procedure
 
 		// Get Response
 		const response = lead.rule.responses.find(({ values }) =>
-			values.split(',').some((value) => Response.toLowerCase().includes(value.toLowerCase()))
+			values.split(',').some((value) => Response.trim().toLowerCase().includes(value.trim().toLowerCase()))
 		);
 
 		let responseActions: { actionType: 'MATCH' | 'NO MATCH' | 'LIMIT EXCEED'; actions: Actions };

@@ -13,6 +13,7 @@
 		'Email',
 		'Address',
 		'ZipCode',
+		'LeadReferenceId',
 		'RuleName',
 		'OutboundCallNumber',
 		'LeadCreatedOn',
