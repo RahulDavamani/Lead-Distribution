@@ -18,18 +18,26 @@ export const getGHLStatus = async (ProspectKey: string) => {
 };
 
 export const updateGHLTemplates = async (ProspectKey: string, templates: { [k: string]: string }) => {
-	for (const [key, value] of Object.entries(templates)) {
-		const ghlTemplate = {
-			customFields: [
-				{
-					id: key,
-					key: key,
-					field_value: value
-				}
-			]
-		};
-		await prisma.$queryRaw`exec [p_GHL_PUTContactUpdate] ${ProspectKey},${ghlTemplate}`.catch(prismaErrorHandler);
-	}
+	// for (const [key, value] of Object.entries(templates)) {
+	// 	const ghlTemplate = {
+	// 		customFields: [
+	// 			{
+	// 				id: key,
+	// 				key: key,
+	// 				field_value: value
+	// 			}
+	// 		]
+	// 	};
+	// 	await prisma.$queryRaw`exec [p_GHL_PUTContactUpdate] ${ProspectKey},${ghlTemplate}`.catch(prismaErrorHandler);
+	// }
+	const ghlTemplate = {
+		customFields: Object.entries(templates).map(([key, value]) => ({
+			id: key,
+			key,
+			field_value: value
+		}))
+	};
+	await prisma.$queryRaw`exec [p_GHL_PUTContactUpdate] ${ProspectKey},${ghlTemplate}`.catch(prismaErrorHandler);
 };
 
 export const postGHLData = async (ProspectKey: string, data: string) => {

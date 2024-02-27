@@ -52,6 +52,14 @@ export const completeLead = async ({
 	user
 }: Prisma.LdLeadCompletedCreateInput) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
+	await upsertLead({
+		log: {
+			log: user?.connect?.UserKey
+				? `Lead completed by "${await getUserStr(user.connect.UserKey)}": ${completeStatus}`
+				: `Lead completed: ${completeStatus}`
+		}
+	});
+
 	const { id, createdAt, ruleId, VonageGUID, logs, notificationProcesses, messages, calls, responses } =
 		await prisma.ldLead
 			.findUniqueOrThrow({
@@ -66,10 +74,6 @@ export const completeLead = async ({
 			})
 			.catch(prismaErrorHandler);
 
-	let log;
-	if (user?.connect?.UserKey) log = `Lead completed by "${await getUserStr(user.connect.UserKey)}": ${completeStatus}`;
-	else log = `Lead completed: ${completeStatus}`;
-	await upsertLead({ log: { log } });
 	await prisma.ldLead.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
 
 	const UserKey = user?.connect?.UserKey ?? calls[0]?.UserKey;
