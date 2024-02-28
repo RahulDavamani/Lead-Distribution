@@ -3,10 +3,12 @@
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { ui } from '../../../stores/ui.store';
-	import { onMount } from 'svelte';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import Flatpickr from 'svelte-flatpickr';
 	import FormControl from '../../components/FormControl.svelte';
+	import { trpc } from '../../../trpc/client';
+	import { page } from '$app/stores';
+	import { auth } from '../../../stores/auth.store';
 
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
 
@@ -34,6 +36,31 @@
 			? Math.floor(completedLeads.reduce((acc, cur) => acc + cur.customerTalkTime, 0) / completedLeads.length)
 			: 0;
 
+	const deleteLead = (id: string) => {
+		$ui.alertModal = {
+			title: 'Are you sure to delete this lead?',
+			body: 'This action cannot be undone',
+			actions: [
+				{
+					name: 'Cancel',
+					class: 'btn-warning',
+					onClick: () => ($ui.alertModal = undefined)
+				},
+				{
+					name: 'Delete',
+					class: 'btn-error',
+					onClick: async () => {
+						$ui.alertModal = undefined;
+						ui.setLoader({ title: 'Deleting Lead' });
+						await trpc($page).lead.delete.query({ id });
+						await fetchCompletedLeads(dateRange);
+						ui.setLoader();
+					}
+				}
+			]
+		};
+	};
+
 	let tableOpts = {
 		search: '',
 		page: 1,
@@ -48,8 +75,7 @@
 				.join()
 				.toLowerCase()
 				.includes(tableOpts.search.toLowerCase())
-		)
-		.slice(startIndex, endIndex);
+		);
 </script>
 
 <div class="flex justify-between items-center mb-2">
@@ -129,12 +155,11 @@
 				<th class="w-32">Customer</th>
 				<th>Complete Status</th>
 				<th>Completed/Closed By</th>
-				<th>Log Message</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user, log }}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user }}
 				<tr class="hover">
 					<td>
 						<div class="flex justify-center items-center gap-2">
@@ -176,12 +201,16 @@
 					</td>
 					<td>{completeStatus ?? 'N/A'}</td>
 					<td>{user ?? 'N/A'}</td>
-					<td>{log}</td>
 					<td>
-						<div class="flex justify-center items-center">
+						<div class="flex justify-center items-center gap-2">
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
 								<Icon icon="mdi:information-variant" width={18} />
 							</button>
+							{#if $auth.roleType !== 'AGENT'}
+								<button class="btn btn-xs btn-error h-fit py-1" on:click={() => deleteLead(id)}>
+									<Icon icon="mdi:delete" width={18} />
+								</button>
+							{/if}
 						</div>
 					</td>
 				</tr>
@@ -204,7 +233,7 @@
 		<button class="btn btn-sm no-animation join-item">Page {tableOpts.page}</button>
 		<button
 			class="btn btn-sm
-         {tableOpts.page === Math.floor(displayLeads.length / tableOpts.show) + 1 && 'btn-disabled'} join-item"
+         {tableOpts.page >= displayLeads.length / tableOpts.show && 'btn-disabled'} join-item"
 			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page + 1 })}
 		>
 			<Icon icon="mdi:navigate-next" width={18} />

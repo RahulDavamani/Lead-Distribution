@@ -58,7 +58,7 @@
 				clearInterval(interval);
 			}
 		}, 500);
-		await trpc($page).lead.redistribute.query({ ProspectKey, UserKey });
+		await trpc($page).lead.requeue.query({ ProspectKey, UserKey });
 	};
 
 	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
@@ -71,14 +71,12 @@
 	};
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
-	$: displayLeads = queuedLeads
-		.filter((l) =>
-			[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
-				.join()
-				.toLowerCase()
-				.includes(tableOpts.search.toLowerCase())
-		)
-		.slice(startIndex, endIndex);
+	$: displayLeads = queuedLeads.filter((l) =>
+		[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
+			.join()
+			.toLowerCase()
+			.includes(tableOpts.search.toLowerCase())
+	);
 </script>
 
 <div class="text-sm mb-2">
@@ -125,7 +123,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationProcess, notificationProcessName, disposition, callUser }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationProcess, notificationProcessName, disposition, callUser }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						callUser?.UserKey !== UserKey &&
@@ -283,7 +281,7 @@
 		<button class="btn btn-sm no-animation join-item">Page {tableOpts.page}</button>
 		<button
 			class="btn btn-sm
-         {tableOpts.page === Math.floor(displayLeads.length / tableOpts.show) + 1 && 'btn-disabled'} join-item"
+         {tableOpts.page >= displayLeads.length / tableOpts.show && 'btn-disabled'} join-item"
 			on:click={() => (tableOpts = { ...tableOpts, page: tableOpts.page + 1 })}
 		>
 			<Icon icon="mdi:navigate-next" width={18} />

@@ -2,6 +2,34 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const ProspectKey = '05F46F18-47F7-4F27-A982-C60FEC8F0159';
+		// const CompanyKey = await getCompanyKey(ProspectKey);
+		// if (!CompanyKey) return console.log(404, 'CompanyKey not found');
+		// const rule = await prisma.ldRule
+		// 	.findFirst({
+		// 		where: { affiliates: { some: { CompanyKey } } },
+		// 		select: {
+		// 			id: true
+		// 		},
+		// 		orderBy: { createdAt: 'desc' }
+		// 	})
+		// 	.catch(prismaErrorHandler);
+		// if (!rule) return console.log(404, 'Rule not found');
+		// const lead = await prisma.ldLeadCompleted
+		// 	.create({
+		// 		data: {
+		// 			ProspectKey,
+		// 			ruleId: rule.id,
+		// 			success: true,
+		// 			completeStatus: 'Completed Lead from GHL',
+		// 			logs: {
+		// 				create: { log: 'Lead completed: Completed Lead from GHL' }
+		// 			}
+		// 		}
+		// 	})
+		// 	.catch(prismaErrorHandler);
+		// console.log(lead);
+		// console.log(await prisma.ldLeadCompleted.findUniqueOrThrow({ where: { ProspectKey } }));
 		// console.log(await prisma.users.findFirst({ where: { VonageAgentId: '1009' } }));
 		// console.log(await getAvailableOperators());
 		// const result =

@@ -3,8 +3,8 @@ import { waitFor } from '$lib/waitFor';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
 import { generateMessage } from './generateMessage';
-import { upsertLeadFunc } from './lead';
 import { startNotificationProcess } from './notificationProcess';
+import { upsertLeadFunc } from './upsertLead';
 
 export const dispatchNotifications = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
@@ -122,7 +122,7 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 		await waitFor(waitTime);
 	}
 
-	await process.completeProcess();
+	if (!(await process.isCompleted())) await process.completeProcess();
 };
 
 export const getAvailableOperators = async () => {

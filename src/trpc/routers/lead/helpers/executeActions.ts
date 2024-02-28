@@ -1,12 +1,24 @@
 import { timeToText } from '$lib/client/DateTime';
 import { getActionsList } from '$lib/config/utils/getActionsList';
 import { scheduleJob } from 'node-schedule';
-import { callbackRedistribute } from './distributeLead';
-import { completeLead, upsertLeadFunc } from './lead';
 import type { Actions } from '$lib/config/actions.schema';
 import { sendSMS } from './message';
 import { prisma } from '../../../../prisma/prisma';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { scheduleCallback } from './scheduleCallback';
+import { upsertLeadFunc } from './upsertLead';
+import { completeLead } from './completeLead';
+
+const parseScheduleTimes = (times: string, responseCount: number) => {
+	const scheduleTimes = times.split('|');
+	const scheduleTime = Number(
+		responseCount <= scheduleTimes.length ? scheduleTimes[responseCount - 1] : scheduleTimes[scheduleTimes.length - 1]
+	);
+	const scheduleTimeText = timeToText(scheduleTime);
+	const scheduledTime = new Date(Date.now() + scheduleTime * 1000);
+
+	return { scheduleTime, scheduleTimeText, scheduledTime };
+};
 
 export const executeActions = async (ProspectKey: string, actions: Actions) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
@@ -18,32 +30,36 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 	let i = 1;
 	for (const action of actionsList) {
 		if (action.requeueLead) {
-			const scheduleTimes = action.requeueLead.scheduleTimes.split('|');
-			const scheduleTime = Number(
-				responseCount <= scheduleTimes.length
-					? scheduleTimes[responseCount - 1]
-					: scheduleTimes[scheduleTimes.length - 1]
-			);
-			const scheduleTimeText = timeToText(scheduleTime);
+			const { scheduleTimeText, scheduledTime } = parseScheduleTimes(action.requeueLead.scheduleTimes, responseCount);
 
-			await callbackRedistribute(ProspectKey, scheduleTime);
-			await upsertLead({ log: { log: `Action #${i}: Lead requeue scheduled in ${scheduleTimeText}` } });
+			try {
+				await scheduleCallback(ProspectKey, scheduledTime);
+				await upsertLead({ log: { log: `Action #${i}: Lead requeue scheduled in ${scheduleTimeText}` } });
+			} catch (error) {
+				await upsertLead({ log: { log: `Action #${i}: Failed to schedule requeue` } });
+			}
 		}
 
 		// Send SMS
 		if (action.sendSMS) {
 			const { smsTemplate } = action.sendSMS;
-			const scheduleTimes = action.sendSMS.scheduleTimes.split('|');
-			const scheduleTime = Number(
-				responseCount <= scheduleTimes.length
-					? scheduleTimes[responseCount - 1]
-					: scheduleTimes[scheduleTimes.length - 1]
-			);
+			const { scheduleTimeText, scheduledTime } = parseScheduleTimes(action.sendSMS.scheduleTimes, responseCount);
 
-			const scheduleTimeText = timeToText(scheduleTime);
-			const scheduledTime = new Date(Date.now() + scheduleTime * 1000);
+			const callCount = await prisma.ldLeadCall.count({ where: { lead: { ProspectKey } } }).catch(prismaErrorHandler);
 
-			scheduleJob(scheduledTime, async () => await sendSMS(ProspectKey, smsTemplate));
+			scheduleJob(scheduledTime, async () => {
+				const { isPicked, calls } = await prisma.ldLead
+					.findUniqueOrThrow({
+						where: { ProspectKey },
+						select: {
+							isPicked: true,
+							calls: { select: { id: true } }
+						}
+					})
+					.catch(prismaErrorHandler);
+
+				if (!isPicked && callCount === calls.length) await sendSMS(ProspectKey, smsTemplate);
+			});
 			await upsertLead({ log: { log: `Action #${i}: Send SMS scheduled in ${scheduleTimeText}` } });
 		}
 

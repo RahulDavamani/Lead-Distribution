@@ -3,7 +3,6 @@
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import FormControl from '../../../components/FormControl.svelte';
 	import Variables from './Variables.svelte';
-	import { timeToText } from '$lib/client/DateTime';
 	import { nanoid } from 'nanoid';
 	import { tick } from 'svelte';
 	import DurationPicker from '../../../components/DurationPicker.svelte';

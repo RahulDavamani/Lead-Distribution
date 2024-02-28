@@ -1,6 +1,7 @@
 export type Time = { days: number; hours: number; minutes: number; seconds: number };
 
 export const timeToText = (totalSeconds: number): string => {
+	if (totalSeconds === 0) return '0 secs';
 	const { days, hours, minutes, seconds } = secondsToTime(totalSeconds);
 	const formattedTime: string[] = [];
 	if (days > 0) formattedTime.push(`${days} days`);

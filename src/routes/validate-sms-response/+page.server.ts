@@ -1,8 +1,7 @@
 import { prisma } from '../../prisma/prisma';
 import { error } from '@sveltejs/kit';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler';
-import { createCaller } from '../../trpc/routers/app.router';
-import { trpcServerErrorHandler } from '../../trpc/trpcErrorhandler';
+import { validateResponse } from '../../trpc/routers/lead/helpers/validateResponse';
 
 export const load = async (event) => {
 	const From = event.url.searchParams.get('From');
@@ -27,7 +26,6 @@ export const load = async (event) => {
 	});
 	if (rule?.messagingService !== 'twilio') throw error(409, 'Messaging Service not supported');
 
-	const trpc = await createCaller(event);
-	await trpc.lead.validateResponse({ ProspectKey, ResponseType: 'sms', Response: Body }).catch(trpcServerErrorHandler);
+	validateResponse(ProspectKey, 'sms', Body);
 	return {};
 };

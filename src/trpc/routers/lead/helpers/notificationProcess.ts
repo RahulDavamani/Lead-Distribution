@@ -1,12 +1,12 @@
 import { prisma } from '../../../../prisma/prisma';
 import type { Prisma } from '@prisma/client';
-import { upsertLeadFunc } from './lead';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr } from './user';
+import { upsertLeadFunc } from './upsertLead';
 
 export const startNotificationProcess = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
-	const name = getProcessName(callbackNum, requeueNum);
 	const upsertLead = upsertLeadFunc(ProspectKey);
+	const name = getProcessName(callbackNum, requeueNum);
 
 	// Cancel all active/scheduled processes
 	await endNotificationProcesses(ProspectKey);
@@ -68,6 +68,7 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		)?.status !== 'ACTIVE';
 
 	const completeProcess = async () => {
+		await upsertLead({ log: { log: `${name}: Completed Sending notifications` } });
 		await prisma.ldLeadNotificationProcess
 			.update({
 				where: { id },

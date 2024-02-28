@@ -69,7 +69,7 @@
 		if (lead && prospect) {
 			ui.setLoader({ title: 'Calling Customer' });
 			await trpc($page)
-				.lead.callCustomer.query({
+				.lead.pick.query({
 					ProspectKey: prospect.ProspectKey,
 					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
 				})
@@ -120,7 +120,7 @@
 				</div>
 				<div class="w-1/2">
 					<div class="font-semibold">Last Name</div>
-					<div>{prospect.CustomerFirstName ?? 'N/A'}</div>
+					<div>{prospect.CustomerLastName ?? 'N/A'}</div>
 				</div>
 				<div class="w-1/2">
 					<div class="font-semibold">Email</div>

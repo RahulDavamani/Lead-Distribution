@@ -1,0 +1,89 @@
+import { actionsInclude } from '$lib/config/actions.config';
+import { ruleResponseTypes } from '$lib/data/ruleResponseTypes';
+import { TRPCError } from '@trpc/server';
+import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { executeActions } from './executeActions';
+import { createLeadResponse } from './leadResponse';
+import { upsertLeadFunc } from './upsertLead';
+import type { Actions } from '$lib/config/actions.schema';
+
+export const validateResponse = async (ProspectKey: string, ResponseType: 'disposition' | 'sms', Response: string) => {
+	const upsertLead = upsertLeadFunc(ProspectKey);
+
+	// Get Lead
+	const lead = await prisma.ldLead
+		.findUniqueOrThrow({
+			where: { ProspectKey },
+			include: {
+				rule: {
+					include: {
+						responses: { include: { actions: actionsInclude }, orderBy: { num: 'asc' } },
+						responseOptions: {
+							include: {
+								responsesLimitExceedActions: actionsInclude,
+								responsesNoMatchActions: actionsInclude
+							}
+						}
+					}
+				},
+				responses: { include: { actions: { select: { responseActions: { select: { id: true } } } } } }
+			}
+		})
+		.catch(prismaErrorHandler);
+
+	// Log Response
+	await upsertLead({
+		log: {
+			log: `VALIDATING RESPONSE #${lead.responses.length + 1}: ${Response} (${ruleResponseTypes[ResponseType]})`
+		}
+	});
+
+	if (!lead.rule) {
+		await upsertLead({ log: { log: `Rule not found` } });
+		throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
+	}
+
+	if (!lead.rule.isActive) {
+		await upsertLead({ log: { log: `Rule is inactive` } });
+		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
+	}
+
+	// Find Rule Response
+	const response = lead.rule.responses.find(({ values }) =>
+		values.split(',').some((value) => Response.trim().toLowerCase().includes(value.trim().toLowerCase()))
+	);
+
+	// Find Response Actions
+	let responseActions: { actionType: 'MATCH' | 'NO MATCH' | 'LIMIT EXCEED'; actions: Actions };
+	if (!response)
+		responseActions = {
+			actionType: 'NO MATCH',
+			actions: lead.rule.responseOptions.responsesNoMatchActions
+		};
+	else if (lead.responses.length >= lead.rule.responseOptions.totalMaxAttempt)
+		responseActions = {
+			actionType: 'LIMIT EXCEED',
+			actions: lead.rule.responseOptions.responsesLimitExceedActions
+		};
+	else
+		responseActions = {
+			actionType: 'MATCH',
+			actions: response.actions
+		};
+
+	// Create Response and Execute Actions
+	await upsertLead({
+		log: {
+			log: `RESPONSE #${lead.responses.length + 1}: Executing response ${responseActions.actionType.toLowerCase()} actions`
+		}
+	});
+	const { completeLeadResponse } = await createLeadResponse(ProspectKey, {
+		isCompleted: false,
+		type: ResponseType,
+		responseValue: Response,
+		actionType: responseActions.actionType,
+		actions: { connect: { id: responseActions.actions.id } }
+	});
+	await executeActions(ProspectKey, responseActions.actions);
+	await completeLeadResponse();
+};

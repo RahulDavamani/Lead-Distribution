@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { afterUpdate, onDestroy, onMount, tick } from 'svelte';
+	import { afterUpdate, onDestroy, onMount } from 'svelte';
 	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
 	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
 	import { trpc } from '../../trpc/client';
@@ -97,8 +97,8 @@
 	});
 
 	const reloadLeads = async () => {
-		ui.setLoader({ title: 'Fetching Leads' });
 		window.stop();
+		ui.setLoader({ title: 'Fetching Leads' });
 		clearInterval(interval);
 		await fetchQueuedLeads();
 		await fetchCompletedLeads(dateRange);
@@ -113,7 +113,7 @@
 	});
 </script>
 
-<div class="container mx-auto">
+<div class="container mx-auto mb-20">
 	<div class="flex justify-between items-end">
 		<div class="text-3xl font-bold flex items-end gap-2 flex-grow">
 			{#if tab === 1}

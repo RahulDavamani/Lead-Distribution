@@ -4,37 +4,37 @@ import { TRPCError } from '@trpc/server';
 import { prisma } from '../../../prisma/prisma';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
 import { prospectInputSchema } from '../../../zod/prospectInput.schema';
-import { getCompletedProcedure, getLeadDetailsProcedure, getQueuedProcedure } from './procedures/getLeads.procedure';
-import { getCompanyKey } from './helpers/getCompanyKey';
 import { roleTypeSchema } from '../../../stores/auth.store';
 import type { Prisma } from '@prisma/client';
-import { completeLead, upsertLeadFunc } from './helpers/lead';
-import { getUserStr, getUserValues } from './helpers/user';
-import { validateResponseProcedure } from './procedures/validateResponse.procedure';
-import { distributeLead, supervisorRedistribute } from './helpers/distributeLead';
 import { getLeadsWhere } from './helpers/getLeadsWhere';
-import { endNotificationProcesses } from './helpers/notificationProcess';
+import { requeueLead } from './helpers/requeueLead';
+import { pickLead } from './helpers/pickLead';
+import { completeLead } from './helpers/completeLead';
+import { getLeadDetails } from './helpers/getLeadDetails';
+import { getQueuedLeads } from './helpers/getQueuedLeads';
+import { getCompletedLeads } from './helpers/getCompletedLeads';
+import { deleteCompletedLead } from './helpers/deleteCompletedLead';
 
 export const leadRouter = router({
-	getQueued: getQueuedProcedure,
-	getCompleted: getCompletedProcedure,
-	getLeadDetails: getLeadDetailsProcedure,
+	getQueued: procedure
+		.input(z.object({ UserKey: z.string().min(1), roleType: roleTypeSchema }))
+		.query(async ({ input: { UserKey, roleType } }) => await getQueuedLeads(UserKey, roleType)),
 
-	distribute: procedure
-		.input(z.object({ ProspectKey: z.string().min(1) }))
-		.query(async ({ input: { ProspectKey } }) => {
-			await distributeLead(ProspectKey);
-			return { ProspectKey };
-		}),
+	getCompleted: procedure
+		.input(
+			z.object({
+				dateRange: z.array(z.string()).length(2),
+				UserKey: z.string().min(1),
+				roleType: roleTypeSchema
+			})
+		)
+		.query(
+			async ({ input: { dateRange, UserKey, roleType } }) => await getCompletedLeads(UserKey, roleType, dateRange)
+		),
 
-	redistribute: procedure
-		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
-		.query(async ({ input: { ProspectKey, UserKey } }) => {
-			await supervisorRedistribute(ProspectKey, UserKey);
-			return { ProspectKey };
-		}),
-
-	validateResponse: validateResponseProcedure,
+	getLeadDetails: procedure
+		.input(z.object({ id: z.string().min(1), type: z.enum(['queued', 'completed']) }))
+		.query(async ({ input: { id, type } }) => await getLeadDetails(id, type)),
 
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1), roleType: roleTypeSchema }))
@@ -64,46 +64,17 @@ export const leadRouter = router({
 			return { lead, prospect };
 		}),
 
-	callCustomer: procedure
+	requeue: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
 		.query(async ({ input: { ProspectKey, UserKey } }) => {
-			const userValues = await getUserValues(UserKey);
-			const upsertLead = upsertLeadFunc(ProspectKey);
+			await requeueLead(ProspectKey, UserKey);
+			return { ProspectKey };
+		}),
 
-			// Check if Lead is Completed/Closed
-			const lead = await prisma.ldLead
-				.findUnique({
-					where: { ProspectKey },
-					select: { id: true, rule: { select: { isActive: true, outboundCallNumber: true } } }
-				})
-				.catch(prismaErrorHandler);
-			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found in queue' });
-
-			// Check if Rule is Active
-			if (!lead.rule) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
-			if (!lead.rule.isActive)
-				throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
-
-			// Get CompanyKey
-			const CompanyKey = await getCompanyKey(ProspectKey);
-			if (!CompanyKey) throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
-
-			// Call Customer
-			await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${userValues?.VonageAgentId},${lead.rule.outboundCallNumber}`.catch(
-				prismaErrorHandler
-			);
-
-			// Update Lead
-			const userStr = await getUserStr(UserKey);
-			await upsertLead({
-				log: { log: `Lead picked by "${userStr}"` },
-				isPicked: true,
-				call: { user: { connect: { UserKey } } }
-			});
-
-			// Complete Lead Notification Processes
-			await endNotificationProcesses(ProspectKey);
-
+	pick: procedure
+		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1) }))
+		.query(async ({ input: { ProspectKey, UserKey } }) => {
+			await pickLead(ProspectKey, UserKey);
 			return { ProspectKey };
 		}),
 
@@ -117,16 +88,13 @@ export const leadRouter = router({
 			})
 		)
 		.query(async ({ input: { ProspectKey, UserKey, success, completeStatus } }) => {
-			// Check if Lead is Completed/Closed
-			const lead = await prisma.ldLead
-				.findFirst({ where: { ProspectKey }, select: { id: true } })
-				.catch(prismaErrorHandler);
-			if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found in queue' });
-
-			// Update Lead Log
 			await completeLead({ ProspectKey, success, completeStatus, user: { connect: { UserKey } } });
 			return { ProspectKey };
 		}),
+
+	delete: procedure
+		.input(z.object({ id: z.string().min(1) }))
+		.query(async ({ input: { id } }) => await deleteCompletedLead(id)),
 
 	postLeadProspect: procedure
 		.input(z.object({ prospect: prospectInputSchema, AccessKey: z.string().min(1) }))

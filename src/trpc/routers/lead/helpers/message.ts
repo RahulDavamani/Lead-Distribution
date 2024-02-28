@@ -3,8 +3,9 @@ import { scheduleJob } from 'node-schedule';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { generateMessage } from './generateMessage';
 import { getGHLStatus, updateGHLTemplates } from './ghl';
-import { completeLead, upsertLeadFunc } from './lead';
 import { twilioSendSMS } from './twilio';
+import { upsertLeadFunc } from './upsertLead';
+import { completeLead } from './completeLead';
 
 export const sendSMS = async (ProspectKey: string, smsTemplate: string) => {
 	const upsertLead = upsertLeadFunc(ProspectKey);
