@@ -22,6 +22,7 @@
 		if ($page.url.pathname.startsWith('/lead-distribute')) return;
 		if ($page.url.pathname.startsWith('/update-disposition')) return;
 		if ($page.url.pathname.startsWith('/validate-sms-response')) return;
+		if ($page.url.pathname.startsWith('/leads-ws')) return;
 		if ($page.url.pathname.startsWith('/test')) return;
 		if (!$auth) return { code: 401, message: 'Unauthorized' };
 		if ($page.url.pathname.startsWith('/rules') && $auth.roleType !== 'ADMIN')

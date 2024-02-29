@@ -1,13 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr } from './user';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 import { dispatchNotifications } from './dispatchNotifications';
 import { unCompleteLead } from './uncompleteLead';
 import { endNotificationProcesses } from './notificationProcess';
 
 export const requeueLead = async (ProspectKey: string, UserKey?: string) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 	if (!UserKey) await unCompleteLead(ProspectKey);
 
 	// Check if Lead is already in Queue
@@ -27,15 +27,15 @@ export const requeueLead = async (ProspectKey: string, UserKey?: string) => {
 
 	// Log Requeue
 	const log = `Lead ${notificationProcesses.length === 0 ? 'queued' : 'requeued'} by ${UserKey ? await getUserStr(UserKey) : 'GHL'}`;
-	await upsertLead({ log: { log }, isPicked: false });
+	await updateLead({ log: { log }, isPicked: false });
 
 	// Rule Not Found / Inactive
 	if (!rule) {
-		await upsertLead({ log: { log: `Rule not found` } });
+		await updateLead({ log: { log: `Rule not found` } });
 		throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 	}
 	if (!rule.isActive) {
-		await upsertLead({ log: { log: `Rule is inactive` } });
+		await updateLead({ log: { log: `Rule is inactive` } });
 		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 	}
 

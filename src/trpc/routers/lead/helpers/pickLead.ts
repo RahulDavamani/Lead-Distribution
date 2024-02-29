@@ -1,11 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr, getUserValues } from './user';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 import { endNotificationProcesses } from './notificationProcess';
 
 export const pickLead = async (ProspectKey: string, UserKey: string) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 	const userValues = await getUserValues(UserKey);
 	const userStr = await getUserStr(UserKey);
 
@@ -29,7 +29,7 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	);
 
 	// Update Lead
-	await upsertLead({
+	await updateLead({
 		log: { log: `Lead picked by "${userStr}"` },
 		isPicked: true,
 		call: { user: { connect: { UserKey } } }

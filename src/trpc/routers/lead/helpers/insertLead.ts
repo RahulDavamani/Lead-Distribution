@@ -1,23 +1,26 @@
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { upsertLeadFunc } from './upsertLead';
 import { dispatchNotifications } from './dispatchNotifications';
 import { sendSMS } from './message';
 import { getCompanyKey } from './getCompanyKey';
+import { createLeadFunc } from './createLead';
 
 export const insertLead = async (ProspectKey: string) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const createLead = createLeadFunc(ProspectKey);
 
 	// Check if Lead is already in Queue
 	const existingLead = await prisma.ldLead
-		.findFirst({ where: { ProspectKey }, select: { id: true } })
+		.findUnique({ where: { ProspectKey }, select: { id: true } })
 		.catch(prismaErrorHandler);
-	if (existingLead) throw new TRPCError({ code: 'CONFLICT', message: 'Lead already exists' });
+	const existingCompletedLead = await prisma.ldLeadCompleted
+		.findUnique({ where: { ProspectKey }, select: { id: true } })
+		.catch(prismaErrorHandler);
+	if (existingLead || existingCompletedLead) throw new TRPCError({ code: 'CONFLICT', message: 'Lead already exists' });
 
 	// Get CompanyKey
 	const CompanyKey = await getCompanyKey(ProspectKey);
 	if (!CompanyKey) {
-		await upsertLead({ log: { log: `Affiliate not found` } });
+		await createLead({ log: { log: `Affiliate not found` } });
 		throw new TRPCError({ code: 'NOT_FOUND', message: 'Company Key not found' });
 	}
 
@@ -37,16 +40,16 @@ export const insertLead = async (ProspectKey: string) => {
 
 	// Rule Not Found / Inactive
 	if (!rule) {
-		await upsertLead({ log: { log: `Rule not found` } });
+		await createLead({ log: { log: `Rule not found` } });
 		throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 	}
 	if (!rule.isActive) {
-		await upsertLead({ log: { log: `Rule is inactive` } });
+		await createLead({ log: { log: `Rule is inactive` } });
 		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 	}
 
 	// Create Lead
-	await upsertLead({ ruleId: rule.id, log: { log: 'Lead Queued' } });
+	await createLead({ ruleId: rule.id, log: { log: 'Lead Queued' } });
 
 	// Send SMS
 	await sendSMS(ProspectKey, rule.smsTemplate);

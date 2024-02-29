@@ -4,11 +4,11 @@ import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { executeActions } from './executeActions';
 import { createLeadResponse } from './leadResponse';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 import type { Actions } from '$lib/config/actions.schema';
 
 export const validateResponse = async (ProspectKey: string, ResponseType: 'disposition' | 'sms', Response: string) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 
 	// Get Lead
 	const lead = await prisma.ldLead
@@ -32,19 +32,19 @@ export const validateResponse = async (ProspectKey: string, ResponseType: 'dispo
 		.catch(prismaErrorHandler);
 
 	// Log Response
-	await upsertLead({
+	await updateLead({
 		log: {
-			log: `VALIDATING RESPONSE #${lead.responses.length + 1}: ${Response} (${ruleResponseTypes[ResponseType]})`
+			log: `RESPONSE #${lead.responses.length + 1}: ${Response} (${ruleResponseTypes[ResponseType]})`
 		}
 	});
 
 	if (!lead.rule) {
-		await upsertLead({ log: { log: `Rule not found` } });
+		await updateLead({ log: { log: `Rule not found` } });
 		throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 	}
 
 	if (!lead.rule.isActive) {
-		await upsertLead({ log: { log: `Rule is inactive` } });
+		await updateLead({ log: { log: `Rule is inactive` } });
 		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 	}
 
@@ -72,7 +72,7 @@ export const validateResponse = async (ProspectKey: string, ResponseType: 'dispo
 		};
 
 	// Create Response and Execute Actions
-	await upsertLead({
+	await updateLead({
 		log: {
 			log: `RESPONSE #${lead.responses.length + 1}: Executing response ${responseActions.actionType.toLowerCase()} actions`
 		}

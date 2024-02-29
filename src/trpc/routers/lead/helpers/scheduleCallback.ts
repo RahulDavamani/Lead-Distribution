@@ -1,12 +1,12 @@
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 import { dispatchNotifications } from './dispatchNotifications';
 import { scheduleJob } from 'node-schedule';
 import { endNotificationProcesses } from './notificationProcess';
 
 export const scheduleCallback = async (ProspectKey: string, scheduledTime: Date) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 
 	// Get Lead
 	const { rule, notificationProcesses } = await prisma.ldLead
@@ -25,7 +25,7 @@ export const scheduleCallback = async (ProspectKey: string, scheduledTime: Date)
 
 	// End Notification Processes
 	await endNotificationProcesses(ProspectKey);
-	await upsertLead({ isPicked: false });
+	await updateLead({ isPicked: false });
 
 	// Create Lead Notification Process
 	const callbackNum = notificationProcesses[0].callbackNum + 1;
@@ -49,15 +49,15 @@ export const scheduleCallback = async (ProspectKey: string, scheduledTime: Date)
 		if (process.status !== 'SCHEDULED') return;
 
 		// Create Lead Requeue
-		await upsertLead({ log: { log: `Lead requeued by Callback #${callbackNum}` } });
+		await updateLead({ log: { log: `Lead requeued by Callback #${callbackNum}` } });
 
 		// Rule Not Found / Inactive
 		if (!rule) {
-			await upsertLead({ log: { log: `Rule not found` } });
+			await updateLead({ log: { log: `Rule not found` } });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead Distribution Rule not found' });
 		}
 		if (!rule.isActive) {
-			await upsertLead({ log: { log: `Rule is inactive` } });
+			await updateLead({ log: { log: `Rule is inactive` } });
 			throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 		}
 

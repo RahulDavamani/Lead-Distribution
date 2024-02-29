@@ -4,10 +4,10 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { env } from '$env/dynamic/private';
 import { generateMessage } from './generateMessage';
 import { startNotificationProcess } from './notificationProcess';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 
 export const dispatchNotifications = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 
 	// Create Notification Process
 	const process = await startNotificationProcess(ProspectKey, callbackNum, requeueNum);
@@ -44,7 +44,7 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 	const { notificationAttempts, operators, supervisors, escalations } = rule;
 
 	if (notificationAttempts.length === 0)
-		return await upsertLead({ log: { log: `${process.name}: No notification attempts found` } });
+		return await updateLead({ log: { log: `${process.name}: No notification attempts found` } });
 
 	const availableOperators = await getAvailableOperators();
 	const completedAttempts: { attemptId: string; UserKey: string }[] = [];
@@ -89,18 +89,18 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 	const isCompleted = await process.isCompleted();
 	if (isCompleted) return;
 
-	if (noOperatorFound) await upsertLead({ log: { log: `${process.name}: No operator found` } });
-	else await upsertLead({ log: { log: `${process.name}: No response from operators` } });
+	if (noOperatorFound) await updateLead({ log: { log: `${process.name}: No operator found` } });
+	else await updateLead({ log: { log: `${process.name}: No response from operators` } });
 
 	// Send Notification to Supervisor
-	if (escalations.length === 0) return await upsertLead({ log: { log: `${process.name}: No escalations found` } });
+	if (escalations.length === 0) return await updateLead({ log: { log: `${process.name}: No escalations found` } });
 	if (supervisors.length === 0)
-		return await upsertLead({ log: { log: `${process.name}: No supervisor found for escalation` } });
+		return await updateLead({ log: { log: `${process.name}: No supervisor found for escalation` } });
 
 	outer: for (const { id, num, messageTemplate, waitTime } of escalations) {
 		const isCompleted = await process.isCompleted();
 		if (isCompleted) break;
-		await upsertLead({ log: { log: `${process.name}: Escalation #${num}` } });
+		await updateLead({ log: { log: `${process.name}: Escalation #${num}` } });
 		for (const { UserKey } of supervisors) {
 			// Check if Lead is already completed
 			const isCompleted = await process.isCompleted();

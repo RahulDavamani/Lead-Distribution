@@ -6,7 +6,7 @@ import { sendSMS } from './message';
 import { prisma } from '../../../../prisma/prisma';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { scheduleCallback } from './scheduleCallback';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 import { completeLead } from './completeLead';
 
 const parseScheduleTimes = (times: string, responseCount: number) => {
@@ -21,7 +21,7 @@ const parseScheduleTimes = (times: string, responseCount: number) => {
 };
 
 export const executeActions = async (ProspectKey: string, actions: Actions) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 	const responseCount = await prisma.ldLeadResponse
 		.count({ where: { lead: { ProspectKey } } })
 		.catch(prismaErrorHandler);
@@ -34,9 +34,9 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 
 			try {
 				await scheduleCallback(ProspectKey, scheduledTime);
-				await upsertLead({ log: { log: `Action #${i}: Lead requeue scheduled in ${scheduleTimeText}` } });
+				await updateLead({ log: { log: `Action #${i}: Lead requeue scheduled in ${scheduleTimeText}` } });
 			} catch (error) {
-				await upsertLead({ log: { log: `Action #${i}: Failed to schedule requeue` } });
+				await updateLead({ log: { log: `Action #${i}: Failed to schedule requeue` } });
 			}
 		}
 
@@ -60,13 +60,13 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 
 				if (!isPicked && callCount === calls.length) await sendSMS(ProspectKey, smsTemplate);
 			});
-			await upsertLead({ log: { log: `Action #${i}: Send SMS scheduled in ${scheduleTimeText}` } });
+			await updateLead({ log: { log: `Action #${i}: Send SMS scheduled in ${scheduleTimeText}` } });
 		}
 
 		// Complete Lead
 		if (action.completeLead) {
 			const { success, completeStatus } = action.completeLead;
-			await upsertLead({ log: { log: `Action #${i}: Complete Lead` } });
+			await updateLead({ log: { log: `Action #${i}: Complete Lead` } });
 			await completeLead({ ProspectKey, success, completeStatus });
 			break;
 		}

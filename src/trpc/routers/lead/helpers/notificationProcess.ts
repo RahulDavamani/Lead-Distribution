@@ -2,16 +2,16 @@ import { prisma } from '../../../../prisma/prisma';
 import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr } from './user';
-import { upsertLeadFunc } from './upsertLead';
+import { updateLeadFunc } from './updateLead';
 
 export const startNotificationProcess = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
-	const upsertLead = upsertLeadFunc(ProspectKey);
+	const updateLead = updateLeadFunc(ProspectKey);
 	const name = getProcessName(callbackNum, requeueNum);
 
 	// Cancel all active/scheduled processes
 	await endNotificationProcesses(ProspectKey);
 
-	// Upsert Notification Process
+	// update Notification Process
 	let process = await prisma.ldLeadNotificationProcess.findFirst({
 		where: { lead: { ProspectKey }, callbackNum, requeueNum },
 		select: { id: true }
@@ -34,7 +34,7 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 	}
 	const { id } = process;
 
-	await upsertLead({
+	await updateLead({
 		log: { log: `${name}: Sending notifications` },
 		isPicked: false
 	});
@@ -45,7 +45,7 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		notificationAttempt: Prisma.LdLeadNotificationAttemptCreateWithoutNotificationProcessInput
 	) => {
 		const userStr = await getUserStr(notificationAttempt.user?.connect?.UserKey ?? '');
-		await upsertLead({
+		await updateLead({
 			log: { log: `${name}: Attempt #${num} sent to operator "${userStr}"` }
 		});
 		await prisma.ldLeadNotificationProcess.update({
@@ -68,7 +68,7 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		)?.status !== 'ACTIVE';
 
 	const completeProcess = async () => {
-		await upsertLead({ log: { log: `${name}: Completed Sending notifications` } });
+		await updateLead({ log: { log: `${name}: Completed Sending notifications` } });
 		await prisma.ldLeadNotificationProcess
 			.update({
 				where: { id },

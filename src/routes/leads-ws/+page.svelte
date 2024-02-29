@@ -1,4 +1,4 @@
-<!-- <script lang="ts">
+<script lang="ts">
 	import { page } from '$app/stores';
 	import { afterUpdate, onDestroy, onMount, tick } from 'svelte';
 	import { trpc } from '../../trpc/client';
@@ -33,8 +33,10 @@
 	const setupSocket = () => {
 		ui.setLoader({ title: 'Fetching Leads' });
 		const webSocketProtocol = window.location.href.startsWith('https://') ? 'wss://' : 'ws://';
-		const url = `${webSocketProtocol}${window.location.hostname}:5000`;
+		const url = `${webSocketProtocol}${window.location.hostname}:80`;
 		socket = new WebSocket(url);
+		console.log(url);
+		console.log(socket);
 		socket.onopen = () => socket.send(JSON.stringify({ UserKey, roleType }));
 		socket.onmessage = (event) => updateQueuedLeads(JSON.parse(event.data));
 	};
@@ -116,7 +118,7 @@
 	);
 </script>
 
-<div class="container mx-auto">
+<div class="container mx-auto mb-20">
 	<div class="flex justify-between items-end px-2">
 		<div class="text-3xl font-bold flex items-end gap-2 flex-grow">
 			{#if tab === 1}
@@ -176,4 +178,4 @@
 </div>
 
 <LeadDetailsModal bind:id={leadDetailsModelId} />
-<SettingsModal bind:showModal={showSettingsModal} /> -->
+<SettingsModal bind:showModal={showSettingsModal} />
