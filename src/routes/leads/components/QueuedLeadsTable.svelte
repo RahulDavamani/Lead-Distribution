@@ -62,7 +62,6 @@
 	};
 
 	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
-	$: firstCallback = queuedLeads.findIndex((lead) => !lead.isNewLead);
 
 	let tableOpts = {
 		search: '',
@@ -77,6 +76,8 @@
 			.toLowerCase()
 			.includes(tableOpts.search.toLowerCase())
 	);
+	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
+	$: console.log(firstCallback);
 </script>
 
 <div class="text-sm mb-2">
@@ -163,7 +164,7 @@
 
 				{#if i === 0 || i === firstCallback}
 					<tr class="hover">
-						{#if i == 0 && queuedLeads.filter((lead) => lead.isNewLead).length > 0}
+						{#if i == 0 && displayLeads.slice(startIndex, endIndex).filter((lead) => lead.isNewLead).length > 0}
 							<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold">
 								New Leads
 							</td>

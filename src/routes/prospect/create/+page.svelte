@@ -62,8 +62,8 @@
 				ZipCode: ''
 			},
 			TrustedFormCertUrl: 'TrustedFormCertUrl.com',
-			ConsentToContact: '',
-			AcceptedTerms: ''
+			ConsentToContact: agreeToTerms ? 'true' : 'false',
+			AcceptedTerms: agreeToTerms ? 'true' : 'false'
 		};
 	};
 
