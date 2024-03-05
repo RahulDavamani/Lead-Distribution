@@ -9,13 +9,18 @@
 		"dev": "vite dev",
 		"dev:ws": "concurrently \"vite dev\" \"node src/ws/server.js\"",
 		"build": "vite build",
+		"build-ws": "prisma generate && vite build",
 		"preview": "vite preview",
 		"preview:ws": "concurrently \"vite preview\" \"node src/ws/server.js\"",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"start": "prisma generate && vite preview --host"
+		"start": "prisma generate && vite preview --host",
+		"start-ws": "concurrently \"vite preview --host\" \"node src/ws/server.js\"",
+		"docker:build": "docker build -t rahuldavamani/lead-distribution .",
+		"docker:run": "docker run -p 3000:3000 -p 8000:8000 rahuldavamani/lead-distribution",
+		"docker:push": "docker push rahuldavamani/lead-distribution"
 	},
 	"devDependencies": {
 		"@iconify/svelte": "^3.1.6",

@@ -224,18 +224,22 @@
 									<th>#</th>
 									<th>Date Time</th>
 									<th>SMS</th>
+									<th>Conversation ID</th>
+									<th>Status</th>
 								</tr>
 							</thead>
 							<tbody>
-								{#each leadDetails.messages as { createdAt, message }, i}
+								{#each leadDetails.messages as { createdAt, message, messageResponse }, i}
 									<tr>
 										<td>{i + 1}</td>
 										<td>{createdAt.toLocaleString()}</td>
 										<td>{message}</td>
+										<td>{messageResponse?.conversationId ?? 'N/A'}</td>
+										<td>{messageResponse?.status ?? 'N/A'}</td>
 									</tr>
 								{:else}
 									<tr>
-										<td class="text-center" colspan={3}>No Messages Found</td>
+										<td class="text-center" colspan={5}>No Messages Found</td>
 									</tr>
 								{/each}
 							</tbody>

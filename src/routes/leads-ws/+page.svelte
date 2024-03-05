@@ -33,7 +33,7 @@
 	const setupSocket = () => {
 		ui.setLoader({ title: 'Fetching Leads' });
 		const webSocketProtocol = window.location.href.startsWith('https://') ? 'wss://' : 'ws://';
-		const url = `${webSocketProtocol}${window.location.hostname}:80`;
+		const url = `${webSocketProtocol}${window.location.hostname}:8000`;
 		socket = new WebSocket(url);
 		console.log(url);
 		console.log(socket);

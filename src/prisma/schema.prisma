@@ -845,7 +845,7 @@ model BonusConfig {
    BonusSeq         Int       @default(autoincrement())
    BonusConfigKey   String    @db.UniqueIdentifier
    BonusTypeKey     String?   @db.UniqueIdentifier
-   PeriodKey        String    @db.UniqueIdentifier
+   PeriodKey        String?   @db.UniqueIdentifier
    ParticipantKey   String?   @db.UniqueIdentifier
    TargetUnits      Int?
    ActualUnits      Int?
@@ -894,7 +894,7 @@ model BonusDetail {
 model BonusProcessConfig {
    Seq              Int       @default(autoincrement())
    BonusTypeKey     String    @id(map: "PK__BonusPro__40C456FCA6370E6D") @db.UniqueIdentifier
-   CurrentPeriodKey String    @db.UniqueIdentifier
+   CurrentPeriodKey String?   @db.UniqueIdentifier
    IsPaymentClose   Boolean?  @default(false, map: "DF__BonusProc__IsPay__0FCF8CA8")
    PaymentCloseOn   DateTime? @db.DateTime
    CommissionSP     String?   @db.VarChar(255)
@@ -913,7 +913,7 @@ model BonusProcessConfig {
 model BonusProcessConfigHistory {
    Seq              Int
    BonusTypeKey     String    @db.UniqueIdentifier
-   CurrentPeriodKey String    @db.UniqueIdentifier
+   CurrentPeriodKey String?   @db.UniqueIdentifier
    IsPaymentClose   Boolean?
    PaymentCloseOn   DateTime? @db.DateTime
    CommissionSP     String?   @db.VarChar(255)
@@ -947,6 +947,8 @@ model BonusType {
    EffectiveFrom   DateTime? @db.Date
    EffectiveTo     DateTime? @db.Date
    InstallFlag     String?   @db.VarChar(1)
+   PayOutDate      DateTime? @db.Date
+   StatusType      Int?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -5470,6 +5472,7 @@ model ImportSpectrumMobileActivation {
    OriginalAccount                             String?   @db.VarChar(50)
    Sales___Mobile_Lines_Sold___BYOD            String?   @map("Sales - Mobile Lines Sold - BYOD") @db.VarChar(10)
    Sequence_Number                             String?   @map("Sequence Number") @db.VarChar(50)
+   Line_Rate_Plan                              String?   @map("Line Rate Plan") @db.VarChar(255)
 
    @@ignore
 }
@@ -7289,6 +7292,7 @@ model OrderStatus {
    IsDefault           Boolean?  @default(false, map: "DF__OrderStat__IsDef__56A9BBE0")
    IsProviderConfirmed Boolean?  @default(false, map: "DF__OrderStat__IsPro__26667738")
    IsInstallOnly       Boolean?  @default(false, map: "DF__OrderStat__IsIns__70F53476")
+   DisplayText         String?   @db.VarChar(150)
 }
 
 model OrderStatusMapping {
@@ -11597,15 +11601,11 @@ model nwValue {
 }
 
 model OrderItemPayment {
-   PaymentItemKey        String    @db.UniqueIdentifier
-   ProviderReceivable    Decimal?  @db.Decimal(10, 2)
+   PaymentItemKey        String    @id(map: "PK__OrderIte__7DE2D2E6C615C99B") @db.UniqueIdentifier
+   ProviderPackageDetail String?   @db.VarChar(255)
    ProviderPaid          Decimal?  @db.Decimal(10, 2)
    ProviderAdjPaid       Decimal?  @db.Decimal(10, 2)
-   ProviderPackageDetail String?   @db.VarChar(255)
-   AffiliateCommission   Decimal?  @db.Decimal(10, 2)
-   RetailerCommission    Decimal?  @db.Decimal(10, 2)
-   CallCenterCommission  Decimal?  @db.Decimal(10, 2)
-   MarketingExpense      Decimal?  @db.Decimal(10, 2)
+   ProviderChargeback    Decimal?  @db.Decimal(10, 2)
    LastPaymentImportId   Int?
    CreatedOn             DateTime? @default(now(), map: "DF__OrderItem__Creat__7AE71C56") @db.DateTime
    CreatedBy             String?   @db.UniqueIdentifier
@@ -11616,8 +11616,7 @@ model OrderItemPayment {
    OrderKey              String    @db.UniqueIdentifier
    PaySeq                Int       @default(autoincrement())
    PayRecords            Int?
-
-   @@id([ProductKey, OrderKey], map: "PK__OrderIte__7DE2D2E6C615C99B")
+   PaymentOn             DateTime? @db.Date
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -13503,8 +13502,10 @@ model CompanyTierMap {
    TierName    String    @db.VarChar(255)
    CreatedBy   String?   @db.UniqueIdentifier
    CreatedOn   DateTime? @db.DateTime
-   ModifiedBy  String?   @db.UniqueIdentifier
-   Modified    DateTime? @db.DateTime
+   SaleDate    DateTime? @db.Date
+   InstallDate DateTime? @db.Date
+   ValidFrom   DateTime  @default(now(), map: "DFCT_ValidFrom")
+   ValidTo     DateTime  @default(dbgenerated("CONVERT([datetime2],'9999-12-31 23:59:59.9999999')"), map: "DTCT_ValidTo")
 
    @@id([ProviderKey, RefKey, RefTypeId], map: "pk_tiermap")
 }
@@ -13606,6 +13607,78 @@ model ZPlanRule_42AXxjZxhSlZTDekXGgTW {
    ComJson   String? @db.VarChar(Max)
    TierTable String? @db.VarChar(Max)
 
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CompanyTierMapHistory {
+   TierSeq     Int
+   TierKey     String?   @db.UniqueIdentifier
+   ProviderKey String    @db.UniqueIdentifier
+   RefKey      String    @db.UniqueIdentifier
+   RefTypeId   Int
+   TierName    String    @db.VarChar(255)
+   CreatedBy   String?   @db.UniqueIdentifier
+   CreatedOn   DateTime? @db.DateTime
+   SaleDate    DateTime? @db.Date
+   InstallDate DateTime? @db.Date
+   ValidFrom   DateTime
+   ValidTo     DateTime
+
+   @@index([ValidTo, ValidFrom], map: "ix_CompanyTierMapHistory", clustered: true)
+   @@ignore
+}
+
+model OrderItemCommission {
+   OrderItemKey         String    @id(map: "PK_OrderItemCommission") @db.UniqueIdentifier
+   RetailerCommission   Decimal?  @db.Decimal(10, 2)
+   RetailerChargeback   Decimal?  @db.Decimal(10, 2)
+   AffiliateCommission  Decimal?  @db.Decimal(10, 2)
+   AffiliateChargeback  Decimal?  @db.Decimal(10, 2)
+   AgentCommission      Decimal?  @db.Decimal(10, 2)
+   AgentChargeback      Decimal?  @db.Decimal(10, 2)
+   CallCenterCommission Decimal?  @db.Decimal(10, 2)
+   CallCenterChargeback Decimal?  @db.Decimal(10, 2)
+   MarketingExpense     Decimal?  @db.Decimal(10, 2)
+   CreatedOn            DateTime? @db.DateTime
+   CreatedBy            String?   @db.UniqueIdentifier
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model OrderItemEst {
+   OrderItemKey    String?   @db.UniqueIdentifier
+   ProductKey      String?   @db.UniqueIdentifier
+   ProviderPackage String?   @db.VarChar(100)
+   XyzPackage      String?   @db.VarChar(100)
+   EstCom          Decimal?  @db.Decimal(10, 2)
+   CreatedOn       DateTime? @default(now(), map: "DF__OrderItem__Creat__4CAF490D") @db.DateTime
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Spectrum_retaildisin_ {
+   Company_Name                        String? @map("Company Name") @db.NVarChar(255)
+   Retail_Call_Center                  String? @map("Retail Call Center") @db.NVarChar(255)
+   Account_Manager                     String? @map("Account Manager") @db.NVarChar(255)
+   Super_Admin                         String? @map("Super Admin") @db.NVarChar(255)
+   Address                             String? @db.NVarChar(255)
+   Spectrum_Sales_ID_This_Company_Uses String? @map("Spectrum Sales ID This Company Uses") @db.NVarChar(255)
+   Avg_Ord                             Float?  @map("Avg Ord")
+   avg_units                           Float?  @map("avg units")
+   Avg_Intternet                       Float?  @map("Avg Intternet")
+   Avg_Ultra                           Float?  @map("Avg Ultra")
+   Avg_Gig                             Float?  @map("Avg Gig")
+   Gig__                               Float?  @map("Gig %")
+   Avg_TV                              Float?  @map("Avg TV")
+   Avg_Mobile                          Float?  @map("Avg Mobile")
+   Avg_Mobile_lines                    Float?  @map("Avg Mobile lines")
+   Avg_Lines_Per_Order                 String? @map("Avg Lines Per Order") @db.NVarChar(255)
+   December                            Float?
+   jan                                 Float?
+   Feb                                 Float?
+
+   @@map("Spectrum_retaildisin$")
    @@ignore
 }
 
@@ -13932,7 +14005,21 @@ model LdLeadMessage {
    completedLeadId String?
    completedLead   LdLeadCompleted? @relation(fields: [completedLeadId], references: [id])
 
-   message String
+   message         String
+   messageResponse LdLeadLCMessageResponse?
+}
+
+model LdLeadLCMessageResponse {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   conversationId String
+   messageId      String
+   status         String
+
+   ldMessage   LdLeadMessage @relation(fields: [ldMessageId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+   ldMessageId String        @unique
 }
 
 model LdLeadCall {

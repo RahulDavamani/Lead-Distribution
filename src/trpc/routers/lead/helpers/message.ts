@@ -6,6 +6,7 @@ import { getGHLStatus, updateGHLTemplates } from './ghl';
 import { twilioSendSMS } from './twilio';
 import { updateLeadFunc } from './updateLead';
 import { completeLead } from './completeLead';
+import { lcSendSMS } from './liveChat';
 
 export const sendSMS = async (ProspectKey: string, smsTemplate: string) => {
 	const updateLead = updateLeadFunc(ProspectKey);
@@ -29,12 +30,24 @@ export const sendSMS = async (ProspectKey: string, smsTemplate: string) => {
 		.findFirstOrThrow({ where: { ProspectKey }, select: { Phone: true } })
 		.catch(prismaErrorHandler);
 
-	if (rule.messagingService === 'twilio') await twilioSendSMS(Phone ?? '', message);
-	else await updateGHLTemplates(ProspectKey, { bundlesmstemplate: message });
+	let messageResponse;
+	switch (rule.messagingService) {
+		case 'twilio':
+			await twilioSendSMS(Phone ?? '', message);
+			break;
+
+		case 'ghl':
+			await updateGHLTemplates(ProspectKey, { bundlesmstemplate: message });
+			break;
+
+		case 'liveChat':
+			messageResponse = await lcSendSMS(Phone ?? '', message);
+			break;
+	}
 
 	await updateLead({
 		log: { log: `SMS #${messages + 1}: Text message sent to customer ` },
-		message: { message }
+		message: { message, messageResponse: { create: messageResponse } }
 	});
 };
 

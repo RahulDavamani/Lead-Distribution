@@ -19,7 +19,7 @@ export const getLeadDetails = async (id: string, type: 'queued' | 'completed') =
 							escalations: { orderBy: { createdAt: 'asc' } }
 						}
 					},
-					messages: { orderBy: { createdAt: 'asc' } },
+					messages: { orderBy: { createdAt: 'asc' }, include: { messageResponse: true } },
 					calls: { orderBy: { createdAt: 'asc' } },
 					responses: { orderBy: { createdAt: 'asc' }, include: { actions: actionsInclude } }
 				}
@@ -39,7 +39,7 @@ export const getLeadDetails = async (id: string, type: 'queued' | 'completed') =
 							escalations: { orderBy: { createdAt: 'asc' } }
 						}
 					},
-					messages: { orderBy: { createdAt: 'asc' } },
+					messages: { orderBy: { createdAt: 'asc' }, include: { messageResponse: true } },
 					calls: { orderBy: { createdAt: 'asc' } },
 					responses: { orderBy: { createdAt: 'asc' }, include: { actions: actionsInclude } }
 				}

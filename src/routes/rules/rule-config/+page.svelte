@@ -10,6 +10,7 @@
 	import Supervisors from './components/Supervisors.svelte';
 	import Variables from './components/Variables.svelte';
 	import Escalations from './components/Escalations.svelte';
+	import { messagingServices } from '$lib/data/messagingServies';
 
 	export let data;
 	$: ({ rule, affiliates, operators, canDelete } = data);
@@ -81,24 +82,17 @@
 					<!-- Messaging Service -->
 					<FormControl label="SMS Messaging Service" classes="w-full" error={zodErrors?.messagingService}>
 						<div class="flex gap-4">
-							<FormControl inputType="In" label="GHL">
-								<input
-									type="radio"
-									name="messagingService"
-									class="radio radio-primary"
-									value="ghl"
-									bind:group={$ruleConfig.rule.messagingService}
-								/>
-							</FormControl>
-							<FormControl inputType="In" label="Twilio">
-								<input
-									type="radio"
-									name="messagingService"
-									class="radio radio-primary"
-									value="twilio"
-									bind:group={$ruleConfig.rule.messagingService}
-								/>
-							</FormControl>
+							{#each Object.entries(messagingServices) as [key, value]}
+								<FormControl inputType="In" label={value}>
+									<input
+										type="radio"
+										name="messagingService"
+										class="radio radio-primary"
+										value={key}
+										bind:group={$ruleConfig.rule.messagingService}
+									/>
+								</FormControl>
+							{/each}
 						</div>
 					</FormControl>
 				</div>
