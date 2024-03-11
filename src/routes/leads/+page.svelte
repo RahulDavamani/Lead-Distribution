@@ -97,12 +97,12 @@
 	});
 
 	const reloadLeads = async () => {
-		window.stop();
+		// window.stop();
 		ui.setLoader({ title: 'Fetching Leads' });
-		clearInterval(interval);
-		await fetchQueuedLeads();
+		// clearInterval(interval);
+		// await fetchQueuedLeads();
 		await fetchCompletedLeads(dateRange);
-		interval = setInterval(fetchQueuedLeads, 1000);
+		// interval = setInterval(fetchQueuedLeads, 5000);
 		ui.setLoader();
 	};
 

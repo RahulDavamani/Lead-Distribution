@@ -15,7 +15,7 @@
 	export let completedLeads: CompletedLead[];
 	export let leadDetailsModelId: string | undefined;
 	export let dateRange: Date[];
-	export let fetchCompletedLeads: (dateRange: Date[]) => void;
+	export let fetchCompletedLeads: (dateRange: Date[]) => Promise<void>;
 
 	let completeStatusSelect: string | undefined;
 	$: completeLeadStatuses = completedLeads.reduce(
@@ -36,9 +36,11 @@
 			? Math.floor(completedLeads.reduce((acc, cur) => acc + cur.customerTalkTime, 0) / completedLeads.length)
 			: 0;
 
-	const deleteLead = (id: string) => {
+	let deleteLeadIds: string[] | undefined;
+
+	const deleteLeads = () => {
 		$ui.alertModal = {
-			title: 'Are you sure to delete this lead?',
+			title: 'Are you sure to delete these leads?',
 			body: 'This action cannot be undone',
 			actions: [
 				{
@@ -51,10 +53,12 @@
 					class: 'btn-error',
 					onClick: async () => {
 						$ui.alertModal = undefined;
-						ui.setLoader({ title: 'Deleting Lead' });
-						await trpc($page).lead.delete.query({ id });
+						if (!deleteLeadIds) return;
+						ui.setLoader({ title: 'Deleting Leads' });
+						await trpc($page).lead.delete.query({ ids: deleteLeadIds, isCompleted: true });
 						await fetchCompletedLeads(dateRange);
 						ui.setLoader();
+						deleteLeadIds = undefined;
 					}
 				}
 			]
@@ -107,7 +111,11 @@
 			placeholder="Choose Date"
 			class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full"
 			bind:value={dateRange}
-			on:close={() => fetchCompletedLeads(dateRange)}
+			on:close={async () => {
+				ui.setLoader({ title: 'Fetching Leads' });
+				await fetchCompletedLeads(dateRange);
+				ui.setLoader();
+			}}
 			options={{
 				mode: 'range',
 				altInput: true,
@@ -131,19 +139,47 @@
 		</div>
 	</FormControl>
 
-	<FormControl>
-		<div class="input input-sm input-bordered flex items-center gap-2">
-			<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
+	<div class="flex gap-4">
+		<FormControl>
+			<div class="input input-sm input-bordered flex items-center gap-2">
+				<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
 
-			<Icon icon="mdi:search" width={18} />
-		</div>
-	</FormControl>
+				<Icon icon="mdi:search" width={18} />
+			</div>
+		</FormControl>
+
+		{#if $auth.roleType !== 'AGENT'}
+			{#if deleteLeadIds === undefined}
+				<button
+					class="btn btn-sm btn-error"
+					on:click={() => {
+						if (deleteLeadIds === undefined) deleteLeadIds = [];
+						else deleteLeadIds = undefined;
+					}}
+				>
+					Delete Leads
+				</button>
+			{:else}
+				<div class="flex gap-4">
+					<button class="btn btn-sm btn-warning" on:click={() => (deleteLeadIds = undefined)}>
+						<Icon icon="mdi:close" width={20} />
+					</button>
+					<button class="btn btn-sm btn-error {deleteLeadIds.length === 0 && 'btn-disabled'}" on:click={deleteLeads}>
+						<Icon icon="mdi:delete" width={20} />
+					</button>
+				</div>
+			{/if}
+		{/if}
+	</div>
 </div>
 
 <div class="overflow-x-auto my-3">
 	<table class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
+				{#if deleteLeadIds !== undefined}
+					<th class="w-1" />
+				{/if}
 				<th class="w-1">Prospect ID</th>
 				<th class="w-1">Vonage GUID</th>
 				<th>Affiliate</th>
@@ -161,6 +197,22 @@
 		<tbody>
 			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user }}
 				<tr class="hover">
+					{#if deleteLeadIds !== undefined}
+						<td class="w-1">
+							<FormControl>
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm checkbox-error"
+									checked={deleteLeadIds.includes(id)}
+									on:click={() => {
+										if (deleteLeadIds)
+											if (deleteLeadIds.includes(id)) deleteLeadIds = deleteLeadIds.filter((leadId) => leadId !== id);
+											else deleteLeadIds = [...deleteLeadIds, id];
+									}}
+								/>
+							</FormControl>
+						</td>
+					{/if}
 					<td>
 						<div class="flex justify-center items-center gap-2">
 							{#if success}
@@ -206,11 +258,6 @@
 							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
 								<Icon icon="mdi:information-variant" width={18} />
 							</button>
-							{#if $auth.roleType !== 'AGENT'}
-								<button class="btn btn-xs btn-error h-fit py-1" on:click={() => deleteLead(id)}>
-									<Icon icon="mdi:delete" width={18} />
-								</button>
-							{/if}
 						</div>
 					</td>
 				</tr>

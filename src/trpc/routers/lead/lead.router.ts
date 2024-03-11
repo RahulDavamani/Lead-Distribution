@@ -13,7 +13,7 @@ import { completeLead } from './helpers/completeLead';
 import { getLeadDetails } from './helpers/getLeadDetails';
 import { getQueuedLeads } from './helpers/getQueuedLeads';
 import { getCompletedLeads } from './helpers/getCompletedLeads';
-import { deleteCompletedLead } from './helpers/deleteCompletedLead';
+import { deleteLeads } from './helpers/deleteLeads';
 
 export const leadRouter = router({
 	getQueued: procedure
@@ -93,8 +93,8 @@ export const leadRouter = router({
 		}),
 
 	delete: procedure
-		.input(z.object({ id: z.string().min(1) }))
-		.query(async ({ input: { id } }) => await deleteCompletedLead(id)),
+		.input(z.object({ ids: z.array(z.string().min(1)), isCompleted: z.boolean() }))
+		.query(async ({ input: { ids, isCompleted } }) => await deleteLeads(ids, isCompleted)),
 
 	postLeadProspect: procedure
 		.input(z.object({ prospect: prospectInputSchema, AccessKey: z.string().min(1) }))

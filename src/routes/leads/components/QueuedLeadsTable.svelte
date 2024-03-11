@@ -8,20 +8,23 @@
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import FormControl from '../../components/FormControl.svelte';
+	import { onMount } from 'svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 
 	export let queuedLeads: QueuedLead[];
 	export let leadDetailsModelId: string | undefined;
+
+	let today = new Date();
+	onMount(() => setInterval(() => (today = new Date()), 1000));
+
 	$: ({
 		user: { UserKey },
 		roleType
 	} = $auth);
 	$: avgLeadTimeElapsed =
 		queuedLeads.length > 0
-			? Math.floor(
-					queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, new Date()), 0) / queuedLeads.length
-				)
+			? Math.floor(queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, today), 0) / queuedLeads.length)
 			: 0;
 
 	const showRequeueAlert = (ProspectKey: string, alertType: 'picked' | 'scheduled') => {
@@ -63,6 +66,34 @@
 
 	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
 
+	let deleteLeadIds: string[] | undefined;
+
+	const deleteLeads = () => {
+		$ui.alertModal = {
+			title: 'Are you sure to delete these leads?',
+			body: 'This action cannot be undone',
+			actions: [
+				{
+					name: 'Cancel',
+					class: 'btn-warning',
+					onClick: () => ($ui.alertModal = undefined)
+				},
+				{
+					name: 'Delete',
+					class: 'btn-error',
+					onClick: async () => {
+						$ui.alertModal = undefined;
+						if (!deleteLeadIds) return;
+						ui.setLoader({ title: 'Deleting Leads' });
+						await trpc($page).lead.delete.query({ ids: deleteLeadIds, isCompleted: false });
+						ui.setLoader();
+						deleteLeadIds = undefined;
+					}
+				}
+			]
+		};
+	};
+
 	let tableOpts = {
 		search: '',
 		page: 1,
@@ -77,7 +108,6 @@
 			.includes(tableOpts.search.toLowerCase())
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
-	$: console.log(firstCallback);
 </script>
 
 <div class="text-sm mb-2">
@@ -98,19 +128,46 @@
 		</div>
 	</FormControl>
 
-	<FormControl>
-		<div class="input input-sm input-bordered flex items-center gap-2">
-			<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
+	<div class="flex gap-4">
+		<FormControl>
+			<div class="input input-sm input-bordered flex items-center gap-2">
+				<input type="text" class="grow" placeholder="Search" bind:value={tableOpts.search} />
 
-			<Icon icon="mdi:search" width={18} />
-		</div>
-	</FormControl>
+				<Icon icon="mdi:search" width={18} />
+			</div>
+		</FormControl>
+		{#if roleType !== 'AGENT'}
+			{#if deleteLeadIds === undefined}
+				<button
+					class="btn btn-sm btn-error"
+					on:click={() => {
+						if (deleteLeadIds === undefined) deleteLeadIds = [];
+						else deleteLeadIds = undefined;
+					}}
+				>
+					Delete Leads
+				</button>
+			{:else}
+				<div class="flex gap-4">
+					<button class="btn btn-sm btn-warning" on:click={() => (deleteLeadIds = undefined)}>
+						<Icon icon="mdi:close" width={20} />
+					</button>
+					<button class="btn btn-sm btn-error {deleteLeadIds.length === 0 && 'btn-disabled'}" on:click={deleteLeads}>
+						<Icon icon="mdi:delete" width={20} />
+					</button>
+				</div>
+			{/if}
+		{/if}
+	</div>
 </div>
 
 <div class="overflow-x-auto my-3">
 	<table class="table table-zebra border rounded-t-none">
 		<thead class="bg-base-300">
 			<tr>
+				{#if deleteLeadIds !== undefined}
+					<th class="w-1" />
+				{/if}
 				<th>Prospect ID</th>
 				<th>Vonage GUID</th>
 				<th>Affiliate</th>
@@ -130,7 +187,7 @@
 						callUser?.UserKey !== UserKey &&
 						(isNewLead
 							? i !== agentFirstNewLead
-							: notificationProcess?.createdAt.toLocaleDateString() !== new Date().toLocaleDateString())) ||
+							: notificationProcess?.createdAt.toLocaleDateString() !== today.toLocaleDateString())) ||
 					(isPicked ? callUser?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
@@ -176,6 +233,22 @@
 					</tr>
 				{/if}
 				<tr class="hover">
+					{#if deleteLeadIds !== undefined}
+						<td class="w-1">
+							<FormControl>
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm checkbox-error"
+									checked={deleteLeadIds.includes(id)}
+									on:click={() => {
+										if (deleteLeadIds)
+											if (deleteLeadIds.includes(id)) deleteLeadIds = deleteLeadIds.filter((leadId) => leadId !== id);
+											else deleteLeadIds = [...deleteLeadIds, id];
+									}}
+								/>
+							</FormControl>
+						</td>
+					{/if}
 					<td>
 						<div class="flex justify-center items-center gap-2">
 							{#if isPicked}
@@ -206,7 +279,7 @@
 						<div>{updatedAt.toLocaleDateString()}</div>
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, new Date())}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, today)}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
@@ -219,7 +292,7 @@
 								{#if isPicked}
 									Picked by {callUser?.userStr}
 								{:else if notificationProcess.status === 'SCHEDULED'}
-									Scheduled in {getTimeElapsedText(new Date(), notificationProcess.createdAt)}
+									Scheduled in {getTimeElapsedText(today, notificationProcess.createdAt)}
 								{:else if notificationProcess.escalations.length > 0}
 									Escalation #{notificationProcess.escalations[0].escalation?.num}
 								{:else if notificationProcess.notificationAttempts.length > 0}
