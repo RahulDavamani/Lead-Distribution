@@ -22,8 +22,8 @@ export const load = async (event) => {
 		})
 		.catch(prismaErrorHandler);
 
-	if (lead) await completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
-	else await insertLeadCompleted(ProspectKey);
+	if (lead) completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
+	else insertLeadCompleted(ProspectKey);
 
 	return {};
 };

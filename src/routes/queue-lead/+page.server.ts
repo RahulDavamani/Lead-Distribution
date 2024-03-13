@@ -22,7 +22,7 @@ export const load = async (event) => {
 		})
 		.catch(prismaErrorHandler);
 
-	if (completeLead) await requeueLead(ProspectKey);
+	if (completeLead) requeueLead(ProspectKey);
 	else insertLead(ProspectKey);
 
 	return {};

@@ -22,9 +22,7 @@ export const insertLeadCompleted = async (ProspectKey: string) => {
 				ruleId: rule?.id,
 				success: true,
 				completeStatus: 'Completed Lead from GHL',
-				logs: {
-					create: { log: 'Lead completed: Completed Lead from GHL' }
-				}
+				logs: { create: { log: 'Lead completed: Completed Lead from GHL' } }
 			}
 		})
 		.catch(prismaErrorHandler);

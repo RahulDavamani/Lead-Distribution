@@ -52,11 +52,16 @@ export const testRouter = router({
 		// await prisma.ldLeadResponse.deleteMany({});
 		// const prospect = await prisma.leadProspect
 		// 	.findFirstOrThrow({
-		// 		where: { ProspectId: 48821 },
+		// 		where: { ProspectId: 49600 },
 		// 		orderBy: { CreatedOn: 'desc' }
 		// 	})
 		// 	.catch();
 		// console.log(prospect);
+		// console.log(await prisma.ldRule.findMany({ select: { id: true, name: true } }));
+		// await prisma.ldLead.update({
+		// 	where: { ProspectKey: '633526b4-74f5-4622-9b60-68090e2cbdd0' },
+		// 	data: { ruleId: 'aHxktsc4w_LSafp9OzjvZ' }
+		// });
 		// await prisma.ldLeadCompleted.deleteMany({});
 		// console.log(await prisma.leadProspect.findMany({ where: { Email: 'abcd@gmail.com' } }));
 		// const operators = (await prisma.$queryRaw`
