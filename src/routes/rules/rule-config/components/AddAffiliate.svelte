@@ -50,26 +50,33 @@
 			<thead class="bg-base-300">
 				<tr>
 					<th></th>
-					<th>ID</th>
 					<th>Name</th>
+					<th>Rule</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each allAffiliates as { CompanyKey, CompanyName }}
-					<tr
-						class="hover {!addedAffiliates.includes(CompanyKey) && 'cursor-pointer'}"
-						on:click={() => selectAffiliate(CompanyKey)}
-					>
+				{#each allAffiliates as { CompanyKey, CompanyName, rule }}
+					{@const disabled =
+						addedAffiliates.includes(CompanyKey) || (rule !== undefined && rule.id !== $ruleConfig.rule.id)}
+					{@const ruleName = addedAffiliates.includes(CompanyKey)
+						? $ruleConfig.rule.name
+						: rule?.id === $ruleConfig.rule.id
+							? addedAffiliates.includes(CompanyKey)
+								? $ruleConfig.rule.name
+								: 'N/A'
+							: rule?.name ?? 'N/A'}
+
+					<tr class="hover {!disabled && 'cursor-pointer'}" on:click={() => !disabled && selectAffiliate(CompanyKey)}>
 						<td class="text-center w-12">
 							<input
 								type="checkbox"
 								class="checkbox checkbox-sm checkbox-success"
 								checked={selectedAffiliates.includes(CompanyKey)}
-								disabled={addedAffiliates.includes(CompanyKey)}
+								{disabled}
 							/>
 						</td>
-						<td>{CompanyKey}</td>
 						<td>{CompanyName}</td>
+						<td>{ruleName}</td>
 					</tr>
 				{/each}
 			</tbody>

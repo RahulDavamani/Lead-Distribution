@@ -49,9 +49,19 @@ export const ruleRouter = router({
 		const affiliates = await getAffiliates();
 		const operators = await getOperators();
 
+		const ruleAffiliates = await Promise.all(
+			affiliates.map(async (a) => {
+				const ruleAffiliate = await prisma.ldRuleAffiliate.findFirst({
+					where: { CompanyKey: a.CompanyKey },
+					select: { rule: { select: { id: true, name: true } } }
+				});
+				return { ...a, rule: ruleAffiliate?.rule };
+			})
+		);
+
 		return {
 			rule,
-			affiliates,
+			affiliates: ruleAffiliates,
 			operators,
 			canDelete: (rule?._count?.queuedLeads ?? 0) + (rule?._count?.completedLeads ?? 0) === 0
 		};

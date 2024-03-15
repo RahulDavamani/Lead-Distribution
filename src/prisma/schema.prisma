@@ -5162,6 +5162,8 @@ model ImportEarthlinkPayment {
    Account_Number                        String?   @map("Account Number") @db.VarChar(50)
    Is_Blended_Bounty_Rate                String?   @map("Is Blended Bounty Rate") @db.VarChar(15)
    ProductKey                            String?   @db.UniqueIdentifier
+   DerivedAccount                        String?   @db.VarChar(50)
+   StatusKey                             String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -6037,6 +6039,7 @@ model InboundCallAffliateCommission {
    IsVonage                   Boolean?
    PeriodKey                  String?   @db.UniqueIdentifier
    MinCallDuration            Int?
+   ComSrcType                 String?   @db.Char(2)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -12058,6 +12061,7 @@ model ProviderLineInstalls {
    ProductKey        String?   @db.UniqueIdentifier
    IsBYOD            Boolean?  @default(false, map: "DF__ProviderL__IsBYO__464ACD93")
    LineSeq           Int?      @db.TinyInt
+   InKey             String?   @default(dbgenerated("newid()"), map: "DF__ProviderL__InKey__6A0AA1CA") @db.UniqueIdentifier
 
    @@id([ProviderKey, Account, SubAccount], map: "PK_ProviderLineInstalls")
 }
@@ -13646,7 +13650,7 @@ model OrderItemCommission {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model OrderItemEst {
-   OrderItemKey    String?   @db.UniqueIdentifier
+   OrderItemKey    String    @id(map: "PK_OrderItemEst") @db.UniqueIdentifier
    ProductKey      String?   @db.UniqueIdentifier
    ProviderPackage String?   @db.VarChar(100)
    XyzPackage      String?   @db.VarChar(100)

@@ -34,7 +34,7 @@
 				</button>
 			</div>
 		</summary>
-		<div class="collapse-content pl-2">
+		<div class="collapse-content pl-2 max-h-96 overflow-auto">
 			<div class="space-y-3">
 				{#each supervisors as { UserKey }, i}
 					{@const supervisor = allOperators.find((o) => o.UserKey === UserKey)}
