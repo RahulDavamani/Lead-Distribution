@@ -1,12 +1,11 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import FormControl from '../../../routes/components/FormControl.svelte';
-	import type { SendSMS } from './sendSMS.schema';
-	import Variables from '../../../routes/rules/rule-config/components/Variables.svelte';
-	import DurationPicker from '../../../routes/components/DurationPicker.svelte';
+	import DurationPicker from '../../../../routes/components/DurationPicker.svelte';
 	import { onMount } from 'svelte';
+	import type { ScheduleCallback } from './scheduleCallback.schema';
+	import FormControl from '../../../../routes/components/FormControl.svelte';
 
-	export let action: SendSMS;
+	export let action: ScheduleCallback;
 	export let actionsCount: number;
 	export let deleteAction: (id: string) => void;
 	export let moveAction: (num: number, dir: 'up' | 'down') => void;
@@ -27,7 +26,7 @@
 					<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAction(action.id)}>
 						<Icon icon="mdi:close" class="text-error" width={20} />
 					</button>
-					<div class="font-semibold">Send SMS</div>
+					<div class="font-semibold">Schedule Callback</div>
 				</div>
 				<div>
 					{#if action.num !== 1}
@@ -44,19 +43,7 @@
 			</div>
 			<div class="divider m-0" />
 
-			<FormControl classes="w-full" label="SMS Template">
-				<div class="join">
-					<textarea
-						placeholder="Type here"
-						class="textarea textarea-bordered w-full join-item"
-						bind:value={action.smsTemplate}
-						rows={1}
-					/>
-					<Variables insertVariable={(v) => (action.smsTemplate += v)} />
-				</div>
-			</FormControl>
-
-			<div class="flex gap-2 mt-3 mb-2">
+			<div class="flex gap-2 my-2">
 				<div>
 					<span class="font-semibold">Schedule Times:</span>
 					<span class="font-mono">({scheduleTimes.length})</span>
@@ -66,7 +53,7 @@
 				</button>
 			</div>
 
-			<ul class="steps steps-vertical">
+			<ul class="steps steps-vertical mb-4">
 				{#each scheduleTimes as _, i}
 					<li class="step step-info">
 						<div class="flex items-center gap-2">
@@ -80,6 +67,23 @@
 					</li>
 				{/each}
 			</ul>
+
+			<FormControl inputType="In" label="Send SMS before callback" labelClasses="font-semibold">
+				<input type="checkbox" class="checkbox checkbox-primary" bind:checked={action.sendSMS} />
+			</FormControl>
+			<div class="flex items-start gap-4">
+				<FormControl label="SMS Template" classes="w-full">
+					<textarea
+						class="textarea textarea-bordered"
+						rows={1}
+						bind:value={action.smsTemplate}
+						disabled={!action.sendSMS}
+					/>
+				</FormControl>
+				<FormControl label="Wait Time">
+					<DurationPicker bind:duration={action.smsWaitTime} disabled={!action.sendSMS} />
+				</FormControl>
+			</div>
 		</div>
 	</li>
 {/if}

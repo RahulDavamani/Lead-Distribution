@@ -3,12 +3,13 @@
 	import { afterUpdate } from 'svelte';
 
 	export let duration: number;
+	export let disabled: boolean = false;
 	let time: Time = secondsToTime(duration);
 	afterUpdate(() => (time = secondsToTime(duration)));
 </script>
 
 <div class="join">
-	<div class="input input-bordered flex items-center gap-1 join-item">
+	<div class="input input-bordered {disabled && 'input-disabled'} flex items-center gap-1 join-item">
 		<input
 			type="number"
 			class="grow max-w-8"
@@ -18,10 +19,11 @@
 				time.days = Number(e.currentTarget.value);
 				duration = timeToSeconds(time);
 			}}
+			{disabled}
 		/>
 		<span class="font-mono opacity-75">Days</span>
 	</div>
-	<div class="input input-bordered flex items-center gap-1 join-item">
+	<div class="input input-bordered {disabled && 'input-disabled'} flex items-center gap-1 join-item">
 		<input
 			type="number"
 			class="grow max-w-8"
@@ -31,10 +33,11 @@
 				time.hours = Number(e.currentTarget.value);
 				duration = timeToSeconds(time);
 			}}
+			{disabled}
 		/>
 		<span class="font-mono opacity-75">Hrs</span>
 	</div>
-	<div class="input input-bordered flex items-center gap-1 join-item">
+	<div class="input input-bordered {disabled && 'input-disabled'} flex items-center gap-1 join-item">
 		<input
 			type="number"
 			class="grow max-w-8"
@@ -44,10 +47,11 @@
 				time.minutes = Number(e.currentTarget.value);
 				duration = timeToSeconds(time);
 			}}
+			{disabled}
 		/>
 		<span class="font-mono opacity-75">Mins</span>
 	</div>
-	<div class="input input-bordered flex items-center gap-1 join-item">
+	<div class="input input-bordered {disabled && 'input-disabled'} flex items-center gap-1 join-item">
 		<input
 			type="number"
 			class="grow max-w-8"
@@ -57,6 +61,7 @@
 				time.seconds = Number(e.currentTarget.value);
 				duration = timeToSeconds(time);
 			}}
+			{disabled}
 		/>
 		<span class="font-mono opacity-75">Secs</span>
 	</div>

@@ -4,7 +4,7 @@ import { ruleSchema } from '../../../zod/rule.schema';
 import { procedure, router } from '../../server';
 import { prisma } from '../../../prisma/prisma';
 import prismaErrorHandler from '../../../prisma/prismaErrorHandler';
-import { actionsInclude } from '$lib/config/actions.config';
+import { actionsInclude } from '$lib/config/actions/actions.config';
 import { getOperators } from './helpers/getOperators';
 import { getAffiliates } from './helpers/getAffiliates';
 import { createActions, upsertActions } from './helpers/upsertActions';

@@ -4,10 +4,15 @@ import { updateLeadFunc } from './updateLead';
 import { dispatchNotifications } from './dispatchNotifications';
 import { scheduleJob } from 'node-schedule';
 import { endNotificationProcesses } from './notificationProcess';
+import { sendSMS } from './message';
+import { waitFor } from '$lib/waitFor';
 
-export const scheduleCallback = async (ProspectKey: string, scheduledTime: Date) => {
+export const scheduleCallback = async (
+	ProspectKey: string,
+	scheduledTime: Date,
+	sms: { smsTemplate: string; smsWaitTime: number } | undefined
+) => {
 	const updateLead = updateLeadFunc(ProspectKey);
-
 	// Get Lead
 	const { rule, notificationProcesses } = await prisma.ldLead
 		.findFirstOrThrow({
@@ -48,8 +53,14 @@ export const scheduleCallback = async (ProspectKey: string, scheduledTime: Date)
 			.catch(prismaErrorHandler);
 		if (process.status !== 'SCHEDULED') return;
 
-		// Create Lead Requeue
+		// Lead Requeue
 		await updateLead({ log: { log: `Lead requeued by Callback #${callbackNum}` } });
+
+		// Send SMS
+		if (sms) {
+			await sendSMS(ProspectKey, sms.smsTemplate);
+			await waitFor(sms.smsWaitTime);
+		}
 
 		// Rule Not Found / Inactive
 		if (!rule) {

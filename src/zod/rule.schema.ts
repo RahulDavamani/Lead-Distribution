@@ -1,4 +1,4 @@
-import { actionsSchema } from '$lib/config/actions.schema';
+import { actionsSchema } from '$lib/config/actions/actions.schema';
 import { z } from 'zod';
 
 export const ruleSchema = z.object({

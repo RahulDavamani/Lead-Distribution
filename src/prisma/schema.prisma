@@ -13843,21 +13843,10 @@ model LdRuleActions {
    responsesNoMatchActions     LdRuleResponseOptions? @relation("ResponsesNoMatchActions")
    responsesLimitExceedActions LdRuleResponseOptions? @relation("ResponsesLimitExceedActions")
 
-   requeueLeadActions  LdRuleRequeueLeadAction[]
-   sendSMSActions      LdRuleSendSMSAction[]
-   completeLeadActions LdRuleCompleteLeadAction[]
-   leadResponses       LdLeadResponse[]
-}
-
-model LdRuleRequeueLeadAction {
-   id        String   @id @unique @default(nanoid())
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
-
-   num           Int
-   scheduleTimes String @default("0")
-
-   actions LdRuleActions[]
+   sendSMSActions          LdRuleSendSMSAction[]
+   scheduleCallbackActions LdRuleScheduleCallbackAction[]
+   completeLeadActions     LdRuleCompleteLeadAction[]
+   leadResponses           LdLeadResponse[]
 }
 
 model LdRuleSendSMSAction {
@@ -13866,8 +13855,22 @@ model LdRuleSendSMSAction {
    updatedAt DateTime @updatedAt
 
    num           Int
-   scheduleTimes String @default("0")
+   scheduleTimes String
    smsTemplate   String
+
+   actions LdRuleActions[]
+}
+
+model LdRuleScheduleCallbackAction {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   num           Int
+   scheduleTimes String
+   sendSMS       Boolean
+   smsTemplate   String
+   smsWaitTime   Int
 
    actions LdRuleActions[]
 }

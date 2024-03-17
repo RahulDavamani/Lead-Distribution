@@ -9,8 +9,8 @@ import type { Operator } from '../zod/operator.schema';
 import type { Affiliate } from '../zod/affiliate.schema';
 import cloneDeep from 'lodash.clonedeep';
 import { nanoid } from 'nanoid';
-import type { Actions } from '$lib/config/actions.schema';
-import { actionsConfigList } from '$lib/config/actions.config';
+import type { Actions } from '$lib/config/actions/actions.schema';
+import { actionsConfigList } from '$lib/config/actions/actions.config';
 
 export interface RuleConfig {
 	init: boolean;

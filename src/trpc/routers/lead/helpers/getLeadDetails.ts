@@ -1,4 +1,4 @@
-import { actionsInclude } from '$lib/config/actions.config';
+import { actionsInclude } from '$lib/config/actions/actions.config';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getProcessName } from './notificationProcess';
 import { getUserValues } from './user';

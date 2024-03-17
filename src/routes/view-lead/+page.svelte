@@ -9,7 +9,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import FormControl from '../components/FormControl.svelte';
-	import { completeLeadStatuses } from '$lib/config/completeLead/completeLeadStatuses';
+	import { completeLeadStatuses } from '$lib/config/actions/completeLead/completeLeadStatuses';
 
 	type Lead = inferProcedureOutput<AppRouter['lead']['view']>['lead'];
 	type Prospect = inferProcedureOutput<AppRouter['lead']['view']>['prospect'];

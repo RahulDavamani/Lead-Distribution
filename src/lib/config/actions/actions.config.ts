@@ -1,12 +1,12 @@
 import type { Prisma } from '@prisma/client';
-import completeLeadConfig from './completeLead/completeLead.config';
-import type { CompleteLead } from './completeLead/completeLead.schema';
-import requeueLeadConfig from './requeueLead/requeueLead.config';
-import type { RequeueLead } from './requeueLead/requeueLead.schema';
 import sendSMSConfig from './sendSMS/sendSMS.config';
 import type { SendSMS } from './sendSMS/sendSMS.schema';
+import scheduleCallbackConfig from './scheduleCallback/scheduleCallback.config';
+import type { ScheduleCallback } from './scheduleCallback/scheduleCallback.schema';
+import completeLeadConfig from './completeLead/completeLead.config';
+import type { CompleteLead } from './completeLead/completeLead.schema';
 
-export type ActionKey = 'requeueLead' | 'sendSMS' | 'completeLead';
+export type ActionKey = 'sendSMS' | 'scheduleCallback' | 'completeLead';
 
 export type ActionsConfig = {
 	[K in ActionKey]: ActionConfig<K>;
@@ -26,15 +26,15 @@ export type ActionLabels<K extends ActionKey> = {
 	keyActions: `${K}Actions`;
 };
 
-export type Action<K extends ActionKey> = K extends 'requeueLead'
-	? RequeueLead
-	: K extends 'sendSMS'
-		? SendSMS
+export type Action<K extends ActionKey> = K extends 'sendSMS'
+	? SendSMS
+	: K extends 'scheduleCallback'
+		? ScheduleCallback
 		: CompleteLead;
 
 export const actionsConfig: ActionsConfig = {
-	...requeueLeadConfig,
 	...sendSMSConfig,
+	...scheduleCallbackConfig,
 	...completeLeadConfig
 };
 

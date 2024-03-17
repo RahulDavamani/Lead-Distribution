@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { afterUpdate, onDestroy, onMount, tick } from 'svelte';
+	import { afterUpdate, onDestroy, onMount } from 'svelte';
 	import { trpc } from '../../trpc/client';
 	import { ui } from '../../stores/ui.store';
 	import { auth } from '../../stores/auth.store';

@@ -1,6 +1,6 @@
 import { prisma } from '../../../../prisma/prisma';
-import { keyActionsList } from '$lib/config/actions.config';
-import type { Actions } from '$lib/config/actions.schema';
+import { keyActionsList } from '$lib/config/actions/actions.config';
+import type { Actions } from '$lib/config/actions/actions.schema';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const upsertActions = async (actions: Actions) => {

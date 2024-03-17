@@ -1,11 +1,11 @@
-import { actionsInclude } from '$lib/config/actions.config';
+import { actionsInclude } from '$lib/config/actions/actions.config';
 import { ruleResponseTypes } from '$lib/data/ruleResponseTypes';
 import { TRPCError } from '@trpc/server';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { executeActions } from './executeActions';
 import { createLeadResponse } from './leadResponse';
 import { updateLeadFunc } from './updateLead';
-import type { Actions } from '$lib/config/actions.schema';
+import type { Actions } from '$lib/config/actions/actions.schema';
 
 export const validateResponse = async (ProspectKey: string, ResponseType: 'disposition' | 'sms', Response: string) => {
 	const updateLead = updateLeadFunc(ProspectKey);

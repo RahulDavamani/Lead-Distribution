@@ -1,11 +1,11 @@
 <script lang="ts">
 	import Modal from '../../../components/Modal.svelte';
-	import { type ActionKey, actionsConfigList, actionsConfig, keyActionsList } from '$lib/config/actions.config';
-	import type { Actions } from '$lib/config/actions.schema';
-	import RequeueLead from '$lib/config/requeueLead/RequeueLead.svelte';
-	import SendSMS from '$lib/config/sendSMS/SendSMS.svelte';
-	import CompleteLead from '$lib/config/completeLead/CompleteLead.svelte';
-	import { getActionsList } from '$lib/config/utils/getActionsList';
+	import { type ActionKey, actionsConfigList, actionsConfig, keyActionsList } from '$lib/config/actions/actions.config';
+	import type { Actions } from '$lib/config/actions/actions.schema';
+	import SendSMS from '$lib/config/actions/sendSMS/SendSMS.svelte';
+	import CompleteLead from '$lib/config/actions/completeLead/CompleteLead.svelte';
+	import { getActionsList } from '$lib/config/actions/utils/getActionsList';
+	import ScheduleCallback from '$lib/config/actions/scheduleCallback/ScheduleCallback.svelte';
 
 	export let actions: Actions;
 	export let actionsName: string;
@@ -71,10 +71,10 @@
 				<div class="steps text-sm">
 					{#each actionsList as action}
 						<div class="step step-primary scale-90">
-							{#if action.requeueLead}
-								Requeue Lead
-							{:else if action.sendSMS}
+							{#if action.sendSMS}
 								Send SMS
+							{:else if action.scheduleCallback}
+								Schedule Callback
 							{:else if action.completeLead}
 								Complete Lead
 							{/if}
@@ -88,10 +88,10 @@
 	<div class="collapse-content">
 		<ul class="steps steps-vertical mt-4 px-4 w-full overflow-visible">
 			{#each actionsList as action}
-				{#if action.requeueLead}
-					<RequeueLead action={action.requeueLead} {actionsCount} {deleteAction} {moveAction} />
-				{:else if action.sendSMS}
+				{#if action.sendSMS}
 					<SendSMS action={action.sendSMS} {actionsCount} {deleteAction} {moveAction} />
+				{:else if action.scheduleCallback}
+					<ScheduleCallback action={action.scheduleCallback} {actionsCount} {deleteAction} {moveAction} />
 				{:else if action.completeLead}
 					<CompleteLead action={action.completeLead} {actionsCount} {deleteAction} {moveAction} />
 				{/if}

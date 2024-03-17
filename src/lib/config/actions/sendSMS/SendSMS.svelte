@@ -1,10 +1,12 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import type { RequeueLead } from './requeueLead.schema';
-	import DurationPicker from '../../../routes/components/DurationPicker.svelte';
+	import FormControl from '../../../../routes/components/FormControl.svelte';
+	import type { SendSMS } from './sendSMS.schema';
+	import Variables from '../../../../routes/rules/rule-config/components/Variables.svelte';
+	import DurationPicker from '../../../../routes/components/DurationPicker.svelte';
 	import { onMount } from 'svelte';
 
-	export let action: RequeueLead;
+	export let action: SendSMS;
 	export let actionsCount: number;
 	export let deleteAction: (id: string) => void;
 	export let moveAction: (num: number, dir: 'up' | 'down') => void;
@@ -25,7 +27,7 @@
 					<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteAction(action.id)}>
 						<Icon icon="mdi:close" class="text-error" width={20} />
 					</button>
-					<div class="font-semibold">Requeue Lead</div>
+					<div class="font-semibold">Send SMS</div>
 				</div>
 				<div>
 					{#if action.num !== 1}
@@ -42,7 +44,19 @@
 			</div>
 			<div class="divider m-0" />
 
-			<div class="flex gap-2 my-2">
+			<FormControl classes="w-full" label="SMS Template">
+				<div class="join">
+					<textarea
+						placeholder="Type here"
+						class="textarea textarea-bordered w-full join-item"
+						bind:value={action.smsTemplate}
+						rows={1}
+					/>
+					<Variables insertVariable={(v) => (action.smsTemplate += v)} />
+				</div>
+			</FormControl>
+
+			<div class="flex gap-2 mt-3 mb-2">
 				<div>
 					<span class="font-semibold">Schedule Times:</span>
 					<span class="font-mono">({scheduleTimes.length})</span>

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import type { CompleteLead } from './completeLead.schema';
-	import FormControl from '../../../routes/components/FormControl.svelte';
 	import { completeLeadStatuses } from './completeLeadStatuses';
+	import FormControl from '../../../../routes/components/FormControl.svelte';
 
 	export let action: CompleteLead;
 	export let actionsCount: number;

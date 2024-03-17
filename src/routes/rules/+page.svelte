@@ -15,7 +15,7 @@
 			clearTimeout(clickTimer);
 			clickTimer = undefined;
 			$ui.alertModal = {
-				title: `Do you want to duplicate ${name}?`,
+				title: `Do you want to duplicate?`,
 				actions: [
 					{
 						name: 'Cancel',

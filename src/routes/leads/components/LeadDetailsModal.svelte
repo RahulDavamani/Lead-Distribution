@@ -5,7 +5,7 @@
 	import Loader from '../../components/Loader.svelte';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
-	import { getActionsList } from '$lib/config/utils/getActionsList';
+	import { getActionsList } from '$lib/config/actions/utils/getActionsList';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
