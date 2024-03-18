@@ -13898,7 +13898,8 @@ model LdLead {
    ruleId String?
    rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
-   isPicked Boolean
+   isPicked         Boolean
+   overrideCallback Boolean
 
    logs                  LdLeadLog[]
    notificationProcesses LdLeadNotificationProcess[]

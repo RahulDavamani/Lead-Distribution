@@ -14,7 +14,7 @@ export const validateResponse = async (ProspectKey: string, ResponseType: 'dispo
 	const lead = await prisma.ldLead
 		.findUniqueOrThrow({
 			where: { ProspectKey },
-			include: {
+			select: {
 				rule: {
 					include: {
 						responses: { include: { actions: actionsInclude }, orderBy: { num: 'asc' } },

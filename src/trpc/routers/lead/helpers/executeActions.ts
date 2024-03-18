@@ -17,6 +17,15 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 		.count({ where: { lead: { ProspectKey } } })
 		.catch(prismaErrorHandler);
 
+	const { overrideCallback } = await prisma.ldLead.findUniqueOrThrow({
+		where: { ProspectKey },
+		select: { overrideCallback: true }
+	});
+	await prisma.ldLead.update({
+		where: { ProspectKey },
+		data: { overrideCallback: false }
+	});
+
 	for (const action of actionsList) {
 		// Send SMS
 		if (action.sendSMS) {
@@ -30,12 +39,15 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 		// Schedule Callback
 		if (action.scheduleCallback) {
 			const { num, scheduleTimes, sendSMS, smsTemplate, smsWaitTime } = action.scheduleCallback;
-			const { scheduleTimeText, scheduledTime } = parseScheduleTimes(scheduleTimes, responseCount);
-			try {
-				await scheduleCallback(ProspectKey, scheduledTime, sendSMS ? { smsTemplate, smsWaitTime } : undefined);
-				await updateLead({ log: { log: `Action #${num}: Lead callback scheduled in ${scheduleTimeText}` } });
-			} catch (error) {
-				await updateLead({ log: { log: `Action #${num}: Failed to schedule callback` } });
+			if (overrideCallback) await updateLead({ log: { log: `Action #${num}: Schedule callback overridden` } });
+			else {
+				const { scheduleTimeText, scheduledTime } = parseScheduleTimes(scheduleTimes, responseCount);
+				try {
+					await scheduleCallback(ProspectKey, scheduledTime, sendSMS ? { smsTemplate, smsWaitTime } : undefined);
+					await updateLead({ log: { log: `Action #${num}: Lead callback scheduled in ${scheduleTimeText}` } });
+				} catch (error) {
+					await updateLead({ log: { log: `Action #${num}: Failed to schedule callback` } });
+				}
 			}
 		}
 
