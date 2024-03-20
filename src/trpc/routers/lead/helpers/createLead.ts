@@ -15,6 +15,7 @@ export const createLeadFunc =
 					ProspectKey,
 					ruleId,
 					isPicked: false,
+					overrideCallback: false,
 					logs: { create: log }
 				}
 			})

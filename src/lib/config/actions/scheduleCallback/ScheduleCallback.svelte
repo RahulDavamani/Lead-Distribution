@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import type { ScheduleCallback } from './scheduleCallback.schema';
 	import FormControl from '../../../../routes/components/FormControl.svelte';
+	import Variables from '../../../../routes/rules/rule-config/components/Variables.svelte';
 
 	export let action: ScheduleCallback;
 	export let actionsCount: number;
@@ -73,12 +74,16 @@
 			</FormControl>
 			<div class="flex items-start gap-4">
 				<FormControl label="SMS Template" classes="w-full">
-					<textarea
-						class="textarea textarea-bordered"
-						rows={1}
-						bind:value={action.smsTemplate}
-						disabled={!action.sendSMS}
-					/>
+					<div class="join">
+						<textarea
+							class="textarea textarea-bordered w-full join-item"
+							rows={1}
+							bind:value={action.smsTemplate}
+							disabled={!action.sendSMS}
+						/>
+
+						<Variables variables={['LeadStatus']} insertVariable={(v) => (action.smsTemplate += v)} />
+					</div>
 				</FormControl>
 				<FormControl label="Wait Time">
 					<DurationPicker bind:duration={action.smsWaitTime} disabled={!action.sendSMS} />

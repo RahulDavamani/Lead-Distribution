@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler.js';
 import { requeueLead } from '../../trpc/routers/lead/helpers/requeueLead.js';
 import { insertLead } from '../../trpc/routers/lead/helpers/insertLead.js';
+import { scheduleJob } from 'node-schedule';
 
 export const load = async (event) => {
 	const ProspectKey = event.url.searchParams.get('ProspectKey');
@@ -22,8 +23,10 @@ export const load = async (event) => {
 		})
 		.catch(prismaErrorHandler);
 
-	if (completeLead) requeueLead(ProspectKey);
-	else insertLead(ProspectKey);
+	scheduleJob(new Date(Date.now() + 1000), async () => {
+		if (completeLead) requeueLead(ProspectKey);
+		else insertLead(ProspectKey);
+	});
 
 	return {};
 };

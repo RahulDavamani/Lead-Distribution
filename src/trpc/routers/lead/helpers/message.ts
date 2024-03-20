@@ -46,7 +46,7 @@ export const sendSMS = async (ProspectKey: string, smsTemplate: string) => {
 	}
 
 	await updateLead({
-		log: { log: `SMS #${messages + 1}: Text message sent to customer ` },
+		log: { log: `SMS #${messages + 1}: Text message sent to customer` },
 		message: { message, messageResponse: { create: messageResponse } }
 	});
 };

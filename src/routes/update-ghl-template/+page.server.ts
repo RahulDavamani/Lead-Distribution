@@ -2,11 +2,13 @@ import { error } from '@sveltejs/kit';
 import { updateGHLTemplates } from '../../trpc/routers/lead/helpers/ghl.js';
 import prismaErrorHandler from '../../prisma/prismaErrorHandler.js';
 import { generateMessage } from '../../trpc/routers/lead/helpers/generateMessage.js';
+import { updateLeadFunc } from '../../trpc/routers/lead/helpers/updateLead.js';
 
 export const load = async (event) => {
 	const SendSMSTemplate = event.url.searchParams.get('SendSMSTemplate');
 	const ProspectKey = event.url.searchParams.get('ProspectKey');
 	if (!ProspectKey) throw error(400, 'Bad Request: Missing params "ProspectKey"');
+	const updateLead = updateLeadFunc(ProspectKey);
 
 	const { RefId, CompanyKey } = await prisma.leadProspect
 		.findFirstOrThrow({
@@ -41,6 +43,14 @@ export const load = async (event) => {
 					orderid: RefId,
 					outboundcallnumber: outboundCallNumber
 				};
+
+	if (SendSMSTemplate) {
+		const messages = await prisma.ldLeadMessage.count({ where: { lead: { ProspectKey } } }).catch(prismaErrorHandler);
+		await updateLead({
+			log: { log: `SMS #${messages + 1}: Text message sent to customer` },
+			message: { message: ghlTemplate['bundlesmstemplate'] }
+		});
+	}
 
 	await updateGHLTemplates(ProspectKey, ghlTemplate);
 	return {};

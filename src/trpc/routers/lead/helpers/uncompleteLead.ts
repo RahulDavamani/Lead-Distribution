@@ -24,7 +24,8 @@ export const unCompleteLead = async (ProspectKey: string) => {
 			ruleId,
 			VonageGUID,
 			ProspectKey,
-			isPicked: false
+			isPicked: false,
+			overrideCallback: false
 		},
 		select: { id: true }
 	});

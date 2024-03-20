@@ -106,6 +106,5 @@ export const leadRouter = router({
 				body: JSON.stringify(prospect)
 			});
 			if (res.status !== 200) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Bad Request' });
-			return;
 		})
 });

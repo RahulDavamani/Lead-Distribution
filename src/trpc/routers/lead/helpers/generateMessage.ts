@@ -1,6 +1,7 @@
 import { prisma } from '../../../../prisma/prisma';
 import { getTimeElapsedText } from '$lib/client/DateTime';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { TRPCError } from '@trpc/server';
 
 type Variables = { [key: string]: string };
 
@@ -23,14 +24,25 @@ export const generateMessage = async (ProspectKey: string, textTemplate: string,
 		.catch(prismaErrorHandler);
 
 	// Get Lead
-	const { createdAt, rule } = await prisma.ldLead
-		.findUniqueOrThrow({
+	let lead = await prisma.ldLead
+		.findUnique({
 			where: { ProspectKey },
 			select: { createdAt: true, rule: { select: { name: true, outboundCallNumber: true } } }
 		})
 		.catch(prismaErrorHandler);
 
-	const timeElapsed = getTimeElapsedText(createdAt, new Date());
+	if (!lead) {
+		lead = await prisma.ldLeadCompleted
+			.findUnique({
+				where: { ProspectKey },
+				select: { createdAt: true, rule: { select: { name: true, outboundCallNumber: true } } }
+			})
+			.catch(prismaErrorHandler);
+	}
+	if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found' });
+	const { rule, createdAt } = lead;
+
+	const timeElapsed = createdAt ? getTimeElapsedText(createdAt, new Date()) : '';
 
 	const allVariables: Variables = {
 		CustomerFirstName: CustomerFirstName ?? '',
