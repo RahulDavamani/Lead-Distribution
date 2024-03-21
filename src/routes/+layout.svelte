@@ -19,9 +19,12 @@
 
 	$: error = (() => {
 		if (!init) return;
-		if ($page.url.pathname.startsWith('/lead-distribute')) return;
+		if ($page.url.pathname.startsWith('/queue-lead')) return;
+		if ($page.url.pathname.startsWith('/complete-lead')) return;
 		if ($page.url.pathname.startsWith('/update-disposition')) return;
 		if ($page.url.pathname.startsWith('/validate-sms-response')) return;
+		if ($page.url.pathname.startsWith('/update-ghl-template')) return;
+		if ($page.url.pathname.startsWith('/schedule-callback')) return;
 		if ($page.url.pathname.startsWith('/leads-ws')) return;
 		if ($page.url.pathname.startsWith('/test')) return;
 		if (!$auth) return { code: 401, message: 'Unauthorized' };

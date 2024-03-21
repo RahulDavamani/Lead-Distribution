@@ -87,7 +87,7 @@
 		await fetchCompletedLeads(dateRange);
 		ui.setLoader();
 
-		interval = setInterval(fetchQueuedLeads, 1000);
+		interval = setInterval(fetchQueuedLeads, 5000);
 		init = true;
 	});
 

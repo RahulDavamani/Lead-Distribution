@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { scheduleCallback } from '../../trpc/routers/lead/helpers/scheduleCallback.js';
+import { updateLeadFunc } from '../../trpc/routers/lead/helpers/updateLead.js';
 
 export const load = async (event) => {
 	const ProspectKey = event.url.searchParams.get('ProspectKey');
@@ -11,6 +12,10 @@ export const load = async (event) => {
 	await prisma.ldLead.update({
 		where: { ProspectKey },
 		data: { overrideCallback: true }
+	});
+
+	await updateLeadFunc(ProspectKey)({
+		log: { log: `Lead callback manually scheduled at ${scheduledTime.toLocaleString()}` }
 	});
 	await scheduleCallback(ProspectKey, scheduledTime, undefined);
 
