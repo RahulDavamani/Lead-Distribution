@@ -5,7 +5,7 @@ import { sendSMS } from './message';
 import { getCompanyKey } from './getCompanyKey';
 import { createLeadFunc } from './createLead';
 
-export const insertLead = async (ProspectKey: string) => {
+export const insertLead = async (ProspectKey: string, { isSendSMS = true, dispatchNotification = true } = {}) => {
 	const createLead = createLeadFunc(ProspectKey);
 
 	// Check if Lead is already in Queue
@@ -49,11 +49,11 @@ export const insertLead = async (ProspectKey: string) => {
 	}
 
 	// Create Lead
-	await createLead({ ruleId: rule.id, log: { log: 'Lead Queued' } });
+	await createLead({ ruleId: rule.id, log: { log: 'Lead inserted into queue' } });
 
 	// Send SMS
-	await sendSMS(ProspectKey, rule.smsTemplate);
+	if (isSendSMS) await sendSMS(ProspectKey, rule.smsTemplate);
 
 	// Send Notification to Operators
-	await dispatchNotifications(ProspectKey, 0, 0);
+	if (dispatchNotification) await dispatchNotifications(ProspectKey, 0, 0);
 };

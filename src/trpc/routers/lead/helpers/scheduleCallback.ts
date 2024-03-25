@@ -10,7 +10,8 @@ import { waitFor } from '$lib/waitFor';
 export const scheduleCallback = async (
 	ProspectKey: string,
 	scheduledTime: Date,
-	sms: { smsTemplate: string; smsWaitTime: number } | undefined
+	sms: { smsTemplate: string; smsWaitTime: number } | undefined,
+	defaultCallbackNum = 0
 ) => {
 	const updateLead = updateLeadFunc(ProspectKey);
 	// Get Lead
@@ -33,7 +34,8 @@ export const scheduleCallback = async (
 	await updateLead({ isPicked: false });
 
 	// Create Lead Notification Process
-	const callbackNum = notificationProcesses[0].callbackNum + 1;
+	const callbackNum =
+		notificationProcesses.length === 0 ? defaultCallbackNum : notificationProcesses[0].callbackNum + 1;
 	const { id } = await prisma.ldLeadNotificationProcess.create({
 		data: {
 			lead: { connect: { ProspectKey } },

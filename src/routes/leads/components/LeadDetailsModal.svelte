@@ -163,12 +163,12 @@
 												</summary>
 												<div class="collapse-content flex justify-center">
 													<ul class="steps">
-														{#each actionsList as { requeueLead, sendSMS, completeLead }}
+														{#each actionsList as { sendSMS, scheduleCallback, completeLead }}
 															<li class="step step-accent">
-																{requeueLead
-																	? 'Requeue Lead'
-																	: sendSMS
-																		? 'Send SMS'
+																{sendSMS
+																	? 'Send SMS'
+																	: scheduleCallback
+																		? 'Schedule Callback'
 																		: completeLead
 																			? 'Complete Lead'
 																			: ''}

@@ -3,19 +3,21 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 type Args = {
 	ruleId?: string;
+	isPicked?: boolean;
+	overrideCallback?: boolean;
 	log?: Prisma.LdLeadLogCreateInput;
 };
 
 export const createLeadFunc =
 	(ProspectKey: string) =>
-	async ({ ruleId, log }: Args) =>
+	async ({ ruleId, log, isPicked, overrideCallback }: Args) =>
 		await prisma.ldLead
 			.create({
 				data: {
 					ProspectKey,
 					ruleId,
-					isPicked: false,
-					overrideCallback: false,
+					isPicked: isPicked ?? false,
+					overrideCallback: overrideCallback ?? false,
 					logs: { create: log }
 				}
 			})
