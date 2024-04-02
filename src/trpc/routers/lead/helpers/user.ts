@@ -3,7 +3,10 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const getUserValues = async (UserKey: string) =>
 	await prisma.users
-		.findUnique({ where: { UserKey }, select: { VonageAgentId: true, FirstName: true, LastName: true, Email: true } })
+		.findUnique({
+			where: { UserKey },
+			select: { VonageAgentId: true, FirstName: true, LastName: true, Email: true, CompanyKey: true }
+		})
 		.catch(prismaErrorHandler);
 
 export const getUserStr = async (UserKey: string) => {

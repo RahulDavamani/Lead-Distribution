@@ -6,11 +6,16 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getActionsList } from '$lib/config/actions/utils/getActionsList';
+	import { onMount } from 'svelte';
+	import { getTimeElapsed, getTimeElapsedText } from '$lib/client/DateTime';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
 	export let id: string | undefined;
 	let leadDetails: LeadDetails | undefined;
+
+	let today = new Date();
+	onMount(() => setInterval(() => (today = new Date()), 1000));
 
 	const fetchLeadDetails = async (id: string) => {
 		const type = $page.url.searchParams.get('type') as 'queued' | 'completed';
@@ -46,23 +51,33 @@
 				<div class="grid grid-cols-4 col-span-4 gap-4">
 					<div class="text-lg font-semibold col-span-4">Notification Dispatch Process:</div>
 
-					{#each leadDetails.notificationProcesses as { processName, createdAt, status, notificationAttempts, escalations }}
+					{#each leadDetails.notificationProcesses as { processName, createdAt, completedAt, status, notificationAttempts, escalations }}
+						{@const leadResponseTime = getTimeElapsed(createdAt, completedAt ?? today)}
 						<details class="collapse collapse-arrow border shadow-sm col-span-4">
 							<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
 								<div class="flex justify-between items-center">
 									<div>
-										<div class="font-semibold">{processName}</div>
+										<div class="flex items-center gap-4">
+											<div class="font-semibold">{processName}</div>
+											{#if status === 'SCHEDULED'}
+												<div class="badge badge-sm badge-info">Scheduled</div>
+											{:else if status === 'ACTIVE'}
+												<div class="badge badge-sm badge-warning">In Progress</div>
+											{:else if status === 'COMPLETED'}
+												<div class="badge badge-sm badge-success">Completed</div>
+											{:else if status === 'CANCELLED'}
+												<div class="badge badge-sm badge-error">Cancelled</div>
+											{/if}
+										</div>
 										<div>{createdAt.toLocaleString()}</div>
 									</div>
-									{#if status === 'SCHEDULED'}
-										<div class="badge badge-info">Scheduled</div>
-									{:else if status === 'ACTIVE'}
-										<div class="badge badge-warning">In Progress</div>
-									{:else if status === 'COMPLETED'}
-										<div class="badge badge-success">Completed</div>
-									{:else if status === 'CANCELLED'}
-										<div class="badge badge-error">Cancelled</div>
-									{/if}
+
+									<div class="max-w-48 text-right mr-2">
+										<span class="font-semibold">Lead Response Time:</span>
+										<span>
+											{getTimeElapsedText(createdAt, leadResponseTime < 0 ? createdAt : completedAt ?? today)}
+										</span>
+									</div>
 								</div>
 							</summary>
 							<div class="collapse-content">

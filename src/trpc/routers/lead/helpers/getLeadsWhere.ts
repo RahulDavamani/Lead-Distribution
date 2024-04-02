@@ -1,7 +1,9 @@
 import type { Prisma } from '@prisma/client';
+import { getUserValues } from './user';
 
-export const getLeadsWhere = (roleType: string, UserKey?: string) => {
+export const getLeadsWhere = async (roleType: string, UserKey?: string) => {
 	let where: Prisma.LdLeadWhereInput | Prisma.LdLeadCompletedWhereInput = {};
+	const CompanyKey = UserKey ? (await getUserValues(UserKey))?.CompanyKey : null;
 	switch (roleType) {
 		case 'ADMIN':
 			where = {};
@@ -12,7 +14,10 @@ export const getLeadsWhere = (roleType: string, UserKey?: string) => {
 			break;
 
 		case 'AGENT':
-			where = { rule: { operators: { some: { UserKey } } } };
+			where = {
+				rule: { operators: { some: { UserKey } } },
+				OR: [{ CompanyKey }, { CompanyKey: null }]
+			};
 			break;
 	}
 	return where;

@@ -186,16 +186,18 @@
 				<th>Rule</th>
 				<th class="w-1">Created On</th>
 				<th class="w-1">Completed On</th>
+				<th>Lead Duration</th>
 				<th>Lead Response Time</th>
 				<th>Customer Talk Time</th>
 				<th class="w-32">Customer</th>
+				<th class="w-32">Company</th>
 				<th>Complete Status</th>
 				<th>Completed/Closed By</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, success, completeStatus, customerTalkTime, user }}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, company, rule, success, completeStatus, customerTalkTime, user, firstCallAt }}
 				<tr class="hover">
 					{#if deleteLeadIds !== undefined}
 						<td class="w-1">
@@ -246,11 +248,15 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, firstCallAt ?? new Date())}</td>
+
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
 					</td>
+					<td>{company?.CompanyName ?? 'All'}</td>
+
 					<td>{completeStatus ?? 'N/A'}</td>
 					<td>{user ?? 'N/A'}</td>
 					<td>

@@ -91,16 +91,18 @@ export const endNotificationProcesses = async (ProspectKey: string) => {
 	const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
 		where: {
 			lead: { ProspectKey },
-			status: { in: ['SCHEDULED', 'ACTIVE'] }
+			OR: [{ status: { in: ['SCHEDULED', 'ACTIVE'] } }, { completedAt: null }]
 		},
-		select: { id: true, status: true }
+		select: { id: true, status: true, completedAt: true }
 	});
+
 	await Promise.all(
-		notificationProcesses.map(async ({ id, status }) => {
+		notificationProcesses.map(async ({ id, status, completedAt }) => {
 			await prisma.ldLeadNotificationProcess.update({
 				where: { id },
 				data: {
-					status: status === 'SCHEDULED' ? 'CANCELLED' : 'COMPLETED'
+					status: status === 'SCHEDULED' ? 'CANCELLED' : status === 'ACTIVE' ? 'COMPLETED' : status,
+					completedAt: completedAt ?? new Date()
 				}
 			});
 		})

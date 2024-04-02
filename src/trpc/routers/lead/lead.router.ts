@@ -14,6 +14,7 @@ import { getLeadDetails } from './helpers/getLeadDetails';
 import { getQueuedLeads } from './helpers/getQueuedLeads';
 import { getCompletedLeads } from './helpers/getCompletedLeads';
 import { deleteLeads } from './helpers/deleteLeads';
+import { getRuleCompanies } from './helpers/getRuleCompanies';
 
 export const leadRouter = router({
 	getQueued: procedure
@@ -35,6 +36,19 @@ export const leadRouter = router({
 	getLeadDetails: procedure
 		.input(z.object({ id: z.string().min(1), type: z.enum(['queued', 'completed']) }))
 		.query(async ({ input: { id, type } }) => await getLeadDetails(id, type)),
+
+	getRuleCompanies: procedure
+		.input(z.object({ ruleId: z.string().min(1) }))
+		.query(async ({ input: { ruleId } }) => await getRuleCompanies(ruleId)),
+
+	updateCompany: procedure
+		.input(z.object({ id: z.string().min(1), CompanyKey: z.string().min(1).nullable() }))
+		.query(async ({ input: { id, CompanyKey } }) => {
+			await prisma.ldLead.update({
+				where: { id },
+				data: { CompanyKey }
+			});
+		}),
 
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1), roleType: roleTypeSchema }))

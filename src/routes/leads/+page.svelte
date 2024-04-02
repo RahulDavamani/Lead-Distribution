@@ -12,6 +12,7 @@
 	import Icon from '@iconify/svelte';
 	import LeadDetailsModal from './components/LeadDetailsModal.svelte';
 	import SettingsModal from './components/SettingsModal.svelte';
+	import SwitchCompanyModal from './components/SwitchCompanyModal.svelte';
 
 	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
 	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
@@ -21,6 +22,7 @@
 	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
 	let affiliateSelect: string | undefined;
 	let leadDetailsModelId: string | undefined;
+	let switchCompanyModalLead: { id: string; ruleId: string; CompanyKey: string | null } | undefined;
 	let showSettingsModal = false;
 
 	const {
@@ -157,6 +159,7 @@
 					affiliateSelect ? CompanyName === affiliateSelect : true
 				)}
 				bind:leadDetailsModelId
+				bind:switchCompanyModalLead
 			/>
 		{:else}
 			<CompletedLeadsTable
@@ -172,4 +175,5 @@
 </div>
 
 <LeadDetailsModal bind:id={leadDetailsModelId} />
+<SwitchCompanyModal bind:lead={switchCompanyModalLead} />
 <SettingsModal bind:showModal={showSettingsModal} />

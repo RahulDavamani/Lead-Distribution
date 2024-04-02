@@ -14,6 +14,7 @@
 
 	export let queuedLeads: QueuedLead[];
 	export let leadDetailsModelId: string | undefined;
+	export let switchCompanyModalLead: { id: string; ruleId: string; CompanyKey: string | null } | undefined;
 
 	let today = new Date();
 	onMount(() => setInterval(() => (today = new Date()), 1000));
@@ -174,14 +175,16 @@
 				<th>Rule</th>
 				<th>Created On</th>
 				<th>Updated On</th>
-				<th><div class="text-center">Lead Time<br />Elapsed</div></th>
-				<th>Customer</th>
+				<th>Lead Duration</th>
+				<th><div class="text-center">Lead Response<br />Time</div></th>
+				<th class="w-32">Customer</th>
+				<th class="w-32">Company</th>
 				<th>Lead Status</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, rule, notificationProcess, notificationProcessName, disposition, callUser }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, CompanyKey, company, rule, notificationProcess, notificationProcessName, disposition, callUser, firstCallAt }, i}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						callUser?.UserKey !== UserKey &&
@@ -280,9 +283,23 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, today)}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, firstCallAt ?? today)}</td>
 					<td>
 						<div>{CustomerName ?? 'N/A'}</div>
 						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
+					</td>
+					<td>
+						<div class="flex justify-between items-center">
+							<div class="">{company?.CompanyName ?? 'All'}</div>
+							{#if rule && roleType !== 'AGENT'}
+								<button
+									class="btn btn-xs btn-ghost text-primary p-0"
+									on:click={() => rule && (switchCompanyModalLead = { id, ruleId: rule.id, CompanyKey })}
+								>
+									<Icon icon="mdi:swap-horizontal" width={22} />
+								</button>
+							{/if}
+						</div>
 					</td>
 					<td>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>

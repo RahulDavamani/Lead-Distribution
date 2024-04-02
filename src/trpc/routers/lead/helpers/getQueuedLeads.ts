@@ -5,9 +5,10 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getProspectDetails } from './getProspectDetails';
 import { getProcessNameSplit } from './notificationProcess';
 import { getUserStr } from './user';
+import { getCompanyValues } from './company';
 
 export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
-	const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadWhereInput;
+	const where = (await getLeadsWhere(roleType, UserKey)) as Prisma.LdLeadWhereInput;
 
 	let queuedLeads = await Promise.all(
 		(
@@ -17,6 +18,7 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 					include: {
 						rule: {
 							select: {
+								id: true,
 								name: true,
 								supervisors: {
 									where: { UserKey },
@@ -29,6 +31,7 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 							orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
 							select: {
 								createdAt: true,
+								completedAt: true,
 								status: true,
 								callbackNum: true,
 								requeueNum: true,
@@ -53,8 +56,7 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 
 						calls: {
 							orderBy: { createdAt: 'desc' },
-							take: 1,
-							select: { UserKey: true }
+							select: { createdAt: true, UserKey: true }
 						},
 
 						responses: {
@@ -71,6 +73,7 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 			return {
 				...lead,
 				prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
+				company: lead.CompanyKey ? await getCompanyValues(lead.CompanyKey) : undefined,
 				isNewLead: lead.notificationProcesses.length === 0 || lead.notificationProcesses[0].callbackNum === 0,
 				notificationProcess,
 				notificationProcessName: getProcessNameSplit(
@@ -78,6 +81,7 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 					notificationProcess?.requeueNum ?? 0
 				),
 				disposition: lead.responses.length > 0 ? lead.responses[0].responseValue : undefined,
+				firstCallAt: lead.calls.length > 0 ? lead.calls[lead.calls.length - 1].createdAt : undefined,
 				callUser:
 					lead.calls.length > 0
 						? {

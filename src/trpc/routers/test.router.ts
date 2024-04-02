@@ -2,6 +2,60 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// console.log(await prisma.companies.count({}));
+		// const leads = await prisma.ldLeadCompleted.findMany({
+		// 	select: {
+		// 		id: true,
+		// 		updatedAt: true,
+		// 		notificationProcesses: {
+		// 			select: { id: true, createdAt: true, completedAt: true },
+		// 			orderBy: { createdAt: 'desc' }
+		// 		}
+		// 	}
+		// });
+		// for (const { updatedAt, notificationProcesses } of leads) {
+		// 	let i = 0;
+		// 	for (const { id } of notificationProcesses) {
+		// 		if (i === 0) {
+		// 			await prisma.ldLeadNotificationProcess.update({
+		// 				where: { id },
+		// 				data: { completedAt: updatedAt }
+		// 			});
+		// 		} else {
+		// 			await prisma.ldLeadNotificationProcess.update({
+		// 				where: { id },
+		// 				data: { completedAt: notificationProcesses[i - 1].createdAt }
+		// 			});
+		// 		}
+		// 		i += 1;
+		// 	}
+		// }
+		// const leads = await prisma.ldLead.findMany({
+		// 	select: {
+		// 		id: true,
+		// 		notificationProcesses: {
+		// 			select: { id: true, createdAt: true, completedAt: true },
+		// 			orderBy: { createdAt: 'desc' }
+		// 		}
+		// 	}
+		// });
+		// for (const { notificationProcesses } of leads) {
+		// 	let i = 0;
+		// 	for (const { id } of notificationProcesses) {
+		// 		if (i === 0) {
+		// 			await prisma.ldLeadNotificationProcess.update({
+		// 				where: { id },
+		// 				data: { completedAt: null }
+		// 			});
+		// 		} else {
+		// 			await prisma.ldLeadNotificationProcess.update({
+		// 				where: { id },
+		// 				data: { completedAt: notificationProcesses[i - 1].createdAt }
+		// 			});
+		// 		}
+		// 		i += 1;
+		// 	}
+		// }
 		// const ProspectKey = '05F46F18-47F7-4F27-A982-C60FEC8F0159';
 		// const CompanyKey = await getCompanyKey(ProspectKey);
 		// if (!CompanyKey) return console.log(404, 'CompanyKey not found');

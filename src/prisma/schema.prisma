@@ -2386,8 +2386,8 @@ model ConfigElement {
    ModifiedBy    String?  @db.UniqueIdentifier
    ValidFrom     DateTime
    ValidTo       DateTime
-   ElementValue2 String?  @db.NVarChar(1024)
-   ElementValue3 String?  @db.NVarChar(1024)
+   ElementValue2 String?  @db.NVarChar(Max)
+   ElementValue3 String?  @db.NVarChar(Max)
    ElementValue4 String?  @db.NVarChar(1024)
    ElementValue5 String?  @db.NVarChar(1024)
 
@@ -2404,8 +2404,8 @@ model ConfigElementHistory {
    ModifiedBy    String?  @db.UniqueIdentifier
    ValidFrom     DateTime
    ValidTo       DateTime
-   ElementValue2 String?  @db.NVarChar(1024)
-   ElementValue3 String?  @db.NVarChar(1024)
+   ElementValue2 String?  @db.NVarChar(Max)
+   ElementValue3 String?  @db.NVarChar(Max)
    ElementValue4 String?  @db.NVarChar(1024)
    ElementValue5 String?  @db.NVarChar(1024)
 
@@ -3800,30 +3800,31 @@ model ImportAlderPayment {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportAlticeOptimumPayment {
-   Seq                 Int       @default(autoincrement())
-   ImportId            Int
-   VENDOR              String?   @db.NVarChar(50)
-   LEAD_AGENT_ID       String?   @map("LEAD AGENT ID") @db.NVarChar(255)
-   Corp                Int?
-   House               BigInt?
-   Cust                Int?
-   CUSTOMER_NAME       String?   @map("CUSTOMER NAME") @db.NVarChar(255)
-   ORDER_CONFIRMATION  BigInt?   @map("ORDER CONFIRMATION")
-   SALES_CHANNEL       String?   @map("SALES CHANNEL") @db.NVarChar(50)
-   Sales_Rep_ID        String?   @map("Sales Rep ID") @db.NVarChar(50)
-   AFFILIATE_ID        String?   @map("AFFILIATE ID") @db.NVarChar(50)
-   PRODUCT_DESCRIPTION String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
-   SPEED_TIER          String?   @map("SPEED TIER") @db.NVarChar(50)
-   PRODUCT_SPEED       String?   @map("PRODUCT/SPEED") @db.NVarChar(100)
-   DATE                DateTime? @db.Date
-   LINE_DESCRIPTION    String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
-   TOTAL_COMMISSION    Decimal?  @map("TOTAL COMMISSION") @db.Decimal(10, 2)
-   MANAGER             String?   @db.NVarChar(100)
-   UNIT_COUNT          Int?      @map("UNIT COUNT")
-   Customer            String?   @db.VarChar(20)
-   Addy                String?   @db.VarChar(255)
-   InstallConfirmation BigInt?
-   Account__           String?   @map("Account #") @db.VarChar(12)
+   Seq                     Int       @default(autoincrement())
+   ImportId                Int
+   VENDOR                  String?   @db.NVarChar(50)
+   LEAD_AGENT_ID           String?   @map("LEAD AGENT ID") @db.NVarChar(255)
+   Corp                    Int?
+   House                   BigInt?
+   Cust                    Int?
+   CUSTOMER_NAME           String?   @map("CUSTOMER NAME") @db.NVarChar(255)
+   ORDER_CONFIRMATION      BigInt?   @map("ORDER CONFIRMATION")
+   SALES_CHANNEL           String?   @map("SALES CHANNEL") @db.NVarChar(50)
+   Sales_Rep_ID            String?   @map("Sales Rep ID") @db.NVarChar(50)
+   AFFILIATE_ID            String?   @map("AFFILIATE ID") @db.NVarChar(50)
+   PRODUCT_DESCRIPTION     String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
+   SPEED_TIER              String?   @map("SPEED TIER") @db.NVarChar(50)
+   PRODUCT_SPEED           String?   @map("PRODUCT/SPEED") @db.NVarChar(100)
+   DATE                    DateTime? @db.Date
+   LINE_DESCRIPTION        String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
+   TOTAL_COMMISSION        Decimal?  @map("TOTAL COMMISSION") @db.Decimal(10, 2)
+   MANAGER                 String?   @db.NVarChar(100)
+   UNIT_COUNT              Int?      @map("UNIT COUNT")
+   Customer                String?   @db.VarChar(20)
+   Addy                    String?   @db.VarChar(255)
+   InstallConfirmation     BigInt?
+   Account__               String?   @map("Account #") @db.VarChar(12)
+   Order_Confirmation_Orig BigInt?   @map("Order Confirmation Orig")
 
    @@ignore
 }
@@ -3865,36 +3866,38 @@ model ImportAlticeOrders {
    CLUSTER_CODE            String?   @db.VarChar(10)
    InstallConfirmation     BigInt?
    AccountDerived          String?   @db.VarChar(12)
+   OPT_ADVANTAGE_FLAG      String?   @db.VarChar(20)
 
    @@ignore
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportAlticeSuddenlinkPayment {
-   Seq                 Int       @default(autoincrement())
-   ImportId            Int
-   VENDOR              String?   @db.NVarChar(50)
-   LEAD_AGENT_ID       String?   @map("LEAD AGENT ID") @db.NVarChar(255)
-   Corp                Int?
-   House               BigInt?
-   Cust                Int?
-   Customer_Name       String?   @map("Customer Name") @db.NVarChar(255)
-   Order_Confirmation  BigInt?   @map("Order Confirmation")
-   Sales_Channel       String?   @db.NVarChar(50)
-   SlsRep              String?   @db.NVarChar(50)
-   Affiliate_ID        String?   @map("Affiliate ID") @db.NVarChar(50)
-   PRODUCT_DESCRIPTION String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
-   Speed_Tier          String?   @map("Speed Tier") @db.NVarChar(50)
-   PRODUCT_SPEED       String?   @map("PRODUCT/SPEED") @db.NVarChar(255)
-   Connect_Date        DateTime? @map("Connect Date") @db.Date
-   LINE_DESCRIPTION    String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
-   COMMISSION          Decimal?  @db.Decimal(10, 2)
-   MANAGER             String?   @db.NVarChar(100)
-   UNIT_COUNT          Int?      @map("UNIT COUNT")
-   Customer            String?   @db.VarChar(20)
-   Addy                String?   @db.VarChar(255)
-   InstallConfirmation BigInt?
-   Account__           String?   @map("Account #") @db.VarChar(12)
+   Seq                     Int       @default(autoincrement())
+   ImportId                Int
+   VENDOR                  String?   @db.NVarChar(50)
+   LEAD_AGENT_ID           String?   @map("LEAD AGENT ID") @db.NVarChar(255)
+   Corp                    Int?
+   House                   BigInt?
+   Cust                    Int?
+   Customer_Name           String?   @map("Customer Name") @db.NVarChar(255)
+   Order_Confirmation      BigInt?   @map("Order Confirmation")
+   Sales_Channel           String?   @db.NVarChar(50)
+   SlsRep                  String?   @db.NVarChar(50)
+   Affiliate_ID            String?   @map("Affiliate ID") @db.NVarChar(50)
+   PRODUCT_DESCRIPTION     String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
+   Speed_Tier              String?   @map("Speed Tier") @db.NVarChar(50)
+   PRODUCT_SPEED           String?   @map("PRODUCT/SPEED") @db.NVarChar(255)
+   Connect_Date            DateTime? @map("Connect Date") @db.Date
+   LINE_DESCRIPTION        String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
+   COMMISSION              Decimal?  @db.Decimal(10, 2)
+   MANAGER                 String?   @db.NVarChar(100)
+   UNIT_COUNT              Int?      @map("UNIT COUNT")
+   Customer                String?   @db.VarChar(20)
+   Addy                    String?   @db.VarChar(255)
+   InstallConfirmation     BigInt?
+   Account__               String?   @map("Account #") @db.VarChar(12)
+   Order_Confirmation_Orig BigInt?   @map("Order Confirmation Orig")
 
    @@ignore
 }
@@ -4851,6 +4854,7 @@ model ImportConfig {
    ProviderKey             String?   @db.UniqueIdentifier
    IsActive                Boolean?
    ImportDescription       String?   @db.VarChar(Max)
+   DataType                String?   @db.Char(1)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -5107,6 +5111,7 @@ model ImportEarthlinkInstalls {
    ProductKey               String?   @db.UniqueIdentifier
    StatusKey                String?   @db.UniqueIdentifier
    DerivedAccount           String?   @db.VarChar(50)
+   LAST_PAYMENT_RECEIVED    DateTime? @db.Date
 
    @@ignore
 }
@@ -6705,6 +6710,8 @@ model Notification {
    CreatedBy            String?              @db.UniqueIdentifier
    ModifiedOn           DateTime?            @db.DateTime
    ModifiedBy           String?              @db.UniqueIdentifier
+   ExcludeCompanyId     String?              @db.VarChar(255)
+   ExcludeUserId        String?              @db.VarChar(255)
    NotificationConfig   NotificationConfig[]
 }
 
@@ -6915,6 +6922,7 @@ model OrderItem {
    InstallDate2Status     String?   @db.VarChar(100)
    IsCombo                Boolean?  @default(false, map: "DF__OrderItem__IsCom__22AAF4ED")
    ProviderOrderDate      DateTime? @db.Date
+   XYZPackage             String?   @db.VarChar(255)
 
    @@unique([OrderKey, Productkey], map: "UC_OrderProductKey")
 }
@@ -7971,6 +7979,7 @@ model Provider {
    EscrowDays                       Int?
    XyzComEffTypeId                  Int?
    PaymentManager                   String?   @db.VarChar(50)
+   PPMapEffTypeID                   Int?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -8093,8 +8102,9 @@ model ProviderProductMap {
    IsCombo               Boolean?
    SubProductKey         String?   @db.VarChar(500)
    IsActive              Boolean?  @default(false, map: "DF__ProviderP__IsAct__0D85BAD5")
+   EffKey                String?   @db.UniqueIdentifier
 
-   @@unique([ProviderKey, ProductTierProductKey, ProductTierName], map: "UK__Provider__D47000A7C44F083E")
+   @@unique([ProviderKey, ProductTierProductKey, ProductTierName, EffKey], map: "UK__Provider__D47000A7C44F083E")
 }
 
 model ProviderServiceabilityPackage {
@@ -12037,10 +12047,11 @@ model ProviderInstalls {
 
 model ProviderLineInstalls {
    InSeq             Int       @default(autoincrement())
+   MobileOrderNumber String    @db.VarChar(50)
    ProviderKey       String    @db.UniqueIdentifier
    Account           String    @db.VarChar(50)
    SubAccount        String    @db.VarChar(50)
-   MobileOrderNumber String    @db.VarChar(50)
+   ProductKey        String    @db.UniqueIdentifier
    StatusKey         String?   @db.UniqueIdentifier
    ProviderStatus    String?   @db.VarChar(50)
    LineOrdered       Int?
@@ -12058,12 +12069,11 @@ model ProviderLineInstalls {
    UpdateImportId    Int?
    OrderDate         DateTime? @db.Date
    LType             String    @default("L", map: "DF__ProviderL__LType__05712E6F") @db.Char(1)
-   ProductKey        String?   @db.UniqueIdentifier
    IsBYOD            Boolean?  @default(false, map: "DF__ProviderL__IsBYO__464ACD93")
    LineSeq           Int?      @db.TinyInt
    InKey             String?   @default(dbgenerated("newid()"), map: "DF__ProviderL__InKey__6A0AA1CA") @db.UniqueIdentifier
 
-   @@id([ProviderKey, Account, SubAccount], map: "PK_ProviderLineInstalls")
+   @@id([ProviderKey, Account, SubAccount, ProductKey], map: "PK_ProviderLineInstalls")
 }
 
 model ProviderPayments {
@@ -12101,6 +12111,7 @@ model ProviderProductMapHistory {
    IsCombo               Boolean?
    SubProductKey         String?   @db.VarChar(500)
    IsActive              Boolean?
+   EffKey                String?   @db.UniqueIdentifier
 
    @@index([SysEndTime, SysStartTime], map: "ix_ProviderProductMapHistory", clustered: true)
    @@ignore
@@ -13171,8 +13182,8 @@ model VonageCallMaster {
 }
 
 model Plan {
-   id                         String           @id @unique
-   createdAt                  DateTime         @default(now())
+   id                         String               @id @unique
+   createdAt                  DateTime             @default(now())
    updatedAt                  DateTime
    name                       String
    description                String
@@ -13180,13 +13191,15 @@ model Plan {
    paymentFrequency           String
    effectiveFrom              String
    effectiveTo                String
-   eligibilityId              String           @unique
+   eligibilityId              String               @unique
    isActive                   Boolean
-   optionsId                  String           @unique
+   optionsId                  String               @unique
    ProviderKey                String
    transactionFinalCommission String
-   PlanEligibility            PlanEligibility  @relation(fields: [eligibilityId], references: [id])
-   PlanOptions                PlanOptions      @relation(fields: [optionsId], references: [id])
+   prevalidationScript        String
+   PlanEligibility            PlanEligibility      @relation(fields: [eligibilityId], references: [id])
+   PlanOptions                PlanOptions          @relation(fields: [optionsId], references: [id])
+   PlanCommissionTier         PlanCommissionTier[]
    PlanCreditPull             PlanCreditPull[]
    PlanVariable               PlanVariable[]
 }
@@ -13201,7 +13214,8 @@ model PlanCreditPull {
    source               String
    dateType             String
    name                 String
-   additionalCriteria   String                 @default("")
+   additionalCriteria   String
+   lastDays             Int
    Plan                 Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
    PlanCreditPullFilter PlanCreditPullFilter[]
 }
@@ -13406,28 +13420,27 @@ model PlanProcessLog {
    ProcessStatus String?   @db.VarChar(50)
    ExceptionAny  String?   @db.VarChar(1000)
    ProcessLog    String?   @db.VarChar(Max)
+   LogFileName   String?   @db.VarChar(255)
+   QueKey        String?   @db.UniqueIdentifier
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanCalcRecord_wqVF5Cw8gEGT_21IdUVgZ {
-   CreSeq           Int
-   PlanId           String?   @db.VarChar(50)
-   PeriodKey        String?   @db.UniqueIdentifier
-   CreKey           String    @db.UniqueIdentifier
-   CreatedOn        DateTime  @db.DateTime
-   ComType          String    @db.Char(1)
-   ComGrossAmount   Decimal?  @db.Decimal(10, 2)
-   ComNetAmount     Decimal?  @db.Decimal(10, 2)
-   EscrowRate       Decimal?  @db.Decimal(5, 2)
-   EscrowAmount     Decimal?  @db.Decimal(10, 2)
-   EscrowPayOn      DateTime? @db.Date
-   ComJson          String?   @db.VarChar(255)
-   RefCreKey        String?   @db.UniqueIdentifier
-   PortalFeePercent String?   @db.VarChar(1000)
-   ComAmount        String?   @db.VarChar(1000)
-   DerivedPackage   String?   @db.VarChar(1000)
-   FinalNetAmount   String?   @db.VarChar(1000)
-   PortalFee        String?   @db.VarChar(1000)
+   CreSeq         Int
+   PlanId         String?   @db.VarChar(50)
+   PeriodKey      String?   @db.UniqueIdentifier
+   CreKey         String    @db.UniqueIdentifier
+   CreatedOn      DateTime  @db.DateTime
+   ComType        String    @db.Char(1)
+   ComGrossAmount Decimal?  @db.Decimal(10, 2)
+   ComNetAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowRate     Decimal?  @db.Decimal(5, 2)
+   EscrowAmount   Decimal?  @db.Decimal(10, 2)
+   EscrowPayOn    DateTime? @db.Date
+   ComJson        String?   @db.VarChar(255)
+   RefCreKey      String?   @db.UniqueIdentifier
+   ComAmount      String?   @db.VarChar(1000)
+   DerivedPackage String?   @db.VarChar(1000)
 
    @@map("ZPlanCalcRecord_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13686,6 +13699,133 @@ model Spectrum_retaildisin_ {
    @@ignore
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CompanyComDetailNew {
+   DetSeq                Int       @default(autoincrement())
+   ProviderKey           String    @db.UniqueIdentifier
+   PeriodKey             String?   @db.UniqueIdentifier
+   PeriodStart           DateTime? @db.Date
+   PeriodEnd             DateTime? @db.Date
+   CompanyKey            String?   @db.UniqueIdentifier
+   OrderKey              String?   @db.UniqueIdentifier
+   OrderItemKey          String?   @db.UniqueIdentifier
+   ComType               String    @db.Char(5)
+   CalcCom               Decimal?  @db.Decimal(10, 2)
+   TierId                Int?
+   Comkey                String?   @db.UniqueIdentifier
+   AddLineCom            Decimal?  @db.Decimal(5, 2)
+   MobileLines           Int?
+   Account               String    @db.VarChar(50)
+   ProductKey            String    @db.UniqueIdentifier
+   ProductName           String?   @db.VarChar(255)
+   ProviderProductKey    String?   @db.UniqueIdentifier
+   ProductCommissionName String?   @db.VarChar(255)
+   ProductTiername       String?   @db.VarChar(100)
+   InstallOn             DateTime? @db.Date
+   DisconnectOn          DateTime? @db.Date
+   CancelOn              DateTime? @db.Date
+   OrderCreatedOn        DateTime? @db.DateTime
+   SalesOn               DateTime? @db.Date
+   OrderStatus           String?   @db.VarChar(200)
+   ProviderOrderStatus   String?   @db.VarChar(20)
+   LeadKey               String?   @db.UniqueIdentifier
+   WorkOrder             String?   @db.VarChar(100)
+   CustomerInteractionId String?   @db.VarChar(100)
+   AgentSalesId          String?   @db.VarChar(10)
+   LineItemCreatedOn     DateTime? @db.DateTime
+   SalesRepKey           String?   @db.UniqueIdentifier
+   Notes                 String?   @db.VarChar(Max)
+   CustomerFirstName     String?   @db.VarChar(100)
+   CustomerLastName      String?   @db.VarChar(100)
+   CustomerAddress1      String?   @db.VarChar(255)
+   CustomerAddress2      String?   @db.VarChar(255)
+   CustomerState         String?   @db.VarChar(50)
+   CustomerCity          String?   @db.VarChar(100)
+   CustomerZipCode       String?   @db.VarChar(10)
+   CustomerPhone         String?   @db.VarChar(20)
+   CustomerEmail         String?   @db.VarChar(100)
+   CreatedDate           DateTime? @db.DateTime
+   TierName              String?   @db.VarChar(100)
+   PaymentType           String?   @db.VarChar(100)
+   Escrow                Decimal?  @db.Decimal(10, 2)
+   EscrowDueOn           DateTime? @db.Date
+   ActualComValue        Int?
+   EscrowDays            Int?
+   ActualProviderKey     String?   @db.UniqueIdentifier
+   Type                  String    @db.Char(2)
+   DetKey                String?   @db.UniqueIdentifier
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CompanyComSummaryNew {
+   SumSeq          Int       @default(autoincrement())
+   ProviderKey     String    @db.UniqueIdentifier
+   PeriodKey       String    @db.UniqueIdentifier
+   CompanyKey      String    @db.UniqueIdentifier
+   PtdUnits        Int?
+   InstallUnits    Int?
+   CommissionUnits Int?
+   DisconnectUnits Int?
+   ToalCalcCom     Decimal?  @db.Decimal(10, 2)
+   TotalExpCom     Decimal?  @db.Decimal(10, 2)
+   TierId          Int?
+   CreatedOn       DateTime? @db.DateTime
+   ToalCbCom       Decimal?  @db.Decimal(10, 2)
+   ToalCom         Decimal?  @db.Decimal(10, 2)
+   ToalCpCb        Decimal?  @db.Decimal(10, 2)
+   PtdOrders       Int?
+   MobileUnits     Int?
+   BalanceBF       Decimal?  @db.Decimal(10, 2)
+   AdjAmount       Decimal?  @db.Decimal(10, 2)
+   PaymentAmount   Decimal?  @db.Decimal(10, 2)
+   BalanceCF       Decimal?  @db.Decimal(10, 2)
+   TierName        String?   @db.VarChar(100)
+   PaymentType     String?   @db.VarChar(100)
+   EscrowUnits     Int?
+   EscrowCom       Decimal?  @db.Decimal(10, 2)
+   EscrowDeduction Decimal?  @db.Decimal(10, 2)
+   OtherDeduction  Decimal?  @db.Decimal(10, 2)
+
+   @@ignore
+}
+
+model PlanCommissionTier {
+   id          String   @id @unique
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime
+   providerKey String
+   tierName    String
+   planId      String
+   Plan        Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model PlanProcessQueue {
+   QueSeq    Int       @default(autoincrement())
+   QueKey    String?   @db.UniqueIdentifier
+   PlanId    String?   @db.VarChar(100)
+   PeriodKey String?   @db.UniqueIdentifier
+   QueueOn   DateTime? @default(now(), map: "DF__PlanProce__Queue__6140519F") @db.DateTime
+   InProcess Boolean?  @default(false, map: "DF__PlanProce__InPro__4622470F")
+
+   @@ignore
+}
+
+model Template {
+   id           String   @id @unique
+   createdAt    DateTime @default(now())
+   updatedAt    DateTime
+   isActive     Boolean
+   name         String
+   description  String
+   type         String
+   subject      String?
+   body         String
+   functionName String
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -13898,6 +14038,8 @@ model LdLead {
    ruleId String?
    rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
+   CompanyKey String? @db.UniqueIdentifier
+
    isPicked         Boolean
    overrideCallback Boolean
 
@@ -13918,6 +14060,8 @@ model LdLeadCompleted {
 
    ruleId String?
    rule   LdRule? @relation(fields: [ruleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+   CompanyKey String? @db.UniqueIdentifier
 
    success        Boolean
    completeStatus String
@@ -13958,6 +14102,7 @@ model LdLeadNotificationProcess {
    callbackNum Int
    requeueNum  Int
    status      String
+   completedAt DateTime?
 
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])

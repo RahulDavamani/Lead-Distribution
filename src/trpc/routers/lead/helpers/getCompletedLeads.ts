@@ -4,6 +4,7 @@ import type { RoleType } from '../../../../stores/auth.store';
 import { getLeadsWhere } from './getLeadsWhere';
 import { getProspectDetails } from './getProspectDetails';
 import { getUserStr } from './user';
+import { getCompanyValues } from './company';
 
 export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dateRange: string[]) => {
 	const where = getLeadsWhere(roleType, UserKey) as Prisma.LdLeadCompletedWhereInput;
@@ -21,7 +22,17 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 						updatedAt: { gte: startDate, lte: endDate }
 					},
 					include: {
-						rule: { select: { name: true } }
+						rule: { select: { name: true } },
+						notificationProcesses: {
+							select: {
+								createdAt: true,
+								completedAt: true
+							}
+						},
+						calls: {
+							orderBy: { createdAt: 'desc' },
+							select: { createdAt: true, UserKey: true }
+						}
 					}
 				})
 				.catch(prismaErrorHandler)
@@ -38,8 +49,10 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			return {
 				...lead,
 				prospectDetails: { ...(await getProspectDetails(lead.ProspectKey)) },
+				company: lead.CompanyKey ? await getCompanyValues(lead.CompanyKey) : undefined,
 				customerTalkTime,
-				user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined
+				user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined,
+				firstCallAt: lead.calls.length > 0 ? lead.calls[lead.calls.length - 1].createdAt : undefined
 			};
 		})
 	);

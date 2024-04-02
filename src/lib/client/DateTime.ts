@@ -14,8 +14,7 @@ export const timeToText = (totalSeconds: number): string => {
 export const getTimeElapsed = (startDate: Date, endDate: Date) =>
 	Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
 
-export const getTimeElapsedText = (startDate: Date, endDate: Date) =>
-	timeToText(Math.floor((endDate.getTime() - startDate.getTime()) / 1000));
+export const getTimeElapsedText = (startDate: Date, endDate: Date) => timeToText(getTimeElapsed(startDate, endDate));
 
 export const timeToSeconds = ({ days, hours, minutes, seconds }: Time) =>
 	days * 86400 + hours * 3600 + minutes * 60 + seconds;

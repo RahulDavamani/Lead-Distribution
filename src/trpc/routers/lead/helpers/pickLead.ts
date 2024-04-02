@@ -13,7 +13,15 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	const lead = await prisma.ldLead
 		.findUnique({
 			where: { ProspectKey },
-			select: { id: true, rule: { select: { isActive: true, outboundCallNumber: true } } }
+			select: {
+				id: true,
+				rule: { select: { isActive: true, outboundCallNumber: true } },
+				notificationProcesses: {
+					select: { id: true },
+					orderBy: { createdAt: 'desc' },
+					take: 1
+				}
+			}
 		})
 		.catch(prismaErrorHandler);
 	if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead not found in queue' });
@@ -32,8 +40,21 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	await updateLead({
 		log: { log: `Lead picked by "${userStr}"` },
 		isPicked: true,
+		CompanyKey: userValues?.CompanyKey,
 		call: { user: { connect: { UserKey } } }
 	});
+
+	// Complete Notification Process
+	if (lead.notificationProcesses.length > 0)
+		await prisma.ldLeadNotificationProcess
+			.update({
+				where: { id: lead.notificationProcesses[0].id },
+				data: {
+					status: 'COMPLETED',
+					completedAt: new Date()
+				}
+			})
+			.catch(prismaErrorHandler);
 
 	// End Notification Processes
 	await endNotificationProcesses(ProspectKey);
