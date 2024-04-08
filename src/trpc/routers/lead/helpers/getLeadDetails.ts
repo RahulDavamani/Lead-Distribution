@@ -1,6 +1,6 @@
 import { actionsInclude } from '$lib/config/actions/actions.config';
+import { getProcessName } from '$lib/getProcessName';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { getProcessName } from './notificationProcess';
 import { getUserValues } from './user';
 
 export const getLeadDetails = async (id: string, type: 'queued' | 'completed') => {

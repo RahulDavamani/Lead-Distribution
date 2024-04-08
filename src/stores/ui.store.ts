@@ -40,7 +40,7 @@ export const ui = (() => {
 	const setTheme = (theme: string) => document.querySelector('html')?.setAttribute('data-theme', theme);
 
 	const navigate = async (url: string) => {
-		ui.setLoader({});
+		ui.setLoader({ title: 'Loading' });
 		await goto(url);
 		ui.setLoader();
 	};

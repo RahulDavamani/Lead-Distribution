@@ -1,103 +1,22 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { afterUpdate, onDestroy, onMount } from 'svelte';
-	import { trpc } from '../../trpc/client';
-	import { ui } from '../../stores/ui.store';
 	import { auth } from '../../stores/auth.store';
-	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
-	import type { inferProcedureOutput } from '@trpc/server';
-	import type { AppRouter } from '../../trpc/routers/app.router';
 	import Icon from '@iconify/svelte';
 	import QueuedLeadsTable from '../leads/components/QueuedLeadsTable.svelte';
 	import CompletedLeadsTable from '../leads/components/CompletedLeadsTable.svelte';
 	import LeadDetailsModal from '../leads/components/LeadDetailsModal.svelte';
 	import SettingsModal from '../leads/components/SettingsModal.svelte';
+	import SwitchCompanyModal from '../leads/components/SwitchCompanyModal.svelte';
+	import { lead } from '../../stores/lead.store';
+	import { ui } from '../../stores/ui.store';
+	import { goto } from '$app/navigation';
 
-	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
-	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
+	$: ({ roleType } = $auth);
+	$: ({ init, queuedLeads, completedLeads } = $lead);
 
-	let init = false;
-	let socket: WebSocket;
-	let queuedLeads: QueuedLead[] = [];
-	let completedLeads: CompletedLead[] = [];
-	let dateRange: Date[] = [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()];
-
-	const {
-		user: { UserKey },
-		roleType
-	} = $auth;
-
-	onMount(() => setupSocket());
-	onDestroy(() => socket.close());
-
-	const setupSocket = () => {
-		ui.setLoader({ title: 'Fetching Leads' });
-		const webSocketProtocol = window.location.href.startsWith('https://') ? 'wss://' : 'ws://';
-		const url = `${webSocketProtocol}${window.location.hostname}:8000`;
-		socket = new WebSocket(url);
-		console.log(url);
-		console.log(socket);
-		socket.onopen = () => socket.send(JSON.stringify({ UserKey, roleType }));
-		socket.onmessage = (event) => updateQueuedLeads(JSON.parse(event.data));
-	};
-
-	const resetSocket = () => {
-		init = false;
-		socket.close();
-		setupSocket();
-	};
-
-	const updateQueuedLeads = async (newLeads: QueuedLead[]) => {
-		console.log(newLeads.length);
-		if (!init) {
-			await fetchCompletedLeads(dateRange);
-			init = true;
-		} else {
-			const missingLead = queuedLeads.find((ql) => !newLeads.find((nl) => nl.id === ql.id));
-			const newLead = newLeads.find((nl) => !queuedLeads.find((ql) => ql.id === nl.id));
-			if (missingLead) {
-				await fetchCompletedLeads(dateRange);
-				if (completedLeads.find((lead) => lead.id === missingLead.id))
-					ui.showToast({
-						title: `${missingLead.prospectDetails.ProspectId}: Lead has been completed`,
-						class: 'alert-success'
-					});
-			}
-			if (newLead)
-				ui.showToast({
-					title: `${newLead.prospectDetails.ProspectId}: New Lead has been inserted`,
-					class: 'alert-success'
-				});
-		}
-
-		queuedLeads = newLeads.map(({ createdAt, updatedAt, notificationProcess, ...queuedLeads }) => ({
-			...queuedLeads,
-			createdAt: new Date(createdAt),
-			updatedAt: new Date(updatedAt),
-			notificationProcess: notificationProcess
-				? {
-						...notificationProcess,
-						createdAt: new Date(notificationProcess.createdAt)
-					}
-				: undefined
-		}));
-	};
-
-	const fetchCompletedLeads = async (dateRange: Date[]) => {
-		ui.setLoader({ title: 'Fetching Leads' });
-		if (dateRange.length !== 2) return;
-
-		const leads = await trpc($page)
-			.lead.getCompleted.query({
-				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
-				UserKey,
-				roleType
-			})
-			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
-
-		completedLeads = leads.completedLeads;
-		ui.setLoader();
-	};
+	onMount(lead.setupSocket);
+	onDestroy(lead.closeSocket);
 
 	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;
 	afterUpdate(() => {
@@ -105,22 +24,31 @@
 		window.history.replaceState(history.state, '', $page.url.toString());
 	});
 
-	let leadDetailsModelId: string | undefined;
-	let showSettingsModal = false;
-
-	let affiliateSelect: string | undefined;
 	$: affiliates = [...completedLeads, ...queuedLeads].reduce(
 		(acc, cur) =>
-			!cur.prospectDetails.CompanyName || acc.includes(cur.prospectDetails.CompanyName)
-				? acc
-				: [...acc, cur.prospectDetails.CompanyName],
+			!cur.prospect.CompanyName || acc.includes(cur.prospect.CompanyName) ? acc : [...acc, cur.prospect.CompanyName],
 		[] as string[]
 	);
 </script>
 
-<div class="container mx-auto mb-20">
+<div class="px-16 mx-auto mb-20">
 	<div class="flex justify-between items-end px-2">
 		<div class="text-3xl font-bold flex items-end gap-2 flex-grow">
+			<button
+				class="btn btn-sm btn-ghost"
+				on:click={() => {
+					lead.update((state) => ({
+						...state,
+						init: false,
+						queuedLeads: [],
+						completedLeads: []
+					}));
+					window.stop();
+					goto('/leads');
+				}}
+			>
+				<Icon icon="wpf:connected" class="text-success" width={20} />
+			</button>
 			{#if tab === 1}
 				Queued Leads:
 				<span class="font-normal font-mono text-2xl">({queuedLeads.length})</span>
@@ -131,20 +59,20 @@
 
 			<select
 				class="select select-bordered select-sm font-semibold text-center max-w-xs w-full ml-3"
-				bind:value={affiliateSelect}
+				bind:value={$lead.affiliate}
 			>
 				<option value={undefined}>All Affiliates</option>
 				{#each Object.entries(affiliates) as [companyName, count]}
 					<option value={companyName}>{companyName} ({count})</option>
 				{/each}
 			</select>
-			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={resetSocket}>
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={lead.resetSocket}>
 				<Icon icon="mdi:refresh" class="text-info" width={22} />
 			</button>
 		</div>
 
 		{#if roleType === 'ADMIN' || roleType === 'SUPERVISOR'}
-			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => (showSettingsModal = true)}>
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => ($lead.showSettingsModal = true)}>
 				<Icon icon="mdi:settings" width={22} />
 			</button>
 		{/if}
@@ -158,24 +86,13 @@
 
 	{#if init}
 		{#if tab === 1}
-			<QueuedLeadsTable
-				queuedLeads={queuedLeads.filter(({ prospectDetails: { CompanyName } }) =>
-					affiliateSelect ? CompanyName === affiliateSelect : true
-				)}
-				bind:leadDetailsModelId
-			/>
+			<QueuedLeadsTable />
 		{:else}
-			<CompletedLeadsTable
-				completedLeads={completedLeads.filter(({ prospectDetails: { CompanyName } }) =>
-					affiliateSelect ? CompanyName === affiliateSelect : true
-				)}
-				bind:leadDetailsModelId
-				bind:dateRange
-				{fetchCompletedLeads}
-			/>
+			<CompletedLeadsTable />
 		{/if}
 	{/if}
 </div>
 
-<LeadDetailsModal bind:id={leadDetailsModelId} />
-<SettingsModal bind:showModal={showSettingsModal} />
+<LeadDetailsModal />
+<SwitchCompanyModal />
+<SettingsModal />

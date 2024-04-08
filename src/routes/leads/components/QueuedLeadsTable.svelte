@@ -2,31 +2,40 @@
 	import Icon from '@iconify/svelte';
 	import { auth } from '../../../stores/auth.store';
 	import { ui } from '../../../stores/ui.store';
-	import type { inferProcedureOutput } from '@trpc/server';
-	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import FormControl from '../../components/FormControl.svelte';
-	import { onMount } from 'svelte';
+	import { lead } from '../../../stores/lead.store';
+	import { getProcessNameSplit } from '$lib/getProcessName';
 
-	type QueuedLead = inferProcedureOutput<AppRouter['lead']['getQueued']>['queuedLeads'][number];
-
-	export let queuedLeads: QueuedLead[];
-	export let leadDetailsModelId: string | undefined;
-	export let switchCompanyModalLead: { id: string; ruleId: string; CompanyKey: string | null } | undefined;
-
-	let today = new Date();
-	onMount(() => setInterval(() => (today = new Date()), 1000));
+	$: ({ queuedLeads, today } = $lead);
 
 	$: ({
 		user: { UserKey },
 		roleType
 	} = $auth);
+
 	$: avgLeadTimeElapsed =
 		queuedLeads.length > 0
-			? Math.floor(queuedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, today), 0) / queuedLeads.length)
+			? Math.floor(
+					queuedLeads.reduce(
+						(acc, cur) => acc + getTimeElapsed(cur.createdAt, cur.calls?.[cur.calls.length - 1]?.createdAt ?? today),
+						0
+					) / queuedLeads.length
+				)
 			: 0;
+
+	const requeue = async (ProspectKey: string) => {
+		ui.setLoader({ title: 'Requeueing Lead' });
+		const interval = setInterval(() => {
+			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.notificationProcesses[0]?.status === 'ACTIVE') {
+				ui.setLoader();
+				clearInterval(interval);
+			}
+		}, 500);
+		await trpc($page).lead.requeue.query({ ProspectKey, UserKey });
+	};
 
 	const showRequeueAlert = (ProspectKey: string, alertType: 'picked' | 'scheduled') => {
 		$ui.alertModal = {
@@ -54,21 +63,7 @@
 		};
 	};
 
-	const requeue = async (ProspectKey: string) => {
-		ui.setLoader({ title: 'Requeueing Lead' });
-		const interval = setInterval(() => {
-			if (queuedLeads.find((lead) => ProspectKey === lead.ProspectKey)?.notificationProcess?.status === 'ACTIVE') {
-				ui.setLoader();
-				clearInterval(interval);
-			}
-		}, 500);
-		await trpc($page).lead.requeue.query({ ProspectKey, UserKey });
-	};
-
-	$: agentFirstNewLead = queuedLeads.findIndex((lead) => !lead.isPicked && lead.isNewLead);
-
 	let deleteLeadIds: string[] | undefined;
-
 	const deleteLeads = () => {
 		$ui.alertModal = {
 			title: 'Are you sure to delete these leads?',
@@ -95,6 +90,8 @@
 		};
 	};
 
+	$: agentFirstNewLead = queuedLeads.findIndex((lead) => lead.isNewLead && !lead.isPicked);
+
 	let tableOpts = {
 		search: '',
 		page: 1,
@@ -102,11 +99,8 @@
 	};
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
-	$: displayLeads = queuedLeads.filter((l) =>
-		[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
-			.join()
-			.toLowerCase()
-			.includes(tableOpts.search.toLowerCase())
+	$: displayLeads = queuedLeads.filter(({ prospect: { CompanyKey, ProspectId, ...values } }) =>
+		Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
 </script>
@@ -184,14 +178,18 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, CompanyKey, company, rule, notificationProcess, notificationProcessName, disposition, callUser, firstCallAt }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, CompanyKey, company, rule, notificationProcesses, calls, latestCall, responses }, i}
+				{@const notificationProcessName = getProcessNameSplit(
+					notificationProcesses[0]?.callbackNum ?? 0,
+					notificationProcesses[0]?.requeueNum ?? 0
+				)}
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
-						callUser?.UserKey !== UserKey &&
+						latestCall?.UserKey !== UserKey &&
 						(isNewLead
 							? i !== agentFirstNewLead
-							: notificationProcess?.createdAt.toLocaleDateString() !== today.toLocaleDateString())) ||
-					(isPicked ? callUser?.UserKey !== UserKey : false)}
+							: notificationProcesses[0]?.createdAt.toLocaleDateString() !== today.toLocaleDateString())) ||
+					(isPicked ? latestCall?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
 					roleType === 'ADMIN' ||
@@ -202,7 +200,7 @@
 						? isPicked
 							? false
 							: true
-						: notificationProcess?.status === 'ACTIVE'
+						: notificationProcesses[0]?.status === 'ACTIVE'
 							? false
 							: canRequeue}
 
@@ -211,25 +209,31 @@
 						? isPicked
 							? 'Lead Picked'
 							: 'Available'
-						: notificationProcess?.status === 'ACTIVE'
+						: notificationProcesses[0]?.status === 'ACTIVE'
 							? 'Queueing'
 							: 'Requeue'}
 
 				{@const statusBtnClick = () => {
 					if (canRequeue)
 						if (isPicked) showRequeueAlert(ProspectKey, 'picked');
-						else if (notificationProcess?.status === 'SCHEDULED') showRequeueAlert(ProspectKey, 'scheduled');
+						else if (notificationProcesses[0]?.status === 'SCHEDULED') showRequeueAlert(ProspectKey, 'scheduled');
 						else requeue(ProspectKey);
 				}}
 
 				{#if i === 0 || i === firstCallback}
 					<tr class="hover">
 						{#if i == 0 && displayLeads.slice(startIndex, endIndex).filter((lead) => lead.isNewLead).length > 0}
-							<td colspan="12" class="text-center bg-success text-success-content bg-opacity-90 font-semibold">
+							<td
+								colspan={deleteLeadIds === undefined ? 12 : 13}
+								class="text-center bg-success text-success-content bg-opacity-90 font-semibold"
+							>
 								New Leads
 							</td>
 						{:else}
-							<td colspan="12" class="text-center bg-info text-info-content bg-opacity-90 font-semibold">
+							<td
+								colspan={deleteLeadIds === undefined ? 12 : 13}
+								class="text-center bg-info text-info-content bg-opacity-90 font-semibold"
+							>
 								Callback Leads
 							</td>
 						{/if}
@@ -258,12 +262,12 @@
 								<div class="badge badge-sm badge-success" />
 							{:else if isNewLead}
 								<div class="badge badge-sm badge-error" />
-							{:else if notificationProcess?.requeueNum === 0}
+							{:else if notificationProcesses[0]?.requeueNum === 0}
 								<div class="badge badge-sm bg-orange-400" />
 							{:else}
 								<div class="badge badge-sm badge-warning" />
 							{/if}
-							{ProspectId}
+							{prospect.ProspectId}
 						</div>
 					</td>
 					<td
@@ -272,7 +276,7 @@
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
-					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{prospect.CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">
 						<div>{createdAt.toLocaleDateString()}</div>
@@ -283,10 +287,10 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, today)}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, firstCallAt ?? today)}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt ?? today)}</td>
 					<td>
-						<div>{CustomerName ?? 'N/A'}</div>
-						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
+						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>
+						<div class="text-xs">{prospect.Address} {prospect.ZipCode}</div>
 					</td>
 					<td>
 						<div class="flex justify-between items-center">
@@ -294,7 +298,7 @@
 							{#if rule && roleType !== 'AGENT'}
 								<button
 									class="btn btn-xs btn-ghost text-primary p-0"
-									on:click={() => rule && (switchCompanyModalLead = { id, ruleId: rule.id, CompanyKey })}
+									on:click={() => rule && ($lead.switchCompanyModalId = id)}
 								>
 									<Icon icon="mdi:swap-horizontal" width={22} />
 								</button>
@@ -305,20 +309,20 @@
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[1]}</div>
 						<div class="">
-							{#if notificationProcess}
-								{#if isPicked}
-									Picked by {callUser?.userStr}
-								{:else if notificationProcess.status === 'SCHEDULED'}
-									Scheduled in {getTimeElapsedText(today, notificationProcess.createdAt)}
-								{:else if notificationProcess.escalations.length > 0}
-									Escalation #{notificationProcess.escalations[0].escalation?.num}
-								{:else if notificationProcess.notificationAttempts.length > 0}
-									Attempt #{notificationProcess.notificationAttempts[0].attempt?.num}
+							{#if isPicked}
+								Picked by {latestCall?.userStr}
+							{:else if notificationProcesses[0]}
+								{#if notificationProcesses[0].status === 'SCHEDULED'}
+									Scheduled in {getTimeElapsedText(today, notificationProcesses[0].createdAt)}
+								{:else if notificationProcesses[0].escalations.length > 0}
+									Escalation #{notificationProcesses[0].escalations[0].escalation?.num}
+								{:else if notificationProcesses[0].notificationAttempts.length > 0}
+									Attempt #{notificationProcesses[0].notificationAttempts[0].attempt?.num}
 								{/if}
 							{/if}
 						</div>
-						{#if disposition}
-							<div class="opacity-75 text-xs">(Disposition: {disposition})</div>
+						{#if responses.length}
+							<div class="opacity-75 text-xs">(Disposition: {responses[0].responseValue})</div>
 						{/if}
 					</td>
 					<td>
@@ -336,7 +340,7 @@
 								<!-- Lead Details Btn -->
 								<button
 									class="btn btn-xs btn-info h-fit py-0.5 animate-none"
-									on:click={() => (leadDetailsModelId = id)}
+									on:click={() => ($lead.leadDetailsModelId = id)}
 								>
 									<Icon icon="mdi:information-variant" width={20} />
 								</button>

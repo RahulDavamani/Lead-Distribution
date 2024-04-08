@@ -10,10 +10,10 @@
 	import cloneDeep from 'lodash.clonedeep';
 	import { ui } from '../../../stores/ui.store';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
+	import { lead } from '../../../stores/lead.store';
 
 	type Rule = inferRouterOutputs<AppRouter>['rule']['getForSettings']['rules'][number];
 
-	export let showModal: boolean;
 	$: ({
 		user: { UserKey },
 		roleType
@@ -43,10 +43,10 @@
 		ui.setLoader();
 	};
 
-	$: showModal ? fetchRules() : (rules = undefined);
+	$: $lead.showSettingsModal ? fetchRules() : (rules = undefined);
 </script>
 
-<Modal title="Settings" bind:showModal boxClasses="max-w-2xl z-0" classes="z-0">
+<Modal title="Settings" bind:showModal={$lead.showSettingsModal} boxClasses="max-w-2xl z-0" classes="z-0">
 	{#if !rules}
 		<div class="my-10">
 			<Loader size={60} overlay={false} center={false} />

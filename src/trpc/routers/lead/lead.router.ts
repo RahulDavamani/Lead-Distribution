@@ -11,10 +11,10 @@ import { requeueLead } from './helpers/requeueLead';
 import { pickLead } from './helpers/pickLead';
 import { completeLead } from './helpers/completeLead';
 import { getLeadDetails } from './helpers/getLeadDetails';
-import { getQueuedLeads } from './helpers/getQueuedLeads';
 import { getCompletedLeads } from './helpers/getCompletedLeads';
 import { deleteLeads } from './helpers/deleteLeads';
 import { getRuleCompanies } from './helpers/getRuleCompanies';
+import { getQueuedLeads } from './helpers/getQueuedLeads';
 
 export const leadRouter = router({
 	getQueued: procedure

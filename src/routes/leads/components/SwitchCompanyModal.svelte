@@ -7,33 +7,35 @@
 	import Loader from '../../components/Loader.svelte';
 	import FormControl from '../../components/FormControl.svelte';
 	import { ui } from '../../../stores/ui.store';
+	import { lead } from '../../../stores/lead.store';
 
 	type RuleCompany = inferProcedureOutput<AppRouter['lead']['getRuleCompanies']>[number];
 
-	export let lead: { id: string; ruleId: string; CompanyKey: string | null } | undefined;
+	$: selectedLead = $lead.queuedLeads.find((l) => l.id === $lead.switchCompanyModalId);
 	let ruleCompanies: RuleCompany[] | undefined;
 	let selectedCompanyKey: string | null = null;
 
-	const closeModal = () => (lead = undefined);
+	const closeModal = () => ($lead.switchCompanyModalId = undefined);
 
 	const fetchRuleCompanies = async (id: string) => {
 		ruleCompanies = await trpc($page).lead.getRuleCompanies.query({ ruleId: id });
-		selectedCompanyKey = ruleCompanies.find(({ CompanyKey }) => CompanyKey === lead?.CompanyKey)?.CompanyKey ?? null;
+		selectedCompanyKey =
+			ruleCompanies.find(({ CompanyKey }) => CompanyKey === selectedLead?.CompanyKey)?.CompanyKey ?? null;
 	};
 
 	const saveCompany = async () => {
-		if (!lead) return;
+		if (!selectedLead) return;
 		ui.setLoader({ title: 'Saving' });
-		await trpc($page).lead.updateCompany.query({ id: lead.id, CompanyKey: selectedCompanyKey });
+		await trpc($page).lead.updateCompany.query({ id: selectedLead.id, CompanyKey: selectedCompanyKey });
 		ui.showToast({ title: 'Company Saved Successfully', class: 'alert-success' });
 		ui.setLoader();
 		closeModal();
 	};
 
-	$: lead?.ruleId ? fetchRuleCompanies(lead.ruleId) : (ruleCompanies = undefined);
+	$: selectedLead?.ruleId ? fetchRuleCompanies(selectedLead.ruleId) : (ruleCompanies = undefined);
 </script>
 
-<Modal classes="z-20" title="Switch Company" showModal={lead !== undefined} {closeModal}>
+<Modal classes="z-20" title="Switch Company" showModal={selectedLead !== undefined} {closeModal}>
 	{#if !ruleCompanies}
 		<div class="my-10">
 			<Loader title="Fetching Companies" size={80} overlay={false} center={false} />

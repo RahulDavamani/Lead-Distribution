@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr } from './user';
 import { updateLeadFunc } from './updateLead';
+import { getProcessName } from '$lib/getProcessName';
 
 export const startNotificationProcess = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
 	const updateLead = updateLeadFunc(ProspectKey);
@@ -107,16 +108,4 @@ export const endNotificationProcesses = async (ProspectKey: string) => {
 			});
 		})
 	);
-};
-
-export const getProcessName = (callbackNum: number, requeueNum: number) => {
-	let name = callbackNum === 0 ? `NEW LEAD` : `CALLBACK #${callbackNum}`;
-	if (requeueNum > 0) name += ` REQUEUE #${requeueNum}`;
-	return name;
-};
-
-export const getProcessNameSplit = (callbackNum: number, requeueNum: number) => {
-	const processName = callbackNum === 0 ? `New Lead` : `Callback #${callbackNum}`;
-	const requeueName = requeueNum > 0 ? `Requeue #${requeueNum}` : '';
-	return [processName, requeueName];
 };

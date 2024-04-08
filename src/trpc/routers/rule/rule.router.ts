@@ -93,6 +93,7 @@ export const ruleRouter = router({
 						name: true,
 						operators: {
 							select: {
+								id: true,
 								UserKey: true,
 								num: true,
 								assignNewLeads: true,

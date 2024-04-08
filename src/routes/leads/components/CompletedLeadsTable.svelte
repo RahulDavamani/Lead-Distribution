@@ -1,7 +1,5 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import type { inferProcedureOutput } from '@trpc/server';
-	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { ui } from '../../../stores/ui.store';
 	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import Flatpickr from 'svelte-flatpickr';
@@ -9,13 +7,9 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { auth } from '../../../stores/auth.store';
+	import { lead } from '../../../stores/lead.store';
 
-	type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
-
-	export let completedLeads: CompletedLead[];
-	export let leadDetailsModelId: string | undefined;
-	export let dateRange: Date[];
-	export let fetchCompletedLeads: (dateRange: Date[]) => Promise<void>;
+	$: ({ completedLeads, today } = $lead);
 
 	let completeStatusSelect: string | undefined;
 	$: completeLeadStatuses = completedLeads.reduce(
@@ -56,7 +50,7 @@
 						if (!deleteLeadIds) return;
 						ui.setLoader({ title: 'Deleting Leads' });
 						await trpc($page).lead.delete.query({ ids: deleteLeadIds, isCompleted: true });
-						await fetchCompletedLeads(dateRange);
+						await lead.fetchCompletedLeads();
 						ui.setLoader();
 						deleteLeadIds = undefined;
 					}
@@ -74,11 +68,8 @@
 	$: endIndex = startIndex + tableOpts.show;
 	$: displayLeads = completedLeads
 		.filter((lead) => (completeStatusSelect ? lead.completeStatus === completeStatusSelect : true))
-		.filter((l) =>
-			[l.prospectDetails.CompanyName, l.prospectDetails.CustomerName, l.prospectDetails.CustomerAddress]
-				.join()
-				.toLowerCase()
-				.includes(tableOpts.search.toLowerCase())
+		.filter(({ prospect: { CompanyKey, ProspectId, ...values } }) =>
+			Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
 		);
 </script>
 
@@ -110,12 +101,8 @@
 		<Flatpickr
 			placeholder="Choose Date"
 			class="input input-bordered input-sm cursor-pointer font-semibold text-center max-w-xs w-full"
-			bind:value={dateRange}
-			on:close={async () => {
-				ui.setLoader({ title: 'Fetching Leads' });
-				await fetchCompletedLeads(dateRange);
-				ui.setLoader();
-			}}
+			bind:value={$lead.dateRange}
+			on:close={lead.fetchCompletedLeads}
 			options={{
 				mode: 'range',
 				altInput: true,
@@ -197,7 +184,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospectDetails: { ProspectId, CompanyName, CustomerName, CustomerAddress }, company, rule, success, completeStatus, customerTalkTime, user, firstCallAt }}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospect, company, rule, success, completeStatus, customerTalkTime, user, calls }}
 				<tr class="hover">
 					{#if deleteLeadIds !== undefined}
 						<td class="w-1">
@@ -226,7 +213,7 @@
 									<Icon icon="mdi:close" />
 								</div>
 							{/if}
-							{ProspectId}
+							{prospect.ProspectId}
 						</div>
 					</td>
 					<td
@@ -237,7 +224,7 @@
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
-					<td>{CompanyName ?? 'N/A'}</td>
+					<td>{prospect.CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">
 						<div>{createdAt.toLocaleDateString()}</div>
@@ -248,12 +235,12 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, firstCallAt ?? new Date())}</td>
+					<td class="text-center">{getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt ?? today)}</td>
 
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
-						<div>{CustomerName ?? 'N/A'}</div>
-						<div class="text-xs">{CustomerAddress ?? 'N/A'}</div>
+						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>
+						<div class="text-xs">{prospect.Address} {prospect.ZipCode}</div>
 					</td>
 					<td>{company?.CompanyName ?? 'All'}</td>
 
@@ -261,7 +248,7 @@
 					<td>{user ?? 'N/A'}</td>
 					<td>
 						<div class="flex justify-center items-center gap-2">
-							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => (leadDetailsModelId = id)}>
+							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => ($lead.leadDetailsModelId = id)}>
 								<Icon icon="mdi:information-variant" width={18} />
 							</button>
 						</div>

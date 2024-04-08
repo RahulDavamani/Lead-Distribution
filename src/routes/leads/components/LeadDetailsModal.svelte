@@ -6,22 +6,18 @@
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { getActionsList } from '$lib/config/actions/utils/getActionsList';
-	import { onMount } from 'svelte';
 	import { getTimeElapsed, getTimeElapsedText } from '$lib/client/DateTime';
+	import { lead } from '../../../stores/lead.store';
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
-	export let id: string | undefined;
+	$: id = $lead.leadDetailsModelId;
 	let leadDetails: LeadDetails | undefined;
-
-	let today = new Date();
-	onMount(() => setInterval(() => (today = new Date()), 1000));
 
 	const fetchLeadDetails = async (id: string) => {
 		const type = $page.url.searchParams.get('type') as 'queued' | 'completed';
 		leadDetails = await trpc($page).lead.getLeadDetails.query({ id, type });
 	};
-
 	$: id ? fetchLeadDetails(id) : (leadDetails = undefined);
 </script>
 
@@ -29,7 +25,7 @@
 	<Modal
 		title="Lead Details {leadDetails?.ProspectId ? `(${leadDetails.ProspectId})` : ''}"
 		showModal={id !== undefined}
-		closeModal={() => (id = undefined)}
+		closeModal={() => ($lead.leadDetailsModelId = undefined)}
 		boxClasses="max-w-full"
 	>
 		{#if leadDetails}
@@ -52,7 +48,7 @@
 					<div class="text-lg font-semibold col-span-4">Notification Dispatch Process:</div>
 
 					{#each leadDetails.notificationProcesses as { processName, createdAt, completedAt, status, notificationAttempts, escalations }}
-						{@const leadResponseTime = getTimeElapsed(createdAt, completedAt ?? today)}
+						{@const leadResponseTime = getTimeElapsed(createdAt, completedAt ?? new Date())}
 						<details class="collapse collapse-arrow border shadow-sm col-span-4">
 							<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
 								<div class="flex justify-between items-center">
@@ -75,7 +71,7 @@
 									<div class="max-w-48 text-right mr-2">
 										<span class="font-semibold">Lead Response Time:</span>
 										<span>
-											{getTimeElapsedText(createdAt, leadResponseTime < 0 ? createdAt : completedAt ?? today)}
+											{getTimeElapsedText(createdAt, leadResponseTime < 0 ? createdAt : completedAt ?? new Date())}
 										</span>
 									</div>
 								</div>
