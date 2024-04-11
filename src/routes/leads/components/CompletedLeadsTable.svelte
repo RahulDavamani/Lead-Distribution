@@ -235,7 +235,11 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt ?? today)}</td>
+					<td class="text-center">
+						{calls[calls.length - 1]?.createdAt
+							? getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt)
+							: 'N/A'}
+					</td>
 
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>
