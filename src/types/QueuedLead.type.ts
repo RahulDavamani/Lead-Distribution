@@ -63,4 +63,6 @@ export interface QueuedLead {
 				createdAt: Date;
 		  }
 		| undefined;
+
+	leadResponseTime: number | undefined;
 }

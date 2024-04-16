@@ -66,7 +66,7 @@ export const watchGhlSMS = async (ProspectKey: string) => {
 		if (ghlStatus === 'Text Received') {
 			job.cancel();
 			await updateLead({ log: { log: 'GHL: Text Received' } });
-			await completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
+			await completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received', notes: '' });
 		}
 	});
 };

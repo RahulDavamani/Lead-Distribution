@@ -9,7 +9,7 @@ export const completeLead = async ({
 	user
 }: Prisma.LdLeadCompletedCreateInput) => {
 	// Get Lead Data
-	const { id, createdAt, ruleId, VonageGUID, logs, notificationProcesses, messages, calls, responses } =
+	const { id, createdAt, ruleId, VonageGUID, notes, logs, notificationProcesses, messages, calls, responses } =
 		await prisma.ldLead
 			.findUniqueOrThrow({
 				where: { ProspectKey },
@@ -34,6 +34,7 @@ export const completeLead = async ({
 			createdAt,
 			ruleId,
 			VonageGUID,
+			notes,
 			ProspectKey,
 			success,
 			completeStatus,

@@ -20,6 +20,7 @@ export const insertLeadCompleted = async (ProspectKey: string) => {
 			data: {
 				ProspectKey,
 				ruleId: rule?.id,
+				notes: '',
 				success: true,
 				completeStatus: 'Completed Lead from GHL',
 				logs: { create: { log: 'Lead completed: Completed Lead from GHL' } }

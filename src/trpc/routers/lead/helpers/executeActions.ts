@@ -55,7 +55,7 @@ export const executeActions = async (ProspectKey: string, actions: Actions) => {
 		if (action.completeLead) {
 			const { num, success, completeStatus } = action.completeLead;
 			await updateLead({ log: { log: `Action #${num}: Complete Lead` } });
-			await completeLead({ ProspectKey, success, completeStatus });
+			await completeLead({ ProspectKey, success, completeStatus, notes: '' });
 			break;
 		}
 	}

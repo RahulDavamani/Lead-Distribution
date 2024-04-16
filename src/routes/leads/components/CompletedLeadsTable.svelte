@@ -184,7 +184,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospect, company, rule, success, completeStatus, customerTalkTime, user, calls }}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospect, company, rule, success, completeStatus, customerTalkTime, user, calls, leadResponseTime }}
 				<tr class="hover">
 					{#if deleteLeadIds !== undefined}
 						<td class="w-1">
@@ -235,11 +235,7 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
-					<td class="text-center">
-						{calls[calls.length - 1]?.createdAt
-							? getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt)
-							: 'N/A'}
-					</td>
+					<td class="text-center">{leadResponseTime && calls.length ? timeToText(leadResponseTime) : 'N/A'}</td>
 
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>

@@ -14,6 +14,7 @@
 	import type { QueuedLead } from '../../types/QueuedLead.type';
 	import { lead } from '../../stores/lead.store';
 	import { goto } from '$app/navigation';
+	import NotesModal from './components/NotesModal.svelte';
 
 	$: ({ init, queuedLeads, completedLeads } = $lead);
 
@@ -80,7 +81,11 @@
 						...state,
 						init: false,
 						queuedLeads: [],
-						completedLeads: []
+						completedLeads: [],
+						leadDetailsModelId: undefined,
+						switchCompanyModalId: undefined,
+						notesModalId: undefined,
+						showSettingsModal: false
 					}));
 					window.stop();
 					goto('/leads-ws');
@@ -134,3 +139,6 @@
 <LeadDetailsModal />
 <SwitchCompanyModal />
 <SettingsModal />
+{#if $lead.notesModalId}
+	<NotesModal />
+{/if}

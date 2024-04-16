@@ -5,6 +5,7 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getProspect } from './getProspect';
 import { getUserStr } from './user';
 import { getCompanyValues } from './company';
+import { getLeadResponseTime } from './getLeadResponseTime';
 
 export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 	const where = (await getLeadsWhere(roleType, UserKey)) as Prisma.LdLeadWhereInput;
@@ -80,7 +81,8 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 						...lead.calls[0],
 						userStr: lead.calls[0].UserKey ? await getUserStr(lead.calls[0].UserKey) : undefined
 					}
-				: undefined
+				: undefined,
+			leadResponseTime: await getLeadResponseTime(lead.id)
 		}))
 	);
 

@@ -2,6 +2,8 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const result = await prisma.leadProspect.findMany({ where: { Email: 'ranji-7657-hook@yopmail.com' } });
+		// console.log(result);
 		// const result =
 		// 	await prisma.$queryRaw`insert into Domo_Google_ConversionRequest (RequestKey, FileKey, CustomerId, TotalCnt, UploadedCnt, ExceptionCnt, Exception) values ('124218dc-a91a-49a7-9a1a-6b10939d5d5f', '8E7808E1-3A5D-4D3D-8E80-F41A6CBF2F3E', '3094113984', 359, 1, 358, '')`;
 		// const result = await prisma.$queryRaw`delete from Domo_Google_ConversionRequest`;

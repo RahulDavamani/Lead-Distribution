@@ -24,7 +24,7 @@ export const load = async (event) => {
 		.catch(prismaErrorHandler);
 
 	scheduleJob(new Date(Date.now() + 1000), async () => {
-		if (lead) completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received' });
+		if (lead) completeLead({ ProspectKey, success: false, completeStatus: 'GHL Text Received', notes: '' });
 		else insertLeadCompleted(ProspectKey);
 	});
 

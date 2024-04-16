@@ -50,6 +50,27 @@ export const leadRouter = router({
 			});
 		}),
 
+	getNotes: procedure.input(z.object({ id: z.string().min(1) })).query(async ({ input: { id } }) => {
+		const { notes } = await prisma.ldLead
+			.findUniqueOrThrow({
+				where: { id },
+				select: { notes: true }
+			})
+			.catch(prismaErrorHandler);
+		return { notes };
+	}),
+
+	updateNotes: procedure
+		.input(z.object({ id: z.string().min(1), notes: z.string() }))
+		.query(async ({ input: { id, notes } }) => {
+			await prisma.ldLead
+				.update({
+					where: { id },
+					data: { notes }
+				})
+				.catch(prismaErrorHandler);
+		}),
+
 	view: procedure
 		.input(z.object({ ProspectKey: z.string().min(1), UserKey: z.string().min(1), roleType: roleTypeSchema }))
 		.query(async ({ input: { ProspectKey, UserKey, roleType } }) => {
@@ -102,7 +123,7 @@ export const leadRouter = router({
 			})
 		)
 		.query(async ({ input: { ProspectKey, UserKey, success, completeStatus } }) => {
-			await completeLead({ ProspectKey, success, completeStatus, user: { connect: { UserKey } } });
+			await completeLead({ ProspectKey, success, completeStatus, user: { connect: { UserKey } }, notes: '' });
 			return { ProspectKey };
 		}),
 

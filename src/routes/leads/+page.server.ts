@@ -2,6 +2,9 @@
 // import { createCaller } from '../../trpc/routers/app.router.js';
 // import { trpcServerErrorHandler } from '../../trpc/trpcErrorhandler.js';
 
+export const ssr = false;
+export const csr = true;
+
 // export const load = async (event) => {
 // 	const isSupervisor = event.url.searchParams.get('IsSupervisor') === 'true';
 // 	const UserKey = event.url.searchParams.get('UserKey');

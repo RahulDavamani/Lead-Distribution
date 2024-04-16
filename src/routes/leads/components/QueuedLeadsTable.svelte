@@ -105,6 +105,17 @@
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
 </script>
 
+<div class="flex text-sm mb-2 gap-4">
+	<div>
+		<span class="font-semibold">New Leads:</span>
+		<span>{queuedLeads.filter(({ isNewLead }) => isNewLead).length}</span>
+	</div>
+	<div>
+		<span class="font-semibold">Callback Leads:</span>
+		<span>{queuedLeads.filter(({ isNewLead }) => !isNewLead).length}</span>
+	</div>
+</div>
+
 <div class="text-sm mb-2">
 	<span class="font-semibold">Avg. Lead Time Elapsed:</span>
 	<span class="">{timeToText(avgLeadTimeElapsed)}</span>
@@ -174,11 +185,12 @@
 				<th class="w-32">Customer</th>
 				<th class="w-32">Company</th>
 				<th>Lead Status</th>
+				<th class="w-1">Notes</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, CompanyKey, company, rule, notificationProcesses, calls, latestCall, responses }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, company, rule, notificationProcesses, calls, latestCall, responses, leadResponseTime }, i}
 				{@const notificationProcessName = getProcessNameSplit(
 					notificationProcesses[0]?.callbackNum ?? 0,
 					notificationProcesses[0]?.requeueNum ?? 0
@@ -224,14 +236,14 @@
 					<tr class="hover">
 						{#if i == 0 && displayLeads.slice(startIndex, endIndex).filter((lead) => lead.isNewLead).length > 0}
 							<td
-								colspan={deleteLeadIds === undefined ? 12 : 13}
+								colspan={deleteLeadIds === undefined ? 13 : 14}
 								class="text-center bg-success text-success-content bg-opacity-90 font-semibold"
 							>
 								New Leads
 							</td>
 						{:else}
 							<td
-								colspan={deleteLeadIds === undefined ? 12 : 13}
+								colspan={deleteLeadIds === undefined ? 13 : 14}
 								class="text-center bg-info text-info-content bg-opacity-90 font-semibold"
 							>
 								Callback Leads
@@ -287,7 +299,7 @@
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, today)}</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, calls[calls.length - 1]?.createdAt ?? today)}</td>
+					<td class="text-center">{leadResponseTime ? timeToText(leadResponseTime) : 'N/A'}</td>
 					<td>
 						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>
 						<div class="text-xs">{prospect.Address} {prospect.ZipCode}</div>
@@ -324,6 +336,11 @@
 						{#if responses.length}
 							<div class="opacity-75 text-xs">(Disposition: {responses[0].responseValue})</div>
 						{/if}
+					</td>
+					<td class="w-1">
+						<button class="btn btn-sm btn-square btn-link" on:click={() => ($lead.notesModalId = id)}>
+							<Icon icon="mdi:file-document-box" class="text-accent" width={24} />
+						</button>
 					</td>
 					<td>
 						<div class="flex flex-col justify-center">

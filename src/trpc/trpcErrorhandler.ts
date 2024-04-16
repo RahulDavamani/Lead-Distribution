@@ -1,7 +1,7 @@
 import { TRPCClientError } from '@trpc/client';
 import { TRPCError } from '@trpc/server';
 import { getErrorCode } from '../lib/data/errorCodes';
-import { error } from '@sveltejs/kit';
+import { error, type NumericRange } from '@sveltejs/kit';
 import { ui } from '../stores/ui.store';
 
 export interface TRPCZodError {
@@ -47,7 +47,7 @@ export const trpcClientErrorHandler = <T>(
 
 export const trpcServerErrorHandler = (e: unknown) => {
 	const { code, message } = trpcErrorhandler(e);
-	throw error(code, { message: message });
+	throw error(code as NumericRange<400, 599>, { message: message });
 };
 
 export const trpcErrorhandler = <T>(e: unknown): TRPCHandlerError<T> => {

@@ -24,6 +24,8 @@ export interface Lead {
 
 	leadDetailsModelId?: string;
 	switchCompanyModalId?: string;
+	notesModalId?: string;
+
 	showSettingsModal: boolean;
 }
 

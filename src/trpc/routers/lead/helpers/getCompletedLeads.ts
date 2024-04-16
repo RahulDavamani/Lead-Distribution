@@ -5,6 +5,7 @@ import { getLeadsWhere } from './getLeadsWhere';
 import { getUserStr } from './user';
 import { getCompanyValues } from './company';
 import { getProspect } from './getProspect';
+import { getLeadResponseTime } from './getLeadResponseTime';
 
 const getCustomerTalkTime = async (VonageGUID: string) =>
 	Number(
@@ -44,7 +45,8 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			prospect: await getProspect(lead.ProspectKey),
 			company: lead.CompanyKey ? await getCompanyValues(lead.CompanyKey) : undefined,
 			customerTalkTime: lead.VonageGUID ? await getCustomerTalkTime(lead.VonageGUID) : 0,
-			user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined
+			user: lead.UserKey ? await getUserStr(lead.UserKey) : undefined,
+			leadResponseTime: await getLeadResponseTime(lead.id)
 		}))
 	);
 

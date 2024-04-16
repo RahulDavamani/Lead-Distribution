@@ -11,6 +11,7 @@
 	import { lead } from '../../stores/lead.store';
 	import { ui } from '../../stores/ui.store';
 	import { goto } from '$app/navigation';
+	import NotesModal from '../leads/components/NotesModal.svelte';
 
 	$: ({ roleType } = $auth);
 	$: ({ init, queuedLeads, completedLeads } = $lead);
@@ -41,7 +42,11 @@
 						...state,
 						init: false,
 						queuedLeads: [],
-						completedLeads: []
+						completedLeads: [],
+						leadDetailsModelId: undefined,
+						switchCompanyModalId: undefined,
+						notesModalId: undefined,
+						showSettingsModal: false
 					}));
 					window.stop();
 					goto('/leads');
@@ -96,3 +101,7 @@
 <LeadDetailsModal />
 <SwitchCompanyModal />
 <SettingsModal />
+
+{#if $lead.notesModalId}
+	<NotesModal />
+{/if}

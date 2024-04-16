@@ -2,7 +2,7 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 
 export const unCompleteLead = async (ProspectKey: string) => {
 	// Get Completed Lead Data
-	const { id, createdAt, ruleId, VonageGUID, logs, notificationProcesses, messages, calls, responses } =
+	const { id, createdAt, ruleId, VonageGUID, notes, logs, notificationProcesses, messages, calls, responses } =
 		await prisma.ldLeadCompleted
 			.findUniqueOrThrow({
 				where: { ProspectKey },
@@ -23,6 +23,7 @@ export const unCompleteLead = async (ProspectKey: string) => {
 			createdAt,
 			ruleId,
 			VonageGUID,
+			notes,
 			ProspectKey,
 			isPicked: false,
 			overrideCallback: false
