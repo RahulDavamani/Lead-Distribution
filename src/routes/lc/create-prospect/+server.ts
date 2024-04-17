@@ -1,4 +1,4 @@
-import { error, type RequestHandler } from '@sveltejs/kit';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import type { ProspectInput } from '../../../zod/prospectInput.schema';
 
 export interface LCBody {
@@ -59,35 +59,37 @@ export const GET: RequestHandler = async ({ url }) => {
 	return new Response(challenge);
 };
 
-export const POST: RequestHandler = async ({ request }) => {
-	try {
-		const body = (await request.json()) as LCBody;
+export const POST: RequestHandler = async ({ url, request }) => {
+	const accesskey = url.searchParams.get('accesskey');
+	if (!accesskey) return error(404, 'Missing accesskey');
 
-		const prospect: ProspectInput = {
-			LeadID: body.chatId ?? '',
-			CustomerInfo: {
-				FirstName: body.attributes?.default_name ?? '',
-				LastName: '',
-				Email: body.attributes?.default_email ?? '',
-				Phone: body.attributes?.PhoneNumber ?? '',
-				Address: '',
-				ZipCode: ''
-			},
-			TrustedFormCertUrl: 'TrustedFormCertUrl.com',
-			ConsentToContact: 'true',
-			AcceptedTerms: 'true'
-		};
+	const body = (await request.json()) as LCBody;
 
-		const url = 'https://openapi.xyzies.com/LeadProspect/PostLead';
-		const res = await fetch(url, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', AccessKey: '9A40BA85-78C1-4327-9021-A1AFC06CE9B9' },
-			body: JSON.stringify(prospect)
-		});
-		if (res.status !== 200) return error(400, 'Failed to create prospect');
+	const prospect: ProspectInput = {
+		LeadID: body.chatId ?? '',
+		CustomerInfo: {
+			FirstName: body.attributes?.default_name ?? '',
+			LastName: '',
+			Email: body.attributes?.default_email ?? '',
+			Phone: body.attributes?.PhoneNumber ?? '',
+			Address: '',
+			ZipCode: ''
+		},
+		TrustedFormCertUrl: 'TrustedFormCertUrl.com',
+		ConsentToContact: 'true',
+		AcceptedTerms: 'true'
+	};
 
-		return new Response('Prospect Created Successfully');
-	} catch (e) {
-		return error(500, 'Internal Error');
-	}
+	const res = await fetch('https://openapi.xyzies.com/LeadProspect/PostLead', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', AccessKey: accesskey },
+		body: JSON.stringify(prospect)
+	});
+	if (res.status !== 200) return error(400, 'Failed to create prospect');
+
+	return json({
+		attributes: {
+			LeadId: body.chatId
+		}
+	});
 };

@@ -9,19 +9,30 @@ export const completeLead = async ({
 	user
 }: Prisma.LdLeadCompletedCreateInput) => {
 	// Get Lead Data
-	const { id, createdAt, ruleId, VonageGUID, notes, logs, notificationProcesses, messages, calls, responses } =
-		await prisma.ldLead
-			.findUniqueOrThrow({
-				where: { ProspectKey },
-				include: {
-					logs: { select: { id: true } },
-					notificationProcesses: { select: { id: true, status: true } },
-					messages: { select: { id: true } },
-					calls: { orderBy: { createdAt: 'desc' }, select: { id: true, UserKey: true } },
-					responses: { select: { id: true } }
-				}
-			})
-			.catch(prismaErrorHandler);
+	const {
+		id,
+		createdAt,
+		ruleId,
+		VonageGUID,
+		CompanyKey,
+		notes,
+		logs,
+		notificationProcesses,
+		messages,
+		calls,
+		responses
+	} = await prisma.ldLead
+		.findUniqueOrThrow({
+			where: { ProspectKey },
+			include: {
+				logs: { select: { id: true } },
+				notificationProcesses: { select: { id: true, status: true } },
+				messages: { select: { id: true } },
+				calls: { orderBy: { createdAt: 'desc' }, select: { id: true, UserKey: true } },
+				responses: { select: { id: true } }
+			}
+		})
+		.catch(prismaErrorHandler);
 
 	// Delete Lead
 	await prisma.ldLead.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
@@ -34,6 +45,7 @@ export const completeLead = async ({
 			createdAt,
 			ruleId,
 			VonageGUID,
+			CompanyKey,
 			notes,
 			ProspectKey,
 			success,

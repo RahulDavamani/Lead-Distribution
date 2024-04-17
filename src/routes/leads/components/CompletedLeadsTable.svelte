@@ -8,6 +8,7 @@
 	import { page } from '$app/stores';
 	import { auth } from '../../../stores/auth.store';
 	import { lead } from '../../../stores/lead.store';
+	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 
 	$: ({ completedLeads, today } = $lead);
 
@@ -49,7 +50,9 @@
 						$ui.alertModal = undefined;
 						if (!deleteLeadIds) return;
 						ui.setLoader({ title: 'Deleting Leads' });
-						await trpc($page).lead.delete.query({ ids: deleteLeadIds, isCompleted: true });
+						await trpc($page)
+							.lead.delete.query({ ids: deleteLeadIds, isCompleted: true })
+							.catch(trpcClientErrorHandler);
 						await lead.fetchCompletedLeads();
 						ui.setLoader();
 						deleteLeadIds = undefined;

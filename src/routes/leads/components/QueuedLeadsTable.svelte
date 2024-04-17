@@ -8,6 +8,7 @@
 	import FormControl from '../../components/FormControl.svelte';
 	import { lead } from '../../../stores/lead.store';
 	import { getProcessNameSplit } from '$lib/getProcessName';
+	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 
 	$: ({ queuedLeads, today } = $lead);
 
@@ -34,7 +35,7 @@
 				clearInterval(interval);
 			}
 		}, 500);
-		await trpc($page).lead.requeue.query({ ProspectKey, UserKey });
+		await trpc($page).lead.requeue.query({ ProspectKey, UserKey }).catch(trpcClientErrorHandler);
 	};
 
 	const showRequeueAlert = (ProspectKey: string, alertType: 'picked' | 'scheduled') => {
@@ -81,7 +82,9 @@
 						$ui.alertModal = undefined;
 						if (!deleteLeadIds) return;
 						ui.setLoader({ title: 'Deleting Leads' });
-						await trpc($page).lead.delete.query({ ids: deleteLeadIds, isCompleted: false });
+						await trpc($page)
+							.lead.delete.query({ ids: deleteLeadIds, isCompleted: false })
+							.catch(trpcClientErrorHandler);
 						ui.setLoader();
 						deleteLeadIds = undefined;
 					}
