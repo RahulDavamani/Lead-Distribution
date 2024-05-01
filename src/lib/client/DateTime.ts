@@ -1,3 +1,6 @@
+import { allDays } from '$lib/data/allDays';
+import type { QueuedLead } from '../../types/QueuedLead.type';
+
 export type Time = { days: number; hours: number; minutes: number; seconds: number };
 
 export const timeToText = (totalSeconds: number): string => {
@@ -31,3 +34,42 @@ export const secondsToTime = (seconds: number) => {
 };
 
 export const formatTime = (inputTime: Time) => secondsToTime(timeToSeconds(inputTime));
+
+export const calculateLeadDuration = (startDate: Date, endDate: Date, workingHours: QueuedLead['workingHours']) => {
+	if (!workingHours?.length) return getTimeElapsed(startDate, endDate);
+	else {
+		const date = new Date(startDate.toDateString());
+		const startTime = startDate.getTime() - new Date(startDate.toDateString()).getTime();
+		const endTime = endDate.getTime() - new Date(endDate.toDateString()).getTime();
+
+		let leadDuration = 0;
+		while (date <= endDate) {
+			const day = allDays[date.getDay()];
+			const workingHour = workingHours.find(({ days }) => days.split(',').includes(day));
+			const workingHourStartTime = workingHour
+				? workingHour.start.getTime() - new Date(workingHour.start.toDateString()).getTime()
+				: 0;
+			const workingHourEndTime = workingHour
+				? workingHour.end.getTime() - new Date(workingHour.end.toDateString()).getTime()
+				: 0;
+
+			const leadStartTime =
+				date.toDateString() === startDate.toDateString()
+					? startTime < workingHourStartTime
+						? workingHourStartTime
+						: startTime
+					: workingHourStartTime;
+
+			const leadEndTime =
+				date.toDateString() === endDate.toDateString()
+					? endTime > workingHourEndTime
+						? workingHourEndTime
+						: endTime
+					: workingHourEndTime;
+
+			leadDuration += (leadEndTime - leadStartTime) / 1000;
+			date.setDate(date.getDate() + 1);
+		}
+		return Math.floor(leadDuration);
+	}
+};

@@ -1,58 +1,48 @@
 <script lang="ts">
-	import Modal from '../../components/Modal.svelte';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
-	import Loader from '../../components/Loader.svelte';
 	import { ui } from '../../../stores/ui.store';
 	import { lead } from '../../../stores/lead.store';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 	import Quill from 'quill';
 	import 'quill/dist/quill.snow.css';
 	import { onMount } from 'svelte';
+	import Loader from '../../components/ui/Loader.svelte';
+	import Modal from '../../components/ui/Modal.svelte';
 
 	let init = false;
-	$: selectedLead = $lead.queuedLeads.find((l) => l.id === $lead.notesModalId);
+	$: id = $ui.modals.notesModalId;
+	$: selectedLead = $lead.queuedLeads?.find((l) => l.id === id);
 
 	let quill: Quill;
 
-	const closeModal = () => {
-		$lead.notesModalId = undefined;
-		init = false;
+	const fetchNotes = async () => {
+		if (!id) return;
+		const { notes } = await trpc($page).lead.getNotes.query({ id }).catch(trpcClientErrorHandler);
+		quill.root.innerHTML = notes;
 	};
 
 	onMount(async () => {
-		if (init) return;
 		quill = new Quill('#editor', {
 			modules: { toolbar: true },
 			placeholder: 'Compose...',
 			theme: 'snow'
 		});
-
-		if (!$lead.notesModalId) return;
-		const { notes } = await trpc($page).lead.getNotes.query({ id: $lead.notesModalId }).catch(trpcClientErrorHandler);
-		quill.root.innerHTML = notes;
+		fetchNotes();
 		init = true;
 	});
 
-	const saveNotes = async () => {
-		if (!$lead.notesModalId) return;
-		ui.setLoader({ title: 'Saving Notes' });
-		await trpc($page).lead.updateNotes.query({ id: $lead.notesModalId, notes: quill.root.innerHTML });
-		ui.showToast({ title: 'Notes Saved Successfully', class: 'alert-success' });
-		ui.setLoader();
-		closeModal();
-	};
+	const saveNotes = ui.loaderWrapper({ title: 'Saving Notes' }, async () => {
+		if (!id) return;
+		await trpc($page).lead.updateNotes.query({ id, notes: quill.root.innerHTML }).catch(trpcClientErrorHandler);
+		ui.setToast({ title: 'Notes Saved Successfully', alertClasses: 'alert-success' });
+	});
 </script>
 
-<Modal
-	classes="z-20 modal-bottom"
-	title="Lead Details: ({selectedLead?.prospect.ProspectId})"
-	showModal={$lead.notesModalId !== undefined}
-	{closeModal}
->
+<Modal classes="z-20 modal-bottom" title="Lead ({selectedLead?.prospect.ProspectId})">
 	{#if !init}
 		<div class="my-10">
-			<Loader title="Fetching Notes" size={80} overlay={false} center={false} />
+			<Loader title="Fetching Notes" size={80} overlay={false} fixed={false} />
 		</div>
 	{/if}
 	<div class="{!init && 'hidden'} d">

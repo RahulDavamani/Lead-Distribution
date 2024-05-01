@@ -1,16 +1,19 @@
+import { endNotificationProcesses } from './notificationProcess';
+
 export const deleteLeads = async (ids: string[], isCompleted: boolean) => {
 	let leads;
 	if (isCompleted)
 		leads = await prisma.ldLeadCompleted.findMany({
 			where: { id: { in: ids } },
-			select: { notificationProcesses: { select: { id: true } } }
+			select: { ProspectKey: true, notificationProcesses: { select: { id: true } } }
 		});
 	else
 		leads = await prisma.ldLead.findMany({
 			where: { id: { in: ids } },
-			select: { notificationProcesses: { select: { id: true } } }
+			select: { ProspectKey: true, notificationProcesses: { select: { id: true } } }
 		});
 
+	await Promise.all(leads.map(({ ProspectKey }) => endNotificationProcesses(ProspectKey)));
 	const notificationProcessesIds = leads.flatMap(({ notificationProcesses }) =>
 		notificationProcesses.flatMap(({ id }) => id)
 	);

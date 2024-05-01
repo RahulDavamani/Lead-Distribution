@@ -1,75 +1,48 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { afterUpdate, onDestroy, onMount } from 'svelte';
-	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
-	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
-	import { trpc } from '../../trpc/client';
-	import { ui } from '../../stores/ui.store';
-	import { auth } from '../../stores/auth.store';
-	import { trpcClientErrorHandler } from '../../trpc/trpcErrorhandler';
-	import Icon from '@iconify/svelte';
-	import LeadDetailsModal from './components/LeadDetailsModal.svelte';
-	import SettingsModal from './components/SettingsModal.svelte';
-	import SwitchCompanyModal from './components/SwitchCompanyModal.svelte';
-	import type { QueuedLead } from '../../types/QueuedLead.type';
+	import { afterUpdate, onMount } from 'svelte';
 	import { lead } from '../../stores/lead.store';
-	import { goto } from '$app/navigation';
+	import Icon from '@iconify/svelte';
+	import { auth } from '../../stores/auth.store';
+	import QueuedLeadsTable from './components/QueuedLeadsTable.svelte';
+	import Loader from '../components/ui/Loader.svelte';
+	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
+	import { ui } from '../../stores/ui.store';
 	import NotesModal from './components/NotesModal.svelte';
 
-	$: ({ init, queuedLeads, completedLeads } = $lead);
+	$: ({ connectionType, tab, viewMode, queuedLeads, completedLeads } = $lead);
+	const { roleType } = $auth;
 
-	const {
-		user: { UserKey },
-		roleType
-	} = $auth;
+	onMount(lead.init);
 
-	const fetchQueuedLeads = async () => {
-		const leads = (await trpc($page)
-			.lead.getQueued.query({ UserKey, roleType })
-			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }))) as QueuedLead[];
-		await lead.updateQueuedLeads(leads);
-	};
-
-	let interval: NodeJS.Timeout | undefined;
-	onMount(async () => {
-		window.stop();
-
-		ui.setLoader({ title: 'Fetching Leads' });
-		await fetchQueuedLeads();
-		await lead.fetchCompletedLeads();
-		interval = setInterval(fetchQueuedLeads, 5000);
-		ui.setLoader();
-
-		$lead.init = true;
-	});
-
-	onDestroy(() => {
-		window.stop();
-		clearInterval(interval);
-	});
-
-	const reloadLeads = async () => {
-		window.stop();
-		ui.setLoader({ title: 'Fetching Leads' });
-		clearInterval(interval);
-		await fetchQueuedLeads();
-		await lead.fetchCompletedLeads();
-		interval = setInterval(fetchQueuedLeads, 5000);
-		ui.setLoader();
-	};
-
-	let tab = $page.url.searchParams.get('type') === 'completed' ? 2 : 1;
 	afterUpdate(() => {
-		$page.url.searchParams.set('type', tab === 1 ? 'queued' : 'completed');
+		$page.url.searchParams.set('connection', $lead.connectionType);
+		$page.url.searchParams.set('type', $lead.tab);
 		window.history.replaceState(history.state, '', $page.url.toString());
 	});
 
-	$: affiliates = [...completedLeads, ...queuedLeads].reduce(
+	$: leads = [...(completedLeads ?? []), ...(queuedLeads ?? [])];
+	$: affiliates = leads.reduce(
 		(acc, cur) =>
 			!cur.prospect.CompanyName || acc.includes(cur.prospect.CompanyName) ? acc : [...acc, cur.prospect.CompanyName],
 		[] as string[]
 	);
 </script>
+
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div class="form-control {viewMode ? 'fixed' : 'absolute'} top-2 right-2 z-50 bg-base-300 rounded-box px-2">
+	<label
+		class="label cursor-pointer gap-2 text-sm"
+		on:click={() => {
+			if (document.fullscreenElement) document.exitFullscreen();
+			else document.documentElement.requestFullscreen();
+		}}
+	>
+		<div class="font-bold">View Mode</div>
+		<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" bind:checked={$lead.viewMode} />
+	</label>
+</div>
 
 <div class="px-16 mx-auto mb-20">
 	<div class="flex justify-between items-end">
@@ -77,28 +50,24 @@
 			<button
 				class="btn btn-sm btn-ghost"
 				on:click={() => {
-					lead.update((state) => ({
-						...state,
-						init: false,
-						queuedLeads: [],
-						completedLeads: [],
-						leadDetailsModelId: undefined,
-						switchCompanyModalId: undefined,
-						notesModalId: undefined,
-						showSettingsModal: false
-					}));
-					window.stop();
-					goto('/leads-ws');
+					$lead.connectionType = connectionType === 'http' ? 'ws' : 'http';
+					$page.url.searchParams.set('connection', $lead.connectionType);
+					window.history.replaceState(history.state, '', $page.url.toString());
+					lead.init();
 				}}
 			>
-				<Icon icon="wpf:disconnected" class="text-error" width={20} />
+				<Icon
+					icon={connectionType === 'ws' ? 'wpf:connected' : 'wpf:disconnected'}
+					class={connectionType === 'ws' ? 'text-success' : 'text-error'}
+					width={20}
+				/>
 			</button>
-			{#if tab === 1}
+			{#if tab === 'queued'}
 				Queued Leads:
-				<span class="font-normal font-mono text-2xl">({queuedLeads.length})</span>
+				<span class="font-normal font-mono text-2xl">({queuedLeads?.length ?? 0})</span>
 			{:else}
 				Completed Leads:
-				<span class="font-normal font-mono text-2xl">({completedLeads.length})</span>
+				<span class="font-normal font-mono text-2xl">({completedLeads?.length ?? 0})</span>
 			{/if}
 
 			<select
@@ -111,34 +80,39 @@
 				{/each}
 			</select>
 
-			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={reloadLeads}>
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => lead.init()}>
 				<Icon icon="mdi:refresh" class="text-info" width={22} />
 			</button>
 		</div>
 
-		{#if roleType === 'ADMIN' || roleType === 'SUPERVISOR'}
-			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => ($lead.showSettingsModal = true)}>
+		{#if roleType === 'ADMIN' || (roleType === 'SUPERVISOR' && !$lead.viewMode)}
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => ui.setModals({ showSettingsModal: true })}>
 				<Icon icon="mdi:settings" width={22} />
 			</button>
 		{/if}
-		<button class="btn btn-sm {tab === 1 ? 'btn-success' : 'btn-warning'}" on:click={() => (tab = tab === 1 ? 2 : 1)}>
-			{tab === 1 ? 'View Completed Leads' : 'View Queued Leads'}
+
+		<button
+			class="btn btn-sm {tab === 'queued' ? 'btn-success' : 'btn-warning'}"
+			on:click={() => ($lead.tab = tab === 'queued' ? 'completed' : 'queued')}
+		>
+			{tab === 'queued' ? 'View Completed Leads' : 'View Queued Leads'}
 		</button>
 	</div>
 	<div class="divider mt-1" />
 
-	{#if init}
-		{#if tab === 1}
+	{#if tab === 'queued'}
+		{#if queuedLeads}
 			<QueuedLeadsTable />
 		{:else}
-			<CompletedLeadsTable />
+			<Loader title="Fetching Queued Leads" overlay={false} />
 		{/if}
+	{:else if completedLeads}
+		<CompletedLeadsTable />
+	{:else}
+		<Loader title="Fetching Completed Leads" overlay={false} />
 	{/if}
 </div>
 
-<LeadDetailsModal />
-<SwitchCompanyModal />
-<SettingsModal />
-{#if $lead.notesModalId}
+{#if $ui.modals.notesModalId}
 	<NotesModal />
 {/if}

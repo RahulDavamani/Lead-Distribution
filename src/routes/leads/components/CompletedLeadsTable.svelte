@@ -9,8 +9,9 @@
 	import { auth } from '../../../stores/auth.store';
 	import { lead } from '../../../stores/lead.store';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
+	import { goto } from '$app/navigation';
 
-	$: ({ completedLeads, today } = $lead);
+	$: completedLeads = $lead.completedLeads!;
 
 	let completeStatusSelect: string | undefined;
 	$: completeLeadStatuses = completedLeads.reduce(
@@ -40,23 +41,25 @@
 			actions: [
 				{
 					name: 'Cancel',
-					class: 'btn-warning',
+					classes: 'btn-warning',
 					onClick: () => ($ui.alertModal = undefined)
 				},
 				{
 					name: 'Delete',
-					class: 'btn-error',
-					onClick: async () => {
+					classes: 'btn-error',
+					onClick: ui.loaderWrapper({ title: 'Deleting Leads' }, async () => {
 						$ui.alertModal = undefined;
 						if (!deleteLeadIds) return;
-						ui.setLoader({ title: 'Deleting Leads' });
+
 						await trpc($page)
 							.lead.delete.query({ ids: deleteLeadIds, isCompleted: true })
 							.catch(trpcClientErrorHandler);
+
+						ui.setLoader({ title: 'Updating Leads' });
 						await lead.fetchCompletedLeads();
-						ui.setLoader();
+
 						deleteLeadIds = undefined;
-					}
+					})
 				}
 			]
 		};
@@ -71,7 +74,7 @@
 	$: endIndex = startIndex + tableOpts.show;
 	$: displayLeads = completedLeads
 		.filter((lead) => (completeStatusSelect ? lead.completeStatus === completeStatusSelect : true))
-		.filter(({ prospect: { CompanyKey, ProspectId, ...values } }) =>
+		.filter(({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
 			Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
 		);
 </script>
@@ -138,7 +141,7 @@
 			</div>
 		</FormControl>
 
-		{#if $auth.roleType !== 'AGENT'}
+		{#if $auth.roleType !== 'AGENT' && !$lead.viewMode}
 			{#if deleteLeadIds === undefined}
 				<button
 					class="btn btn-sm btn-error"
@@ -222,7 +225,7 @@
 					<td
 						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
 						on:click={() => {
-							if (VonageGUID) ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`);
+							if (VonageGUID) goto(`/vonage-call-details?Guid=${VonageGUID}`);
 						}}
 					>
 						{VonageGUID ?? 'N/A'}
@@ -251,7 +254,10 @@
 					<td>{user ?? 'N/A'}</td>
 					<td>
 						<div class="flex justify-center items-center gap-2">
-							<button class="btn btn-xs btn-primary h-fit py-1" on:click={() => ($lead.leadDetailsModelId = id)}>
+							<button
+								class="btn btn-xs btn-primary h-fit py-1"
+								on:click={() => ui.setModals({ leadDetailsModelId: id })}
+							>
 								<Icon icon="mdi:information-variant" width={18} />
 							</button>
 						</div>

@@ -1,17 +1,16 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
-	import { ruleConfig } from '../../../../stores/ruleConfig.store';
+	import { ruleChanges, ruleConfig, ruleErrors } from '../../../../stores/ruleConfig.store';
 	import { tick } from 'svelte';
 	import { nanoid } from 'nanoid';
 	import FormControl from '../../../components/FormControl.svelte';
 	import Actions from './Actions.svelte';
 	import type { Rule } from '../../../../zod/rule.schema';
+	import IconBtn from '../../../components/ui/IconBtn.svelte';
 
 	type ResponseType = 'disposition' | 'sms';
 
 	$: ({
-		rule: { responses },
-		zodErrors
+		rule: { responses }
 	} = $ruleConfig);
 	$: responseGroups = {
 		disposition: {
@@ -53,36 +52,54 @@
 		await tick();
 		sortResponses(type);
 	};
+
+	$: responseChanges = {
+		create: $ruleChanges.responses?.create?.map(({ id }) => id) ?? [],
+		update: $ruleChanges.responses?.update?.map(({ id }) => id) ?? [],
+		remove: $ruleChanges.responses?.remove?.map(({ id }) => id) ?? []
+	};
 </script>
 
 <details class="collapse collapse-arrow">
 	<summary class="collapse-title px-0">
-		<div class="text-lg font-bold">Call Back Disposition & Prospect SMS Verification:</div>
+		<div class="flex flex-wrap items-center gap-2">
+			<div class="text-lg font-bold">Call Back Disposition & Prospect SMS Verification:</div>
+
+			{#if responseChanges.create.length}
+				<div class="badge badge-success">Added: {responseChanges.create.length}</div>
+			{/if}
+			{#if responseChanges.update.length}
+				<div class="badge badge-warning">Modified: {responseChanges.update.length}</div>
+			{/if}
+			{#if responseChanges.remove.length}
+				<div class="badge badge-error">Removed: {responseChanges.remove.length}</div>
+			{/if}
+		</div>
 	</summary>
 
 	<div class="collapse-content px-2">
 		<FormControl
 			label="Total Max Verification Check"
 			classes="w-1/2 mb-4 px-2"
-			error={zodErrors?.responseOptions?.totalMaxAttempt}
+			error={$ruleErrors?.responseOptions?.totalMaxAttempt}
 		>
 			<input
 				type="number"
 				placeholder="Type here"
-				class="input input-bordered"
+				class="input input-bordered {$ruleErrors?.responseOptions?.totalMaxAttempt && 'input-error'} 
+            {$ruleChanges.responseOptions?.totalMaxAttempt && 'input-warning'}"
 				bind:value={$ruleConfig.rule.responseOptions.totalMaxAttempt}
 			/>
 		</FormControl>
 
 		{#each Object.values(responseGroups) as { type, name, responses }}
-			<div class="flex gap-2">
+			<div class="flex items-center gap-2">
 				<div>
 					<span class="font-semibold">{name} Responses:</span>
 					<span class="font-mono">({responses.length})</span>
 				</div>
-				<button class="z-10 text-success" on:click={() => addResponse(type)}>
-					<Icon icon="mdi:add-circle" width={24} />
-				</button>
+
+				<IconBtn icon="mdi:add-circle" width={24} iconClasses="text-success" on:click={() => addResponse(type)} />
 			</div>
 			<div class="mb-2 text-sm">
 				{#if type === 'sms'}
@@ -93,18 +110,19 @@
 			<div class="space-y-4 px-2 mb-6">
 				{#each responses as { id, num }}
 					{@const i = $ruleConfig.rule.responses.findIndex((r) => r.id === id)}
-					<div class="my-card">
-						<div class="flex items-center mb-1">
-							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteResponse(type, id)}>
-								<Icon icon="mdi:close" class="text-error" width={20} />
-							</button>
+					<div
+						class="my-card {responseChanges.create.includes(id) && 'outline outline-success'} 
+                     {responseChanges.update.includes(id) && 'outline outline-warning'}"
+					>
+						<div class="flex items-center gap-1 mb-1">
+							<IconBtn icon="mdi:close" iconClasses="text-error" width={20} on:click={() => deleteResponse(type, id)} />
 							<div class="font-semibold">Response #{num}</div>
 						</div>
 
-						<FormControl classes="mb-4" label="Response Values (Contains)" error={zodErrors?.responses?.[i]?.values}>
+						<FormControl classes="mb-4" label="Response Values (Contains)" error={$ruleErrors?.responses?.[i]?.values}>
 							<textarea
 								placeholder="Type here"
-								class="textarea textarea-bordered"
+								class="textarea textarea-bordered {$ruleErrors?.responses?.[i]?.values && 'textarea-error'}"
 								bind:value={$ruleConfig.rule.responses[i].values}
 								rows={1}
 							/>
@@ -121,14 +139,24 @@
 		<div class="font-semibold mb-2">Other Cases:</div>
 
 		<div class="space-y-4">
-			<Actions
-				actionsName="Response Nomatch Actions"
-				bind:actions={$ruleConfig.rule.responseOptions.responsesNoMatchActions}
-			/>
-			<Actions
-				actionsName="Response Limit Exceeded Actions"
-				bind:actions={$ruleConfig.rule.responseOptions.responsesLimitExceedActions}
-			/>
+			<div
+				class="hover:outline hover:shadow-lg focus-within:outline focus-within:shadow-lg rounded-box
+            {$ruleChanges.responseOptions?.responsesNoMatchActions && 'outline outline-warning'}"
+			>
+				<Actions
+					actionsName="Response Nomatch Actions"
+					bind:actions={$ruleConfig.rule.responseOptions.responsesNoMatchActions}
+				/>
+			</div>
+			<div
+				class="hover:outline hover:shadow-lg focus-within:outline focus-within:shadow-lg rounded-box
+            {$ruleChanges.responseOptions?.responsesLimitExceedActions && 'outline outline-warning'}"
+			>
+				<Actions
+					actionsName="Response Limit Exceeded Actions"
+					bind:actions={$ruleConfig.rule.responseOptions.responsesLimitExceedActions}
+				/>
+			</div>
 		</div>
 	</div>
 </details>

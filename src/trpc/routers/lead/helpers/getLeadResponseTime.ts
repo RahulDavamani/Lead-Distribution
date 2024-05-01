@@ -5,13 +5,15 @@ export const getLeadResponseTime = async (id: string) => {
 		where: { OR: [{ leadId: id }, { completedLeadId: id }] },
 		orderBy: { createdAt: 'asc' }
 	});
-	const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
-		where: { OR: [{ leadId: id }, { completedLeadId: id }] },
-		orderBy: { createdAt: 'desc' },
-		select: { createdAt: true }
-	});
-	const np = call
-		? notificationProcesses.find(({ createdAt }) => createdAt < call.createdAt)
-		: notificationProcesses[0];
-	return np ? getTimeElapsed(np.createdAt, call?.createdAt ?? new Date()) : undefined;
+	if (call) {
+		const notificationProcess = await prisma.ldLeadNotificationProcess.findFirst({
+			where: {
+				OR: [{ leadId: id }, { completedLeadId: id }],
+				createdAt: { lt: call.createdAt }
+			},
+			orderBy: { createdAt: 'desc' },
+			select: { createdAt: true }
+		});
+		if (notificationProcess) return getTimeElapsed(notificationProcess.createdAt, call.createdAt);
+	}
 };

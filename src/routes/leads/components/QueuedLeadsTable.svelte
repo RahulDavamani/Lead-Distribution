@@ -4,26 +4,26 @@
 	import { ui } from '../../../stores/ui.store';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
-	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
+	import { calculateLeadDuration, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import FormControl from '../../components/FormControl.svelte';
 	import { lead } from '../../../stores/lead.store';
 	import { getProcessNameSplit } from '$lib/getProcessName';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
+	import { goto } from '$app/navigation';
 
-	$: ({ queuedLeads, today } = $lead);
+	$: ({ today } = $lead);
+	$: queuedLeads = $lead.queuedLeads!;
 
 	$: ({
 		user: { UserKey },
 		roleType
 	} = $auth);
 
+	$: leadsWithResponseTime = queuedLeads.filter((lead) => lead.leadResponseTime);
 	$: avgLeadTimeElapsed =
-		queuedLeads.length > 0
+		leadsWithResponseTime.length > 0
 			? Math.floor(
-					queuedLeads.reduce(
-						(acc, cur) => acc + getTimeElapsed(cur.createdAt, cur.calls?.[cur.calls.length - 1]?.createdAt ?? today),
-						0
-					) / queuedLeads.length
+					leadsWithResponseTime.reduce((acc, cur) => acc + cur.leadResponseTime!, 0) / leadsWithResponseTime.length
 				)
 			: 0;
 
@@ -49,12 +49,12 @@
 			actions: [
 				{
 					name: 'Cancel',
-					class: 'btn-error',
+					classes: 'btn-error',
 					onClick: () => ($ui.alertModal = undefined)
 				},
 				{
 					name: 'Requeue',
-					class: 'btn-warning',
+					classes: 'btn-warning',
 					onClick: async () => {
 						$ui.alertModal = undefined;
 						await requeue(ProspectKey);
@@ -72,22 +72,25 @@
 			actions: [
 				{
 					name: 'Cancel',
-					class: 'btn-warning',
+					classes: 'btn-warning',
 					onClick: () => ($ui.alertModal = undefined)
 				},
 				{
 					name: 'Delete',
-					class: 'btn-error',
-					onClick: async () => {
+					classes: 'btn-error',
+					onClick: ui.loaderWrapper({ title: 'Deleting lead' }, async () => {
 						$ui.alertModal = undefined;
 						if (!deleteLeadIds) return;
-						ui.setLoader({ title: 'Deleting Leads' });
+
 						await trpc($page)
 							.lead.delete.query({ ids: deleteLeadIds, isCompleted: false })
 							.catch(trpcClientErrorHandler);
-						ui.setLoader();
+
+						ui.setLoader({ title: 'Updating Leads' });
+						await lead.fetchQueuedLeads();
+
 						deleteLeadIds = undefined;
-					}
+					})
 				}
 			]
 		};
@@ -102,7 +105,7 @@
 	};
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
-	$: displayLeads = queuedLeads.filter(({ prospect: { CompanyKey, ProspectId, ...values } }) =>
+	$: displayLeads = queuedLeads.filter(({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
 		Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
@@ -129,7 +132,7 @@
 		<div class="flex items-center gap-2">
 			Show
 			<select class="select select-xs select-bordered" bind:value={tableOpts.show}>
-				{#each [10, 25, 50, 100] as show}
+				{#each [5, 10, 25, 50, 100] as show}
 					<option value={show}>{show}</option>
 				{/each}
 			</select>
@@ -145,7 +148,7 @@
 				<Icon icon="mdi:search" width={18} />
 			</div>
 		</FormControl>
-		{#if roleType !== 'AGENT'}
+		{#if roleType !== 'AGENT' && !$lead.viewMode}
 			{#if deleteLeadIds === undefined}
 				<button
 					class="btn btn-sm btn-error"
@@ -178,22 +181,21 @@
 					<th class="w-1" />
 				{/if}
 				<th>Prospect ID</th>
-				<th>Vonage GUID</th>
+				<th class="w-40">Vonage GUID</th>
 				<th>Affiliate</th>
 				<th>Rule</th>
 				<th>Created On</th>
 				<th>Updated On</th>
-				<th>Lead Duration</th>
+				<th><div class="text-center">Lead Duration</div></th>
 				<th><div class="text-center">Lead Response<br />Time</div></th>
-				<th class="w-32">Customer</th>
+				<th>Customer</th>
 				<th class="w-32">Company</th>
 				<th>Lead Status</th>
-				<th class="w-1">Notes</th>
 				<th><div class="text-center">Actions</div></th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, company, rule, notificationProcesses, calls, latestCall, responses, leadResponseTime }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, company, rule, notificationProcesses, latestCall, responses, leadResponseTime, workingHours }, i}
 				{@const notificationProcessName = getProcessNameSplit(
 					notificationProcesses[0]?.callbackNum ?? 0,
 					notificationProcesses[0]?.requeueNum ?? 0
@@ -236,19 +238,14 @@
 				}}
 
 				{#if i === 0 || i === firstCallback}
+					{@const colspan = 13 + (deleteLeadIds ? 1 : 0) + ($lead.viewMode ? -1 : 0)}
 					<tr class="hover">
 						{#if i == 0 && displayLeads.slice(startIndex, endIndex).filter((lead) => lead.isNewLead).length > 0}
-							<td
-								colspan={deleteLeadIds === undefined ? 13 : 14}
-								class="text-center bg-success text-success-content bg-opacity-90 font-semibold"
-							>
+							<td {colspan} class="text-center bg-success text-success-content bg-opacity-90 font-semibold">
 								New Leads
 							</td>
 						{:else}
-							<td
-								colspan={deleteLeadIds === undefined ? 13 : 14}
-								class="text-center bg-info text-info-content bg-opacity-90 font-semibold"
-							>
+							<td {colspan} class="text-center bg-info text-info-content bg-opacity-90 font-semibold">
 								Callback Leads
 							</td>
 						{/if}
@@ -286,8 +283,8 @@
 						</div>
 					</td>
 					<td
-						class="text-center {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
-						on:click={() => VonageGUID && ui.navigate(`/vonage-call-details?Guid=${VonageGUID}`)}
+						class="text-center text-xs {VonageGUID && 'text-primary cursor-pointer hover:underline'}'}"
+						on:click={() => VonageGUID && goto(`/vonage-call-details?Guid=${VonageGUID}`)}
 					>
 						{VonageGUID ?? 'N/A'}
 					</td>
@@ -301,29 +298,17 @@
 						<div>{updatedAt.toLocaleDateString()}</div>
 						<div>{updatedAt.toLocaleTimeString()}</div>
 					</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, today)}</td>
+					<td class="text-center">{timeToText(calculateLeadDuration(createdAt, today, workingHours))}</td>
 					<td class="text-center">{leadResponseTime ? timeToText(leadResponseTime) : 'N/A'}</td>
 					<td>
 						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>
 						<div class="text-xs">{prospect.Address} {prospect.ZipCode}</div>
 					</td>
-					<td>
-						<div class="flex justify-between items-center">
-							<div class="">{company?.CompanyName ?? 'All'}</div>
-							{#if rule && roleType !== 'AGENT'}
-								<button
-									class="btn btn-xs btn-ghost text-primary p-0"
-									on:click={() => rule && ($lead.switchCompanyModalId = id)}
-								>
-									<Icon icon="mdi:swap-horizontal" width={22} />
-								</button>
-							{/if}
-						</div>
-					</td>
+					<td>{company?.CompanyName ?? 'All'} </td>
 					<td>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[1]}</div>
-						<div class="">
+						<div>
 							{#if isPicked}
 								Picked by {latestCall?.userStr}
 							{:else if notificationProcesses[0]}
@@ -336,21 +321,30 @@
 								{/if}
 							{/if}
 						</div>
+
 						{#if responses.length}
 							<div class="opacity-75 text-xs">(Disposition: {responses[0].responseValue})</div>
 						{/if}
-					</td>
-					<td class="w-1">
-						<button class="btn btn-sm btn-square btn-link" on:click={() => ($lead.notesModalId = id)}>
-							<Icon icon="mdi:file-document-box" class="text-accent" width={24} />
-						</button>
+
+						{#if latestCall}
+							{#if latestCall.createdAt < responses[0]?.createdAt}
+								<div />
+							{:else if today.getTime() - latestCall.createdAt.getTime() > 600000}
+								<button
+									class="btn btn-link btn-xs whitespace-nowrap p-0 animate-pulse"
+									on:click={() => ui.setModals({ updateDispositionModalId: id })}
+								>
+									Update Disposition
+								</button>
+							{/if}
+						{/if}
 					</td>
 					<td>
 						<div class="flex flex-col justify-center">
 							<!-- Status Btn -->
 							<button
 								class="btn btn-sm {roleType === 'AGENT' ? 'btn-success' : 'btn-warning'} mb-2
-                        {!statusBtnEnable && 'btn-disabled'} text-xs min-w-24"
+                            {!statusBtnEnable && 'btn-disabled'} text-xs"
 								on:click={statusBtnClick}
 							>
 								{statusBtnText}
@@ -358,18 +352,67 @@
 
 							<div class="flex justify-center items-center gap-2">
 								<!-- Lead Details Btn -->
-								<button
-									class="btn btn-xs btn-info h-fit py-0.5 animate-none"
-									on:click={() => ($lead.leadDetailsModelId = id)}
-								>
-									<Icon icon="mdi:information-variant" width={20} />
-								</button>
+								<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+								<div class="dropdown dropdown-top dropdown-end">
+									<div tabindex="0" role="button" class="btn btn-xs btn-info h-fit py-0.5 animate-none">
+										<Icon icon="mdi:menu" width={20} />
+									</div>
+									<ul
+										tabindex="0"
+										class="p-2 mb-1 border border-gray-400 shadow-2xl menu dropdown-content z-50 bg-base-100 rounded-box w-52"
+									>
+										<li>
+											<button
+												on:click={async (e) => {
+													e.currentTarget.blur();
+													ui.setModals({ leadDetailsModelId: id });
+												}}
+											>
+												<Icon icon="mdi:information-outline" class="text-info" width={22} />
+												Lead Details
+											</button>
+										</li>
+										<li>
+											<button
+												on:click={(e) => {
+													e.currentTarget.blur();
+													ui.setModals({ scheduleCallbackModalId: id });
+												}}
+											>
+												<Icon icon="mdi:phone-schedule" class="text-primary" width={20} />
+												Schedule Callback
+											</button>
+										</li>
+										<li>
+											<button
+												on:click={(e) => {
+													e.currentTarget.blur();
+													ui.setModals({ switchCompanyModalId: id });
+												}}
+											>
+												<Icon icon="mdi:swap-horizontal" class="text-secondary" width={22} />
+												Switch Company
+											</button>
+										</li>
+										<li>
+											<button
+												on:click={(e) => {
+													e.currentTarget.blur();
+													ui.setModals({ notesModalId: id });
+												}}
+											>
+												<Icon icon="mdi:file-document-box" class="text-accent" width={22} />
+												Notes
+											</button>
+										</li>
+									</ul>
+								</div>
 
 								<!-- View Lead Btn -->
 								<button
 									class="btn btn-xs btn-success {disableViewLead && 'btn-disabled'}
-                           h-fit py-1 flex gap-2 animate-none flex-grow"
-									on:click={() => ui.navigate(`/view-lead?ProspectKey=${ProspectKey}`)}
+                               h-fit py-1 flex gap-2 animate-none"
+									on:click={() => goto(`/view-lead?ProspectKey=${ProspectKey}`)}
 								>
 									<Icon icon="mdi:arrow-right" width={18} />
 								</button>

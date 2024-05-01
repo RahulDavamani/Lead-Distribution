@@ -40,7 +40,7 @@ export const trpcClientErrorHandler = <T>(
 	if (callback) callback({ code, message, zodErrors });
 
 	if (stopLoading) ui.update((state) => ({ ...state, loader: undefined }));
-	if (showToast) ui.showToast({ class: 'alert-error', title: `${code ?? 'Error'}: ${message}` });
+	if (showToast) ui.setToast({ alertClasses: 'alert-error', title: `${code ?? 'Error'}: ${message}` });
 
 	throw `${code}: ${message}`;
 };
@@ -51,7 +51,7 @@ export const trpcServerErrorHandler = (e: unknown) => {
 };
 
 export const trpcErrorhandler = <T>(e: unknown): TRPCHandlerError<T> => {
-	console.log(e);
+	// console.log(e);
 	if (e instanceof TRPCClientError) {
 		try {
 			const errors = JSON.parse(e.message);

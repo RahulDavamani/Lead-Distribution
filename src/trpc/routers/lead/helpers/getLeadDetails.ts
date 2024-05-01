@@ -1,7 +1,6 @@
 import { actionsInclude } from '$lib/config/actions/actions.config';
 import { getProcessName } from '$lib/getProcessName';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { getUserValues } from './user';
 
 export const getLeadDetails = async (id: string, type: 'queued' | 'completed') => {
 	let lead;
@@ -53,54 +52,44 @@ export const getLeadDetails = async (id: string, type: 'queued' | 'completed') =
 		})
 		.catch(prismaErrorHandler);
 
-	const notificationAttempts = [];
-	for (const notificationAttempt of lead.notificationProcesses.flatMap(
-		({ notificationAttempts }) => notificationAttempts
-	)) {
-		notificationAttempts.push({
+	const UserKeys = lead.notificationProcesses
+		.flatMap((np) => np.notificationAttempts.map((na) => na.UserKey).concat(np.escalations.map((e) => e.UserKey)))
+		.concat(lead.calls.map((c) => c.UserKey))
+		.filter(Boolean) as string[];
+
+	const users = await prisma.users.findMany({
+		where: { UserKey: { in: UserKeys } },
+		select: {
+			UserKey: true,
+			VonageAgentId: true,
+			FirstName: true,
+			LastName: true
+		}
+	});
+
+	const notificationProcesses = lead.notificationProcesses.map((notificationProcess) => {
+		const notificationAttempts = notificationProcess.notificationAttempts.map((notificationAttempt) => ({
 			...notificationAttempt,
-			userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
-		});
-	}
+			userValues: users.find((u) => u.UserKey === notificationAttempt.UserKey)
+		}));
 
-	const escalations = [];
-	for (const escalation of lead.notificationProcesses.flatMap(({ escalations }) => escalations)) {
-		escalations.push({
+		const escalations = notificationProcess.escalations.map((escalation) => ({
 			...escalation,
-			userValues: escalation.UserKey ? await getUserValues(escalation.UserKey) : undefined
-		});
-	}
+			userValues: users.find((u) => u.UserKey === escalation.UserKey)
+		}));
 
-	const notificationProcesses = [];
-	for (const notificationProcess of lead.notificationProcesses) {
-		const notificationAttempts = [];
-		for (const notificationAttempt of notificationProcess.notificationAttempts)
-			notificationAttempts.push({
-				...notificationAttempt,
-				userValues: notificationAttempt.UserKey ? await getUserValues(notificationAttempt.UserKey) : undefined
-			});
-
-		const escalations = [];
-		for (const escalation of notificationProcess.escalations)
-			escalations.push({
-				...escalation,
-				userValues: escalation.UserKey ? await getUserValues(escalation.UserKey) : undefined
-			});
-
-		notificationProcesses.push({
+		return {
 			...notificationProcess,
 			processName: getProcessName(notificationProcess.callbackNum, notificationProcess.requeueNum),
 			notificationAttempts,
 			escalations
-		});
-	}
+		};
+	});
 
-	const calls = [];
-	for (const call of lead.calls)
-		calls.push({
-			...call,
-			userValues: call?.UserKey ? await getUserValues(call.UserKey) : undefined
-		});
+	const calls = lead.calls.map((call) => ({
+		...call,
+		userValues: users.find((u) => u.UserKey === call.UserKey)
+	}));
 
 	return { ...lead, ProspectId, calls, notificationProcesses };
 };

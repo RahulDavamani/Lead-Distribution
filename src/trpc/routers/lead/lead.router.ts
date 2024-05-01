@@ -15,6 +15,8 @@ import { getCompletedLeads } from './helpers/getCompletedLeads';
 import { deleteLeads } from './helpers/deleteLeads';
 import { getRuleCompanies } from './helpers/getRuleCompanies';
 import { getQueuedLeads } from './helpers/getQueuedLeads';
+import { validateResponse } from './helpers/validateResponse';
+import { scheduleCallback } from './helpers/scheduleCallback';
 
 export const leadRouter = router({
 	getQueued: procedure
@@ -112,6 +114,31 @@ export const leadRouter = router({
 			await pickLead(ProspectKey, UserKey);
 			return { ProspectKey };
 		}),
+
+	validateResponse: procedure
+		.input(
+			z.object({
+				ProspectKey: z.string().min(1),
+				ResponseType: z.enum(['sms', 'disposition']),
+				Response: z.string().min(1),
+				UserKey: z.string().min(1)
+			})
+		)
+		.query(
+			async ({ input: { ProspectKey, ResponseType, Response, UserKey } }) =>
+				await validateResponse(ProspectKey, ResponseType, Response, UserKey)
+		),
+
+	scheduleCallback: procedure
+		.input(
+			z.object({
+				ProspectKey: z.string().min(1),
+				scheduledTime: z.date()
+			})
+		)
+		.query(
+			async ({ input: { ProspectKey, scheduledTime } }) => await scheduleCallback(ProspectKey, scheduledTime, undefined)
+		),
 
 	complete: procedure
 		.input(

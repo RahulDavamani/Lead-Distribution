@@ -1,21 +1,30 @@
-import { goto } from '$app/navigation';
 import { writable } from 'svelte/store';
+import type { Modals } from '../types/Modals.type';
 
 export interface UI {
 	loader?: Loader;
+	contentLoader?: string;
 	toast?: Toast;
-	toastInterval?: NodeJS.Timeout;
 	alertModal?: AlertModal;
+	modals: Modals;
 }
 
 export interface Loader {
 	title?: string;
+	percent?: string;
+	size?: number;
 	overlay?: boolean;
+	fixed?: boolean;
+
+	classes?: string;
+	titleClass?: string;
 }
 
 export interface Toast {
 	title: string;
-	class?: string;
+	toastClasses?: string;
+	alertClasses?: string;
+	toastDuration?: number;
 }
 
 export interface AlertModal {
@@ -26,51 +35,29 @@ export interface AlertModal {
 }
 
 export interface AlertModalAction {
-	name: string;
-	class?: string;
+	name?: string;
+	classes?: string;
 	onClick?: () => void | Promise<void>;
 }
 
 export const ui = (() => {
-	const { subscribe, set, update } = writable<UI>({});
+	const { subscribe, set, update } = writable<UI>({ modals: {} });
 
 	// Methods
 
 	const setLoader = (loader?: Loader) => update((state) => ({ ...state, loader }));
-	const setTheme = (theme: string) => document.querySelector('html')?.setAttribute('data-theme', theme);
+	const setToast = (toast?: Toast) => update((state) => ({ ...state, toast }));
+	const setAlertModal = (alertModal?: AlertModal) => update((state) => ({ ...state, alertModal }));
+	const setModals = (modals?: Modals) => update((state) => ({ ...state, modals: modals ?? {} }));
 
-	const navigate = async (url: string) => {
-		ui.setLoader({ title: 'Loading' });
-		await goto(url);
-		ui.setLoader();
+	const loaderWrapper = <T>(loader: Loader, fn: () => Promise<T>, start = true, end = true) => {
+		return async () => {
+			if (start) ui.setLoader(loader);
+			const result = await fn();
+			if (end) ui.setLoader();
+			return result;
+		};
 	};
 
-	const showToast = (toast: Toast) => {
-		update((state) => {
-			clearInterval(state.toastInterval);
-			return {
-				...state,
-				toast,
-				toastInterval: setInterval(() => update((state) => ({ ...state, toast: undefined })), 5000)
-			};
-		});
-	};
-
-	const closeToast = () => {
-		update((state) => {
-			clearTimeout(state.toastInterval);
-			return { ...state, toast: undefined };
-		});
-	};
-
-	return {
-		subscribe,
-		set,
-		update,
-		setLoader,
-		setTheme,
-		navigate,
-		showToast,
-		closeToast
-	};
+	return { subscribe, set, update, setLoader, setToast, setAlertModal, setModals, loaderWrapper };
 })();

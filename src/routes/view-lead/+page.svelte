@@ -10,6 +10,7 @@
 	import Icon from '@iconify/svelte';
 	import FormControl from '../components/FormControl.svelte';
 	import { completeLeadStatuses } from '$lib/config/actions/completeLead/completeLeadStatuses';
+	import { goto } from '$app/navigation';
 
 	type Lead = inferProcedureOutput<AppRouter['lead']['view']>['lead'];
 	type Prospect = inferProcedureOutput<AppRouter['lead']['view']>['prospect'];
@@ -31,7 +32,7 @@
 				actions: [
 					{
 						name: 'Retry',
-						class: 'btn-primary',
+						classes: 'btn-primary',
 						onClick: () => {
 							fetchLead();
 						}
@@ -74,7 +75,7 @@
 					UserKey: UserKey ?? $auth.user?.UserKey ?? ''
 				})
 				.catch(trpcClientErrorHandler);
-			ui.showToast({ title: 'Lead Completed Successfully', class: 'alert-success' });
+			ui.setToast({ title: 'Lead Completed Successfully', alertClasses: 'alert-success' });
 			ui.setLoader();
 			window.location.href = `https://bundle.xyzies.com/Web/OrderRedirect?OrderType=1&lpk=${prospect.ProspectKey}`;
 		}
@@ -91,9 +92,9 @@
 					completeStatus
 				})
 				.catch(trpcClientErrorHandler);
-			ui.showToast({ title: 'Lead completed Successfully', class: 'alert-success' });
+			ui.setToast({ title: 'Lead completed Successfully', alertClasses: 'alert-success' });
 			ui.setLoader();
-			ui.navigate('/leads');
+			goto('/leads');
 		}
 	};
 </script>

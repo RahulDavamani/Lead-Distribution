@@ -10,10 +10,10 @@ export const load = async (event) => {
 	if (!ProspectKey) throw error(400, 'Bad Request: Missing params "ProspectKey"');
 	const updateLead = updateLeadFunc(ProspectKey);
 
-	const { RefId, CompanyKey } = await prisma.leadProspect
+	const { RefId, CompanyKey, OutBoundNumber } = await prisma.leadProspect
 		.findFirstOrThrow({
 			where: { ProspectKey },
-			select: { RefId: true, CompanyKey: true }
+			select: { RefId: true, CompanyKey: true, OutBoundNumber: true }
 		})
 		.catch(prismaErrorHandler);
 	if (!RefId) throw error(404, 'RefId not found');
@@ -24,24 +24,26 @@ export const load = async (event) => {
 			where: { affiliates: { some: { CompanyKey } } },
 			select: {
 				outboundCallNumber: true,
+				overrideOutboundNumber: true,
 				smsTemplate: true
 			},
 			orderBy: { createdAt: 'desc' }
 		})
 		.catch(prismaErrorHandler);
 	if (!rule) throw error(404, 'Rule not found');
-	const { outboundCallNumber, smsTemplate } = rule;
+	const { outboundCallNumber, overrideOutboundNumber, smsTemplate } = rule;
+	const outboundNumber = overrideOutboundNumber ? OutBoundNumber ?? outboundCallNumber : outboundCallNumber;
 
 	const ghlTemplate: { [k: string]: string } =
 		SendSMSTemplate === 'true'
 			? {
 					orderid: RefId,
-					outboundcallnumber: outboundCallNumber,
+					outboundcallnumber: outboundNumber,
 					bundlesmstemplate: await generateMessage(ProspectKey, smsTemplate)
 				}
 			: {
 					orderid: RefId,
-					outboundcallnumber: outboundCallNumber
+					outboundcallnumber: outboundNumber
 				};
 
 	if (SendSMSTemplate) {

@@ -6,12 +6,13 @@ export interface QueuedLead {
 	VonageGUID: string | null;
 	ruleId: string | null;
 	CompanyKey: string | null;
+	notes: string;
 	isPicked: boolean;
 	overrideCallback: boolean;
 
 	rule: {
-		name: string;
 		id: string;
+		name: string;
 		supervisors: {
 			UserKey: string;
 			isRequeue: boolean;
@@ -39,6 +40,7 @@ export interface QueuedLead {
 	}[];
 
 	responses: {
+		createdAt: Date;
 		responseValue: string | null;
 	}[];
 
@@ -65,4 +67,13 @@ export interface QueuedLead {
 		| undefined;
 
 	leadResponseTime: number | undefined;
+
+	workingHours:
+		| {
+				id: string;
+				start: Date;
+				end: Date;
+				days: string;
+		  }[]
+		| undefined;
 }

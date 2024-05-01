@@ -1,44 +1,47 @@
 <script lang="ts">
-	import Modal from '../../components/Modal.svelte';
 	import type { inferProcedureOutput } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
-	import Loader from '../../components/Loader.svelte';
 	import FormControl from '../../components/FormControl.svelte';
 	import { ui } from '../../../stores/ui.store';
 	import { lead } from '../../../stores/lead.store';
+	import Modal from '../../components/ui/Modal.svelte';
+	import Loader from '../../components/ui/Loader.svelte';
+	import { onMount } from 'svelte';
 
 	type RuleCompany = inferProcedureOutput<AppRouter['lead']['getRuleCompanies']>[number];
 
-	$: selectedLead = $lead.queuedLeads.find((l) => l.id === $lead.switchCompanyModalId);
+	$: id = $ui.modals.switchCompanyModalId;
+	$: selectedLead = $lead.queuedLeads?.find((l) => l.id === id);
+
 	let ruleCompanies: RuleCompany[] | undefined;
 	let selectedCompanyKey: string | null = null;
 
-	const closeModal = () => ($lead.switchCompanyModalId = undefined);
-
-	const fetchRuleCompanies = async (id: string) => {
+	const fetchRuleCompanies = async () => {
+		if (!id) return;
+		ruleCompanies = undefined;
 		ruleCompanies = await trpc($page).lead.getRuleCompanies.query({ ruleId: id });
 		selectedCompanyKey =
 			ruleCompanies.find(({ CompanyKey }) => CompanyKey === selectedLead?.CompanyKey)?.CompanyKey ?? null;
 	};
+	onMount(fetchRuleCompanies);
 
-	const saveCompany = async () => {
-		if (!selectedLead) return;
-		ui.setLoader({ title: 'Saving' });
-		await trpc($page).lead.updateCompany.query({ id: selectedLead.id, CompanyKey: selectedCompanyKey });
-		ui.showToast({ title: 'Company Saved Successfully', class: 'alert-success' });
-		ui.setLoader();
-		closeModal();
-	};
+	const saveCompany = ui.loaderWrapper({ title: 'Saving Company' }, async () => {
+		if (!id) return;
+		await trpc($page).lead.updateCompany.query({ id, CompanyKey: selectedCompanyKey });
+		ui.setToast({ title: 'Company Saved Successfully', alertClasses: 'alert-success' });
+		ui.setModals({});
 
-	$: selectedLead?.ruleId ? fetchRuleCompanies(selectedLead.ruleId) : (ruleCompanies = undefined);
+		ui.setLoader({ title: 'Updating Leads' });
+		await lead.fetchQueuedLeads();
+	});
 </script>
 
-<Modal classes="z-20" title="Switch Company" showModal={selectedLead !== undefined} {closeModal}>
+<Modal classes="z-20" title="Switch Company ({selectedLead?.prospect.ProspectId})">
 	{#if !ruleCompanies}
 		<div class="my-10">
-			<Loader title="Fetching Companies" size={80} overlay={false} center={false} />
+			<Loader title="Fetching Companies" size={80} overlay={false} fixed={false} />
 		</div>
 	{:else}
 		<FormControl label="Company">

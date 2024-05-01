@@ -9,95 +9,143 @@ import { page } from '$app/stores';
 import { trpcClientErrorHandler } from '../trpc/trpcErrorhandler';
 import superjson from 'superjson';
 
-type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>['completedLeads'][number];
+type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>[number];
 
 export interface Lead {
-	init: boolean;
-	socket?: WebSocket;
+	connectionType: 'http' | 'ws';
+	tab: 'queued' | 'completed';
+	viewMode: boolean;
 
-	queuedLeads: QueuedLead[];
-	completedLeads: CompletedLead[];
+	socket?: WebSocket;
+	interval?: NodeJS.Timeout;
+
+	queuedLeads?: QueuedLead[];
+	completedLeads?: CompletedLead[];
 
 	today: Date;
 	dateRange: Date[];
 	affiliate?: string;
-
-	leadDetailsModelId?: string;
-	switchCompanyModalId?: string;
-	notesModalId?: string;
-
-	showSettingsModal: boolean;
 }
 
 export const lead = (() => {
 	const initState: Lead = {
-		init: false,
-		queuedLeads: [],
-		completedLeads: [],
+		connectionType: 'http',
+		tab: 'queued',
+		viewMode: false,
+
 		today: new Date(),
-		dateRange: [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()],
-		showSettingsModal: false
+		dateRange: [new Date(new Date().setDate(new Date().getDate() - 2)), new Date()]
 	};
+
 	const { subscribe, set, update } = writable<Lead>(initState);
 	setInterval(() => update((state) => ({ ...state, today: new Date() })), 1000);
 
-	const setupSocket = () => {
-		ui.setLoader({ title: 'Fetching Leads' });
+	const init = async () => {
+		closeHttp();
+		closeSocket();
+
+		const $page = get(page);
+		const connectionType = ($page.url.searchParams.get('connection') as 'http' | 'ws') ?? 'http';
+		const tab = ($page.url.searchParams.get('type') as 'queued' | 'completed') ?? 'queued';
+
+		update((state) => ({
+			...state,
+			connectionType,
+			tab,
+
+			socket: undefined,
+			interval: undefined,
+
+			queuedLeads: undefined,
+			completedLeads: undefined
+		}));
+
+		if (connectionType === 'http') await initHttp();
+		else initSocket();
+	};
+
+	const initSocket = () => {
+		const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
+		// const socket = new WebSocket('ws://localhost:8000');
+		socket.onopen = messageSocket;
+		socket.onmessage = onMessageSocket;
+		update((state) => ({ ...state, socket }));
+	};
+
+	const messageSocket = () => {
 		const {
 			user: { UserKey },
 			roleType
 		} = get(auth);
-		const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
-		// const socket = new WebSocket('ws://localhost:8000');
-		socket.onopen = () => socket.send(JSON.stringify({ UserKey, roleType }));
-		socket.onmessage = (event) => updateQueuedLeads(superjson.parse(event.data));
-		update((state) => ({ ...state, socket }));
+		const { socket } = get(lead);
+		if (socket) socket.send(JSON.stringify({ UserKey, roleType }));
+	};
+
+	const onMessageSocket = async (event: MessageEvent) => {
+		const queuedLeads = superjson.parse(event.data) as QueuedLead[];
+		updateQueuedLeads(queuedLeads);
 	};
 
 	const closeSocket = () =>
 		update((state) => {
 			state.socket?.close();
-			return {
-				...state,
-				init: false,
-				socket: undefined
-			};
+			return { ...state, socket: undefined };
 		});
 
-	const resetSocket = () => {
-		closeSocket();
-		setupSocket();
+	const initHttp = async () => {
+		await fetchQueuedLeads();
+		fetchCompletedLeads();
+		const interval = setInterval(fetchQueuedLeads, 10000);
+		update((state) => ({ ...state, interval }));
+	};
+
+	const closeHttp = () =>
+		update((state) => {
+			clearInterval(state.interval);
+			return { ...state, interval: undefined };
+		});
+
+	const fetchQueuedLeads = async () => {
+		const {
+			user: { UserKey },
+			roleType
+		} = get(auth);
+		const $page = get(page);
+
+		const queuedLeads = (await trpc($page)
+			.lead.getQueued.query({ UserKey, roleType })
+			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }))) as QueuedLead[];
+
+		updateQueuedLeads(queuedLeads);
 	};
 
 	const updateQueuedLeads = async (newLeads: QueuedLead[]) => {
-		console.log(`Fetched ${newLeads.length} leads`);
-		const { init, queuedLeads, completedLeads } = get(lead);
-		if (!init) {
-			await fetchCompletedLeads();
-			update((state) => ({ ...state, init: true }));
-		} else {
-			const missingLead = queuedLeads.find((ql) => !newLeads.find((nl) => nl.id === ql.id));
-			const newLead = newLeads.find((nl) => !queuedLeads.find((ql) => ql.id === nl.id));
+		console.log(`Fetched ${newLeads.length} Leads`);
+		const { queuedLeads, completedLeads } = get(lead);
+		update((state) => ({ ...state, queuedLeads: newLeads }));
+
+		if (!completedLeads) await fetchCompletedLeads();
+		else {
+			const missingLead = queuedLeads?.find((ql) => !newLeads.find((nl) => nl.id === ql.id));
+			const newLead = newLeads.find((nl) => !queuedLeads?.find((ql) => ql.id === nl.id));
 			if (missingLead) {
 				await fetchCompletedLeads();
 				if (completedLeads.find((lead) => lead.id === missingLead.id))
-					ui.showToast({
+					ui.setToast({
 						title: `${missingLead.prospect.ProspectId}: Lead has been completed`,
-						class: 'alert-success'
+						alertClasses: 'alert-success'
 					});
 			}
 			if (newLead)
-				ui.showToast({
+				ui.setToast({
 					title: `${newLead.prospect.ProspectId}: New Lead has been inserted`,
-					class: 'alert-success'
+					alertClasses: 'alert-success'
 				});
 		}
-
-		update((state) => ({ ...state, queuedLeads: newLeads }));
 	};
 
 	const fetchCompletedLeads = async () => {
-		ui.setLoader({ title: 'Fetching Leads' });
+		update((state) => ({ ...state, completedLeads: undefined }));
 		const { dateRange } = get(lead);
 		const {
 			user: { UserKey },
@@ -106,7 +154,7 @@ export const lead = (() => {
 		const $page = get(page);
 		if (dateRange.length !== 2) return;
 
-		const leads = await trpc($page)
+		const completedLeads = await trpc($page)
 			.lead.getCompleted.query({
 				dateRange: [dateRange[0].toString(), dateRange[1].toString()],
 				UserKey,
@@ -114,9 +162,8 @@ export const lead = (() => {
 			})
 			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }));
 
-		update((state) => ({ ...state, completedLeads: leads.completedLeads }));
-		ui.setLoader();
+		update((state) => ({ ...state, completedLeads }));
 	};
 
-	return { subscribe, set, update, setupSocket, closeSocket, resetSocket, updateQueuedLeads, fetchCompletedLeads };
+	return { subscribe, set, update, init, fetchQueuedLeads, fetchCompletedLeads };
 })();

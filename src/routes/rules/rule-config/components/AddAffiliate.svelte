@@ -1,19 +1,16 @@
 <script lang="ts">
 	import { afterUpdate } from 'svelte';
-	import Modal from '../../../components/Modal.svelte';
 	import DataTable from 'datatables.net-dt';
-	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import { nanoid } from 'nanoid';
+	import { ui } from '../../../../stores/ui.store';
+	import Modal from '../../../components/ui/Modal.svelte';
 
-	afterUpdate(() => {
-		new DataTable('#affiliatesTable');
-	});
+	afterUpdate(() => new DataTable('#affiliatesTable'));
 
-	export let showModal: boolean;
 	$: ({
 		rule: { affiliates },
-		affiliates: allAffiliates
+		masterData
 	} = $ruleConfig);
 
 	let selectedAffiliates: string[] = [];
@@ -34,28 +31,23 @@
 				CompanyKey
 			}))
 		];
-		showModal = false;
 		selectedAffiliates = [];
-	};
-
-	const closeModal = () => {
-		showModal = false;
-		selectedAffiliates = [];
+		ui.setModals();
 	};
 </script>
 
-<Modal bind:showModal title="Add Campaign Affiliate" boxClasses="max-w-6xl" {closeModal}>
+<Modal title="Add Campaign Affiliate" boxClasses="max-w-6xl">
 	<div class="overflow-x-auto">
 		<table id="affiliatesTable" class="table table-zebra border rounded-t-none">
 			<thead class="bg-base-300">
 				<tr>
-					<th></th>
+					<th />
 					<th>Name</th>
 					<th>Rule</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each allAffiliates as { CompanyKey, CompanyName, rule }}
+				{#each masterData.affiliates as { CompanyKey, CompanyName, rule }}
 					{@const disabled =
 						addedAffiliates.includes(CompanyKey) || (rule !== undefined && rule.id !== $ruleConfig.rule.id)}
 					{@const ruleName = addedAffiliates.includes(CompanyKey)
@@ -84,7 +76,7 @@
 	</div>
 
 	<div class="flex justify-end mt-4">
-		<button class="btn btn-success" on:click={addAffiliate}>
+		<button class="btn btn-success {!selectedAffiliates.length && 'btn-disabled'}" on:click={addAffiliate}>
 			Add {selectedAffiliates.length} Affiliates
 		</button>
 	</div>

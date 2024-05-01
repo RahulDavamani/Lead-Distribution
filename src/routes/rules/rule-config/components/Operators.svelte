@@ -1,15 +1,14 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
-	import { ruleConfig } from '../../../../stores/ruleConfig.store';
-	import AddOperator from './AddOperator.svelte';
+	import { ruleChanges, ruleConfig } from '../../../../stores/ruleConfig.store';
 	import { tick } from 'svelte';
 	import FormControl from '../../../components/FormControl.svelte';
+	import IconBtn from '../../../components/ui/IconBtn.svelte';
+	import { ui } from '../../../../stores/ui.store';
 
 	$: ({
 		rule: { operators },
-		operators: allOperators
+		masterData
 	} = $ruleConfig);
-	let showModal = false;
 
 	const sortOperators = () =>
 		($ruleConfig.rule.operators = operators.sort((a, b) => a.num - b.num).map((op, i) => ({ ...op, num: i })));
@@ -19,31 +18,53 @@
 		await tick();
 		sortOperators();
 	};
+
+	$: operatorChanges = {
+		create: $ruleChanges.operators?.create?.map(({ id }) => id) ?? [],
+		update: $ruleChanges.operators?.update?.map(({ id }) => id) ?? [],
+		remove: $ruleChanges.operators?.remove?.map(({ id }) => id) ?? []
+	};
 </script>
 
 <div class="w-full h-fit">
 	<details class="collapse collapse-arrow">
 		<summary class="collapse-title px-0">
-			<div class="flex gap-2">
+			<div class="flex flex-wrap items-center gap-2">
 				<div>
 					<span class="text-lg font-bold">Campaign Operators:</span>
 					<span class="font-mono">({operators.length})</span>
 				</div>
-				<button class="z-10 text-success" on:click={() => (showModal = true)}>
-					<Icon icon="mdi:add-circle" width={24} />
-				</button>
+
+				<IconBtn
+					icon="mdi:add-circle"
+					width={24}
+					iconClasses="text-success"
+					on:click={() => ui.setModals({ addOperator: true })}
+				/>
+
+				{#if operatorChanges.create.length}
+					<div class="badge badge-success">Added: {operatorChanges.create.length}</div>
+				{/if}
+				{#if operatorChanges.update.length}
+					<div class="badge badge-warning">Modified: {operatorChanges.update.length}</div>
+				{/if}
+				{#if operatorChanges.remove.length}
+					<div class="badge badge-error">Removed: {operatorChanges.remove.length}</div>
+				{/if}
 			</div>
 		</summary>
-		<div class="collapse-content pl-2 max-h-96 overflow-auto">
-			<div class="space-y-3">
-				{#each operators as { UserKey }, i}
-					{@const operator = allOperators.find((o) => o.UserKey === UserKey)}
 
-					<div class="my-card">
-						<div class="flex justify-start items-center">
-							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteOperator(UserKey)}>
-								<Icon icon="mdi:close" class="text-error" width={20} />
-							</button>
+		<div class="collapse-content pl-2 max-h-[30rem] overflow-auto">
+			<div class="space-y-3 mt-1">
+				{#each operators as { id, UserKey }, i}
+					{@const operator = masterData.operators.find((o) => o.UserKey === UserKey)}
+
+					<div
+						class="my-card {operatorChanges.create.includes(id) && 'outline outline-success'} 
+                     {operatorChanges.update.includes(id) && 'outline outline-warning'}"
+					>
+						<div class="flex justify-start items-center gap-1">
+							<IconBtn icon="mdi:close" iconClasses="text-error" width={20} on:click={() => deleteOperator(UserKey)} />
 
 							<div>
 								{#if operator}
@@ -82,5 +103,3 @@
 		</div>
 	</details>
 </div>
-
-<AddOperator bind:showModal />

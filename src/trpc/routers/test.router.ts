@@ -2,6 +2,30 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const leads = await prisma.ldLeadCompleted.findMany({
+		// 	select: {
+		// 		id: true,
+		// 		logs: {
+		// 			orderBy: { createdAt: 'desc' },
+		// 			take: 1,
+		// 			select: { createdAt: true }
+		// 		}
+		// 	}
+		// });
+		// console.log(leads.length);
+		// let i = 1;
+		// for (const { id, logs } of leads) {
+		// 	const leadResponseTime = (await getLeadResponseTime(id)) ?? null;
+		// 	await prisma.ldLeadCompleted.update({
+		// 		where: { id },
+		// 		data: {
+		// 			updatedAt: logs[0]?.createdAt,
+		// 			leadResponseTime
+		// 		}
+		// 	});
+		// 	console.log(i, id, leadResponseTime, logs[0]?.createdAt);
+		// 	i++;
+		// }
 		// const result = await prisma.leadProspect.findMany({ where: { Email: 'ranji-7657-hook@yopmail.com' } });
 		// console.log(result);
 		// const result =

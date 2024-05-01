@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Modal from '../../../components/Modal.svelte';
 	import { type ActionKey, actionsConfigList, actionsConfig, keyActionsList } from '$lib/config/actions/actions.config';
 	import type { Actions } from '$lib/config/actions/actions.schema';
 	import SendSMS from '$lib/config/actions/sendSMS/SendSMS.svelte';
 	import CompleteLead from '$lib/config/actions/completeLead/CompleteLead.svelte';
 	import { getActionsList } from '$lib/config/actions/utils/getActionsList';
 	import ScheduleCallback from '$lib/config/actions/scheduleCallback/ScheduleCallback.svelte';
+	import Modal from '../../../components/ui/Modal.svelte';
 
 	export let actions: Actions;
 	export let actionsName: string;
@@ -89,11 +89,11 @@
 		<ul class="steps steps-vertical mt-4 px-4 w-full overflow-visible">
 			{#each actionsList as action}
 				{#if action.sendSMS}
-					<SendSMS action={action.sendSMS} {actionsCount} {deleteAction} {moveAction} />
+					<SendSMS bind:action={action.sendSMS} {actionsCount} {deleteAction} {moveAction} />
 				{:else if action.scheduleCallback}
-					<ScheduleCallback action={action.scheduleCallback} {actionsCount} {deleteAction} {moveAction} />
+					<ScheduleCallback bind:action={action.scheduleCallback} {actionsCount} {deleteAction} {moveAction} />
 				{:else if action.completeLead}
-					<CompleteLead action={action.completeLead} {actionsCount} {deleteAction} {moveAction} />
+					<CompleteLead bind:action={action.completeLead} {actionsCount} {deleteAction} {moveAction} />
 				{/if}
 			{/each}
 			<li data-content="+" class="step step-success">
@@ -104,7 +104,7 @@
 </div>
 
 {#if showAddAction}
-	<Modal title="Add Action" showModal={showAddAction} closeModal={() => (showAddAction = false)}>
+	<Modal title="Add Action">
 		<div class="flex flex-col gap-4">
 			{#each actionsConfigList as { labels: { key, name } }}
 				<button class="btn rounded-box text-xl justify-start items-center normal-case" on:click={() => addAction(key)}>

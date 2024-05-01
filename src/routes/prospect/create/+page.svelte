@@ -49,7 +49,7 @@
 	const submit = async () => {
 		ui.setLoader({ title: 'Creating Lead Prospect' });
 		await trpc($page).lead.postLeadProspect.query({ prospect, AccessKey }).catch(trpcClientErrorHandler);
-		ui.showToast({ class: 'alert-success', title: 'Lead Prospect Created' });
+		ui.setToast({ alertClasses: 'alert-success', title: 'Lead Prospect Created' });
 		ui.setLoader();
 		prospect = {
 			LeadID: '',

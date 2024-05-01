@@ -27,5 +27,8 @@ module.exports = {
 		'@typescript-eslint/no-non-null-assertion': 'off',
 		'svelte/no-at-html-tags': 'off',
 		'@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+	},
+	globals: {
+		NodeJS: true
 	}
 };

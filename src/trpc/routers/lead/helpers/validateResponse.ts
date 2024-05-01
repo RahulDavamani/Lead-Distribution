@@ -7,7 +7,12 @@ import { createLeadResponse } from './leadResponse';
 import { updateLeadFunc } from './updateLead';
 import type { Actions } from '$lib/config/actions/actions.schema';
 
-export const validateResponse = async (ProspectKey: string, ResponseType: 'disposition' | 'sms', Response: string) => {
+export const validateResponse = async (
+	ProspectKey: string,
+	ResponseType: 'disposition' | 'sms',
+	Response: string,
+	UserKey?: string
+) => {
 	const updateLead = updateLeadFunc(ProspectKey);
 
 	// Get Lead
@@ -82,7 +87,8 @@ export const validateResponse = async (ProspectKey: string, ResponseType: 'dispo
 		type: ResponseType,
 		responseValue: Response,
 		actionType: responseActions.actionType,
-		actions: { connect: { id: responseActions.actions.id } }
+		actions: { connect: { id: responseActions.actions.id } },
+		UserKey
 	});
 	await executeActions(ProspectKey, responseActions.actions);
 	await completeLeadResponse();

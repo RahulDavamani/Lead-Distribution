@@ -1,15 +1,15 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { ruleConfig } from '../../../../stores/ruleConfig.store';
+	import { ruleChanges, ruleConfig } from '../../../../stores/ruleConfig.store';
 	import FormControl from '../../../components/FormControl.svelte';
 	import Variables from './Variables.svelte';
 	import { nanoid } from 'nanoid';
 	import { tick } from 'svelte';
 	import DurationPicker from '../../../components/DurationPicker.svelte';
+	import IconBtn from '../../../components/ui/IconBtn.svelte';
 
 	$: ({
-		rule: { notificationAttempts },
-		zodErrors
+		rule: { notificationAttempts }
 	} = $ruleConfig);
 
 	const addNotificationAttempt = () =>
@@ -46,29 +46,50 @@
 		await tick();
 		sortNotificationAttempts();
 	};
+
+	$: notificationAttemptChanges = {
+		create: $ruleChanges.notificationAttempts?.create?.map(({ id }) => id) ?? [],
+		update: $ruleChanges.notificationAttempts?.update?.map(({ id }) => id) ?? [],
+		remove: $ruleChanges.notificationAttempts?.remove?.map(({ id }) => id) ?? []
+	};
 </script>
 
 <details class="collapse collapse-arrow overflow-visible">
 	<summary class="collapse-title px-0">
-		<div class="flex gap-2">
+		<div class="flex flex-wrap items-center gap-2">
 			<div>
 				<span class="text-lg font-bold">Notification Attempts:</span>
 				<span class="font-mono">({notificationAttempts.length})</span>
 			</div>
-			<button class="z-10 text-success" on:click={addNotificationAttempt}>
-				<Icon icon="mdi:add-circle" width={24} />
-			</button>
+
+			<IconBtn icon="mdi:add-circle" width={24} iconClasses="text-success" on:click={addNotificationAttempt} />
+
+			{#if notificationAttemptChanges.create.length}
+				<div class="badge badge-success">Added: {notificationAttemptChanges.create.length}</div>
+			{/if}
+			{#if notificationAttemptChanges.update.length}
+				<div class="badge badge-warning">Modified: {notificationAttemptChanges.update.length}</div>
+			{/if}
+			{#if notificationAttemptChanges.remove.length}
+				<div class="badge badge-error">Removed: {notificationAttemptChanges.remove.length}</div>
+			{/if}
 		</div>
 	</summary>
 	<div class="collapse-content p-0">
 		<div class="space-y-4 px-2">
-			{#each notificationAttempts as { num }, i}
-				<div class="my-card">
+			{#each notificationAttempts as { id, num }, i}
+				<div
+					class="my-card {notificationAttemptChanges.create.includes(id) && 'outline outline-success'} 
+               {notificationAttemptChanges.update.includes(id) && 'outline outline-warning'}"
+				>
 					<div class="flex justify-between">
-						<div class="flex items-center mb-1">
-							<button class="btn btn-xs btn-square btn-ghost mr-1" on:click={() => deleteNotificationAttempt(num)}>
-								<Icon icon="mdi:close" class="text-error" width={20} />
-							</button>
+						<div class="flex items-center gap-1 mb-1">
+							<IconBtn
+								icon="mdi:close"
+								iconClasses="text-error"
+								width={20}
+								on:click={() => deleteNotificationAttempt(num)}
+							/>
 							<div class="font-semibold">Attempt #{num}</div>
 						</div>
 
@@ -92,7 +113,6 @@
 							label="Notification Message Template"
 							classes="w-full"
 							bottomLabel={'Max 190 Characters (After Variables Replaced)'}
-							error={zodErrors?.notificationAttempts?.[i]?.messageTemplate}
 						>
 							<div class="join">
 								<textarea
@@ -108,7 +128,7 @@
 							</div>
 						</FormControl>
 
-						<FormControl label="Wait Time" error={zodErrors?.notificationAttempts?.[i]?.waitTime}>
+						<FormControl label="Wait Time">
 							<DurationPicker bind:duration={$ruleConfig.rule.notificationAttempts[i].waitTime} />
 						</FormControl>
 					</div>

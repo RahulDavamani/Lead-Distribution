@@ -1,16 +1,16 @@
 <script lang="ts">
-	import Modal from '../../components/Modal.svelte';
 	import { trpc } from '../../../trpc/client';
 	import { page } from '$app/stores';
 	import { auth } from '../../../stores/auth.store';
 	import type { inferRouterOutputs } from '@trpc/server';
 	import type { AppRouter } from '../../../trpc/routers/app.router';
-	import Loader from '../../components/Loader.svelte';
 	import FormControl from '../../components/FormControl.svelte';
 	import cloneDeep from 'lodash.clonedeep';
 	import { ui } from '../../../stores/ui.store';
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
-	import { lead } from '../../../stores/lead.store';
+	import Modal from '../../components/ui/Modal.svelte';
+	import Loader from '../../components/ui/Loader.svelte';
+	import { onMount } from 'svelte';
 
 	type Rule = inferRouterOutputs<AppRouter>['rule']['getForSettings']['rules'][number];
 
@@ -22,9 +22,12 @@
 	let rules: Rule[] | undefined;
 
 	const fetchRules = async () => {
+		rules = undefined;
 		ogRules = (await trpc($page).rule.getForSettings.query({ UserKey, roleType }).catch(trpcClientErrorHandler)).rules;
 		rules = cloneDeep(ogRules);
 	};
+
+	onMount(fetchRules);
 
 	const isRuleChanged = (id: string) =>
 		JSON.stringify(ogRules?.find((r) => r.id === id)) !== JSON.stringify(rules?.find((r) => r.id === id));
@@ -37,19 +40,17 @@
 		if (!rules || !ogRules) return;
 		ui.setLoader({ title: 'Saving Changes' });
 		await trpc($page)
-			.rule.updateOperators.query({ ruleId: rules[i].id, operators: rules[i].operators })
+			.rule.updateOperators.mutate({ ruleId: rules[i].id, operators: rules[i].operators })
 			.catch(trpcClientErrorHandler);
 		await fetchRules();
 		ui.setLoader();
 	};
-
-	$: $lead.showSettingsModal ? fetchRules() : (rules = undefined);
 </script>
 
-<Modal title="Settings" bind:showModal={$lead.showSettingsModal} boxClasses="max-w-2xl z-0" classes="z-0">
+<Modal title="Settings" boxClasses="max-w-2xl z-0" classes="z-0">
 	{#if !rules}
 		<div class="my-10">
-			<Loader size={60} overlay={false} center={false} />
+			<Loader size={60} overlay={false} fixed={false} />
 		</div>
 	{:else}
 		<div class="mb-2">

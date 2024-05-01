@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const operatorSchema = z.object({
-	UserKey: z.string(),
-	VonageAgentId: z.string(),
-	FirstName: z.string(),
-	LastName: z.string(),
-	Email: z.string()
+	UserKey: z.string().nullable(),
+	VonageAgentId: z.string().nullable(),
+	FirstName: z.string().nullable(),
+	LastName: z.string().nullable(),
+	Email: z.string().nullable()
 });
 
 export type Operator = z.infer<typeof operatorSchema>;

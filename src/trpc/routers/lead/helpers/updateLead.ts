@@ -5,6 +5,7 @@ type Args = {
 	isPicked?: boolean;
 	overrideCallback?: boolean;
 	CompanyKey?: string | null;
+	leadResponseTime?: number | null;
 	log?: Prisma.LdLeadLogCreateInput;
 	message?: Prisma.LdLeadMessageCreateInput;
 	call?: Prisma.LdLeadCallCreateInput;
@@ -13,7 +14,7 @@ type Args = {
 
 export const updateLeadFunc =
 	(ProspectKey: string) =>
-	async ({ isPicked, overrideCallback, CompanyKey, log, message, call, response }: Args) =>
+	async ({ isPicked, overrideCallback, CompanyKey, leadResponseTime, log, message, call, response }: Args) =>
 		await prisma.ldLead
 			.update({
 				where: { ProspectKey },
@@ -21,6 +22,7 @@ export const updateLeadFunc =
 					isPicked,
 					overrideCallback,
 					CompanyKey,
+					leadResponseTime,
 					logs: { create: log },
 					messages: { create: message },
 					calls: { create: call },

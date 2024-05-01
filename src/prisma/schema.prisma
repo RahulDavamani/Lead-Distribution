@@ -2442,34 +2442,35 @@ model CustomerDemographic {
 }
 
 model Customers {
-   CustomerSeq      Int       @default(autoincrement())
-   CustomerKey      String    @id(map: "PK__Customer__95011E641C5AFA06") @db.UniqueIdentifier
-   FirstName        String?   @db.VarChar(100)
-   LastName         String?   @db.VarChar(100)
-   ServicePhone     String?   @db.VarChar(20)
-   Email            String?   @db.VarChar(100)
-   AddressLine1     String?   @db.VarChar(255)
-   AddressLine2     String?   @db.VarChar(255)
-   AptUnit          String?   @db.VarChar(100)
-   City             String?   @db.VarChar(100)
-   State            String?   @db.VarChar(50)
-   ZipCode          String?   @db.VarChar(10)
-   ZipExt           String?   @db.VarChar(10)
-   GeoLati          String?   @db.VarChar(50)
-   GeoLong          String?   @db.VarChar(50)
-   CompanyKey       String?   @db.UniqueIdentifier
-   CreatedBy        String?   @db.UniqueIdentifier
-   ModifiedBy       String?   @db.UniqueIdentifier
-   ValidFrom        DateTime
-   ValidTo          DateTime
-   ATTCustomerID    String?   @db.VarChar(Max)
-   SourceId         Int?
-   ServicePhoneAlt  String?   @db.VarChar(20)
-   DNCStatusCode    String?   @db.VarChar(10)
-   DncCheckOn       DateTime? @db.DateTime
-   HubSpotContactId String?   @db.VarChar(50)
-   ImportId         Int?
-   CreatedOn        DateTime? @default(now(), map: "DF__Customers__Creat__59BB32B5") @db.DateTime
+   CustomerSeq        Int       @default(autoincrement())
+   CustomerKey        String    @id(map: "PK__Customer__95011E641C5AFA06") @db.UniqueIdentifier
+   FirstName          String?   @db.VarChar(100)
+   LastName           String?   @db.VarChar(100)
+   ServicePhone       String?   @db.VarChar(20)
+   Email              String?   @db.VarChar(100)
+   AddressLine1       String?   @db.VarChar(255)
+   AddressLine2       String?   @db.VarChar(255)
+   AptUnit            String?   @db.VarChar(100)
+   City               String?   @db.VarChar(100)
+   State              String?   @db.VarChar(50)
+   ZipCode            String?   @db.VarChar(10)
+   ZipExt             String?   @db.VarChar(10)
+   GeoLati            String?   @db.VarChar(50)
+   GeoLong            String?   @db.VarChar(50)
+   CompanyKey         String?   @db.UniqueIdentifier
+   CreatedBy          String?   @db.UniqueIdentifier
+   ModifiedBy         String?   @db.UniqueIdentifier
+   ValidFrom          DateTime
+   ValidTo            DateTime
+   ATTCustomerID      String?   @db.VarChar(Max)
+   SourceId           Int?
+   ServicePhoneAlt    String?   @db.VarChar(20)
+   DNCStatusCode      String?   @db.VarChar(10)
+   DncCheckOn         DateTime? @db.DateTime
+   HubSpotContactId   String?   @db.VarChar(50)
+   ImportId           Int?
+   CreatedOn          DateTime? @default(now(), map: "DF__Customers__Creat__59BB32B5") @db.DateTime
+   IsConsentToContact Boolean?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -2506,34 +2507,35 @@ model Customers_Back12282021 {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model CustomersHistory {
-   CustomerSeq      Int
-   CustomerKey      String    @db.UniqueIdentifier
-   FirstName        String?   @db.VarChar(100)
-   LastName         String?   @db.VarChar(100)
-   ServicePhone     String?   @db.VarChar(20)
-   Email            String?   @db.VarChar(100)
-   AddressLine1     String?   @db.VarChar(255)
-   AddressLine2     String?   @db.VarChar(255)
-   AptUnit          String?   @db.VarChar(100)
-   City             String?   @db.VarChar(100)
-   State            String?   @db.VarChar(50)
-   ZipCode          String?   @db.VarChar(10)
-   ZipExt           String?   @db.VarChar(10)
-   GeoLati          String?   @db.VarChar(50)
-   GeoLong          String?   @db.VarChar(50)
-   CompanyKey       String?   @db.UniqueIdentifier
-   CreatedBy        String?   @db.UniqueIdentifier
-   ModifiedBy       String?   @db.UniqueIdentifier
-   ValidFrom        DateTime
-   ValidTo          DateTime
-   ATTCustomerID    String?   @db.VarChar(Max)
-   SourceId         Int?
-   ServicePhoneAlt  String?   @db.VarChar(20)
-   DNCStatusCode    String?   @db.VarChar(10)
-   DncCheckOn       DateTime? @db.DateTime
-   HubSpotContactId String?   @db.VarChar(50)
-   ImportId         Int?
-   CreatedOn        DateTime? @db.DateTime
+   CustomerSeq        Int
+   CustomerKey        String    @db.UniqueIdentifier
+   FirstName          String?   @db.VarChar(100)
+   LastName           String?   @db.VarChar(100)
+   ServicePhone       String?   @db.VarChar(20)
+   Email              String?   @db.VarChar(100)
+   AddressLine1       String?   @db.VarChar(255)
+   AddressLine2       String?   @db.VarChar(255)
+   AptUnit            String?   @db.VarChar(100)
+   City               String?   @db.VarChar(100)
+   State              String?   @db.VarChar(50)
+   ZipCode            String?   @db.VarChar(10)
+   ZipExt             String?   @db.VarChar(10)
+   GeoLati            String?   @db.VarChar(50)
+   GeoLong            String?   @db.VarChar(50)
+   CompanyKey         String?   @db.UniqueIdentifier
+   CreatedBy          String?   @db.UniqueIdentifier
+   ModifiedBy         String?   @db.UniqueIdentifier
+   ValidFrom          DateTime
+   ValidTo            DateTime
+   ATTCustomerID      String?   @db.VarChar(Max)
+   SourceId           Int?
+   ServicePhoneAlt    String?   @db.VarChar(20)
+   DNCStatusCode      String?   @db.VarChar(10)
+   DncCheckOn         DateTime? @db.DateTime
+   HubSpotContactId   String?   @db.VarChar(50)
+   ImportId           Int?
+   CreatedOn          DateTime? @db.DateTime
+   IsConsentToContact Boolean?
 
    @@index([ValidTo, ValidFrom], map: "ix_CustomersHistory", clustered: true)
    @@ignore
@@ -3815,7 +3817,7 @@ model ImportAlticeOptimumPayment {
    House                   BigInt?
    Cust                    Int?
    CUSTOMER_NAME           String?   @map("CUSTOMER NAME") @db.NVarChar(255)
-   ORDER_CONFIRMATION      BigInt?   @map("ORDER CONFIRMATION")
+   ORDER_CONFIRMATION      String?   @map("ORDER CONFIRMATION") @db.VarChar(20)
    SALES_CHANNEL           String?   @map("SALES CHANNEL") @db.NVarChar(50)
    Sales_Rep_ID            String?   @map("Sales Rep ID") @db.NVarChar(50)
    AFFILIATE_ID            String?   @map("AFFILIATE ID") @db.NVarChar(50)
@@ -3888,7 +3890,7 @@ model ImportAlticeSuddenlinkPayment {
    House                   BigInt?
    Cust                    Int?
    Customer_Name           String?   @map("Customer Name") @db.NVarChar(255)
-   Order_Confirmation      BigInt?   @map("Order Confirmation")
+   Order_Confirmation      String?   @map("Order Confirmation") @db.VarChar(20)
    Sales_Channel           String?   @db.NVarChar(50)
    SlsRep                  String?   @db.NVarChar(50)
    Affiliate_ID            String?   @map("Affiliate ID") @db.NVarChar(50)
@@ -4718,6 +4720,8 @@ model ImportClearConnect {
    Install_Date_Sched_For DateTime? @map("Install Date Sched For") @db.Date
    Install_Date           DateTime? @map("Install Date") @db.Date
    Disconnect_Date        DateTime? @map("Disconnect Date") @db.Date
+   ProductKey             String?   @db.UniqueIdentifier
+   StatusKey              String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -4789,6 +4793,7 @@ model ImportComcastInstalls {
    Option_2                           String?   @map("Option 2") @db.VarChar(255)
    ProductKey                         String?   @db.UniqueIdentifier
    StatusKey                          String?   @db.UniqueIdentifier
+   DerivedPackage                     String?   @db.VarChar(100)
 
    @@ignore
 }
@@ -4833,6 +4838,7 @@ model ImportComcastPayment {
    ProductKey               String?   @db.UniqueIdentifier
    StatusKey                String?   @db.UniqueIdentifier
    Originator               String?   @db.VarChar(255)
+   DerivedPackage           String?   @db.VarChar(100)
 
    @@ignore
 }
@@ -5443,6 +5449,9 @@ model ImportSpectrumInstallDisconnects {
    Xumo_Flag                                Boolean?  @map("Xumo Flag")
    Xumo___Total_Device___Time_of_Sale_Count Int?      @map("Xumo - Total Device - Time of Sale Count")
    ProviderKey                              String?   @default(dbgenerated("06F693AD-9EE8-488C-BD70-98472403196F"), map: "DF__ImportSpe__Provi__306744C3") @db.UniqueIdentifier
+   Xumo___Time_of_Sale_Count                Int?      @map("Xumo - Time of Sale Count")
+   Internet_Usage                           String?   @map("Internet Usage") @db.VarChar(10)
+   Internet_Usage_Date                      DateTime? @map("Internet Usage Date") @db.Date
 
    @@ignore
 }
@@ -6138,6 +6147,7 @@ model Lead {
    ValidTo             DateTime  @default(dbgenerated("CONVERT([datetime2],'9999-12-31 23:59:59.9999999')"), map: "DT_ValidTo")
    CTContactId         String?   @db.VarChar(100)
    ProspectKey         String?   @db.UniqueIdentifier
+   RingbaUID           String?   @db.VarChar(100)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -6176,6 +6186,7 @@ model LeadHistory {
    ValidTo             DateTime
    CTContactId         String?   @db.VarChar(100)
    ProspectKey         String?   @db.UniqueIdentifier
+   RingbaUID           String?   @db.VarChar(100)
 
    @@index([ValidTo, ValidFrom], map: "ix_LeadHistory", clustered: true)
    @@ignore
@@ -6212,6 +6223,9 @@ model LeadProspect {
    FirstResponseAgentId Int?
    Duration             Int?
    Direction            String?   @db.VarChar(20)
+   PropertyOwnership    String?   @db.VarChar(50)
+   InstallType          String?   @db.VarChar(50)
+   OutBoundNumber       String?   @db.VarChar(12)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -7446,6 +7460,7 @@ model Pages {
    MenuDescription   String?   @db.NVarChar(Max)
    IsAdminMenu       Boolean?  @default(false, map: "DF__Pages__IsAdminMe__797DF6D1")
    IsGenTKN          Boolean?  @default(false, map: "DF__Pages__IsGenTKN__2E7EFC51")
+   IsDeveloperMenu   Boolean?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -11592,6 +11607,9 @@ model MSSQL_TemporalHistoryFor_833542153 {
    FirstResponseAgentId Int?
    Duration             Int?
    Direction            String?   @db.VarChar(20)
+   PropertyOwnership    String?   @db.VarChar(50)
+   InstallType          String?   @db.VarChar(50)
+   OutBoundNumber       String?   @db.VarChar(12)
 
    @@index([ValidTo, ValidFrom], map: "ix_MSSQL_TemporalHistoryFor_833542153", clustered: true)
    @@ignore
@@ -13514,7 +13532,6 @@ model ZPlanParticipant_wqVF5Cw8gEGT_21IdUVgZ {
    ModifiedOn      DateTime? @db.DateTime
    ComJson         String?   @db.VarChar(Max)
    AgentCompanyKey String?   @db.UniqueIdentifier
-   TierName        String?   @db.VarChar(1000)
 
    @@map("ZPlanParticipant_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -13561,11 +13578,12 @@ model PlanRule {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanRule_wqVF5Cw8gEGT_21IdUVgZ {
-   PlanId    String  @db.VarChar(50)
-   PeriodKey String  @db.UniqueIdentifier
-   ComJson   String? @db.VarChar(Max)
-   TierJson  String? @db.VarChar(Max)
-   TierTable String? @db.VarChar(Max)
+   PlanId           String  @db.VarChar(50)
+   PeriodKey        String  @db.UniqueIdentifier
+   ComJson          String? @db.VarChar(Max)
+   TierJson         String? @db.VarChar(Max)
+   TierTable        String? @db.VarChar(Max)
+   CompanyTierTable String? @db.VarChar(Max)
 
    @@map("ZPlanRule_wqVF5Cw8gEGT-21IdUVgZ")
    @@ignore
@@ -14031,6 +14049,8 @@ model Domo_Google_ConversionRequest {
    ExceptionCnt Int?
    Exception    String?   @db.NVarChar(Max)
    Type         String?   @db.VarChar(100)
+   ActionId     String?   @db.VarChar(100)
+   ActionName   String?   @db.VarChar(255)
 
    @@ignore
 }
@@ -14154,56 +14174,9 @@ model ZPlanRule_XKWRAGPdmfLNYrRSte3ss {
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model ZPlanSource_wqVF5Cw8gEGT_21IdUVgZ_91_RCdfGcUtzt4_IKpNW0 {
-   CompanyType           Int?
-   RatePlan              String?   @db.VarChar(255)
-   PackageName           String?   @db.VarChar(255)
-   CompanyKey            String?   @db.UniqueIdentifier
-   ProviderKey           String?   @db.UniqueIdentifier
-   OrderKey              String    @db.UniqueIdentifier
-   OrderItemKey          String    @db.UniqueIdentifier
-   OrderSeq              Int
-   CustomerKey           String?   @db.UniqueIdentifier
-   SaleDate              DateTime? @db.DateTime
-   InstallDate           DateTime? @db.Date
-   DisconnectDate        DateTime? @db.Date
-   CancelDate            DateTime? @db.Date
-   InstallDate2          DateTime? @db.Date
-   ProductKey            String    @db.UniqueIdentifier
-   CreditLevel           String?   @db.Char(2)
-   CreditBucket          String?   @db.VarChar(50)
-   Account               String?   @db.VarChar(100)
-   DerivedAccount        String?   @db.VarChar(100)
-   WorkOrder             String?   @db.VarChar(100)
-   ProviderOrderId       String?   @db.VarChar(50)
-   CustomerInteractionId String?   @db.VarChar(100)
-   ProductName           String    @db.VarChar(255)
-   ProductCommonName     String?   @db.VarChar(20)
-   ProviderProductName   String?   @db.VarChar(255)
-   ProviderProductKey    String?   @db.UniqueIdentifier
-   Package               String?   @db.VarChar(255)
-   StatusKey             String?   @db.UniqueIdentifier
-   Status                String?   @db.VarChar(200)
-   LineItems             Int?
-   IsInstalled           Boolean?
-   IsConfirmed           Boolean?
-   IsCancelled           Int
-   IsProviderConfirmed   Boolean?
-   LeadTransferred       Boolean?
-   SalesRepKey           String?   @db.UniqueIdentifier
-   CreatedBy             String?   @db.UniqueIdentifier
-   XYZPackage            String?   @db.VarChar(255)
-   LineInstalled         Int?
-   LineOrdered           Int?
-   SubAccount            String    @db.VarChar(50)
-
-   @@map("ZPlanSource_wqVF5Cw8gEGT-21IdUVgZ_91-RCdfGcUtzt4-IKpNW0")
-   @@ignore
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanSource_wqVF5Cw8gEGT_21IdUVgZ_ZqLl4OAHxgHP0eXivfl_G {
    PackageName           String?   @db.VarChar(255)
+   CompanyId             Int?
    CompanyType           Int?
    CompanyKey            String?   @db.UniqueIdentifier
    ProviderKey           String?   @db.UniqueIdentifier
@@ -14249,6 +14222,7 @@ model ZPlanSource_wqVF5Cw8gEGT_21IdUVgZ_ZqLl4OAHxgHP0eXivfl_G {
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ZPlanSource_XKWRAGPdmfLNYrRSte3ss_GS1EuF0eUPPTAvgL_bDu1 {
    PackageName           String?   @db.VarChar(255)
+   CompanyId             Int?
    CompanyType           Int?
    CompanyKey            String?   @db.UniqueIdentifier
    ProviderKey           String?   @db.UniqueIdentifier
@@ -14291,6 +14265,145 @@ model ZPlanSource_XKWRAGPdmfLNYrRSte3ss_GS1EuF0eUPPTAvgL_bDu1 {
    @@ignore
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model TemProviderzipcode {
+   ProviderId  Int?
+   ProviderKey String? @db.UniqueIdentifier
+   ZipCode     Float?
+   Tier        Int?
+   Description String? @db.VarChar(1000)
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model TemProviderzipcodeSheet {
+   ZipCode     String? @db.VarChar(10)
+   Providerkey String? @db.UniqueIdentifier
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model TemProviderzipcodeSheetCal {
+   ZipCode      String?  @db.VarChar(10)
+   ATT          Boolean?
+   ATT_BP       Boolean?
+   Spectrum     Boolean?
+   Spectrum_BP  Boolean?
+   Comcast      Boolean?
+   Comcast_BP   Boolean?
+   Fidium       Boolean?
+   Fidium_BP    Boolean?
+   Frontier     Boolean?
+   Frontier_BP  Boolean?
+   Altice       Boolean?
+   Altice_BP    Boolean?
+   Earthlink    Boolean?
+   Earthlink_BP Boolean?
+   Wow          Boolean?
+   Wow_BP       Boolean?
+
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CampaignPhoneNotification {
+   NotificationKey      String    @default(dbgenerated("newid()"), map: "DF__CampaignP__Notif__55C47D52") @db.UniqueIdentifier
+   CampaignPhoneKey     String    @db.UniqueIdentifier
+   NotificationTitle    String?   @db.VarChar(1000)
+   NotificationTemplate String?   @db.VarChar(Max)
+   EffectiveFrom        DateTime? @db.Date
+   EffectiveTo          DateTime? @db.Date
+   IsActive             Boolean?
+   CreatedOn            DateTime? @default(now(), map: "DF__CampaignP__Creat__56B8A18B") @db.DateTime
+   CreatedBy            String?   @db.UniqueIdentifier
+   ModifiedOn           DateTime? @db.DateTime
+   ModifiedBy           String?   @db.UniqueIdentifier
+
+   @@ignore
+}
+
+model RingbaCalls {
+   Seq               Int       @default(autoincrement())
+   CallUID           String    @id(map: "PK__RingbaCa__16364F37961BFACF") @db.VarChar(100)
+   CallerID          String?   @db.VarChar(20)
+   CampaignId        String?   @db.VarChar(100)
+   PublisherID       String?   @db.VarChar(100)
+   CallStatus        String?   @db.VarChar(20)
+   CallDateTime      DateTime? @db.DateTime
+   DialedNumber      String?   @db.VarChar(20)
+   CreatedOn         DateTime? @default(now(), map: "DF__RingbaCal__Creat__31F13130") @db.DateTime
+   ValidFrom         DateTime
+   ValidTo           DateTime
+   CallCompletedTime DateTime? @db.DateTime
+   CallDurationSec   Int?
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model RingbaCallsHistory {
+   Seq               Int
+   CallUID           String    @db.VarChar(100)
+   CallerID          String?   @db.VarChar(20)
+   CampaignId        String?   @db.VarChar(100)
+   PublisherID       String?   @db.VarChar(100)
+   CallStatus        String?   @db.VarChar(20)
+   CallDateTime      DateTime? @db.DateTime
+   DialedNumber      String?   @db.VarChar(20)
+   CreatedOn         DateTime? @db.DateTime
+   ValidFrom         DateTime
+   ValidTo           DateTime
+   CallCompletedTime DateTime? @db.DateTime
+   CallDurationSec   Int?
+
+   @@index([ValidTo, ValidFrom], map: "ix_RingbaCallsHistory", clustered: true)
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model PopUpNotification {
+   NotificationKey      String    @default(dbgenerated("newid()"), map: "DF__PopUpNoti__Notif__66EF0954") @db.UniqueIdentifier
+   RefKey               String?   @db.UniqueIdentifier
+   RefTypeId            Int
+   NotificationTitle    String?   @db.VarChar(1000)
+   NotificationTemplate String?   @db.VarChar(Max)
+   EffectiveFrom        DateTime? @db.Date
+   EffectiveTo          DateTime? @db.Date
+   IsActive             Boolean?
+   PopUpSize            String?   @db.VarChar(155)
+   CreatedOn            DateTime? @default(now(), map: "DF__PopUpNoti__Creat__67E32D8D") @db.DateTime
+   CreatedBy            String?   @db.UniqueIdentifier
+   ModifiedOn           DateTime? @db.DateTime
+   ModifiedBy           String?   @db.UniqueIdentifier
+
+   @@ignore
+}
+
+model QBComSummary {
+   Seq             Int       @id(map: "PK__QBComSum__CA1E3C88CCE94344") @default(autoincrement())
+   ProviderKey     String    @db.UniqueIdentifier
+   ProviderName    String?   @db.VarChar(50)
+   PeriodKey       String    @db.UniqueIdentifier
+   PeriodStart     DateTime? @db.Date
+   PeriodEnd       DateTime? @db.Date
+   Type            String?   @db.VarChar(20)
+   BillNumber      String?   @db.VarChar(100)
+   Amount          Decimal?  @db.Decimal(10, 2)
+   CompanyKey      String    @db.UniqueIdentifier
+   CompanyName     String?   @db.VarChar(200)
+   CompanyType     String?   @db.VarChar(20)
+   BusinessType    String?   @db.VarChar(100)
+   APAccount       String?   @db.VarChar(50)
+   LineAccountName String?   @db.VarChar(200)
+   Memo            String?   @db.VarChar(255)
+   Location        String?   @db.VarChar(100)
+   DueDate         DateTime? @db.Date
+   CreatedOn       DateTime? @default(now(), map: "DF__QBComSumm__Creat__3522A396") @db.DateTime
+   ComSumSeq       Int?
+
+   @@unique([ProviderKey, PeriodKey, CompanyKey, Type], map: "uk_QBComSummary")
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -14300,12 +14413,15 @@ model LdRule {
    name        String  @unique
    description String
 
-   outboundCallNumber String
-   messagingService   String
-   smsTemplate        String
+   outboundCallNumber     String
+   overrideOutboundNumber Boolean @default(false)
 
-   operators   LdRuleOperator[]
+   messagingService String
+   smsTemplate      String
+
    affiliates  LdRuleAffiliate[]
+   companies   LdRuleCompany[]
+   operators   LdRuleOperator[]
    supervisors LdRuleSupervisor[]
 
    notificationAttempts LdRuleNotificationAttempt[]
@@ -14317,6 +14433,19 @@ model LdRule {
 
    queuedLeads    LdLead[]
    completedLeads LdLeadCompleted[]
+
+   history LdRuleHistory[]
+}
+
+model LdRuleHistory {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+   UserKey String @db.UniqueIdentifier
 }
 
 model LdRuleAffiliate {
@@ -14331,6 +14460,33 @@ model LdRuleAffiliate {
    CompanyKey String
 
    @@unique([ruleId, CompanyKey])
+}
+
+model LdRuleCompany {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ruleId String
+   rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+   CompanyKey   String
+   workingHours LdRuleCompanyWorkingHours[]
+
+   @@unique([ruleId, CompanyKey])
+}
+
+model LdRuleCompanyWorkingHours {
+   id        String   @id @unique @default(nanoid())
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+   ruleCompanyId String
+   ruleCompany   LdRuleCompany @relation(fields: [ruleCompanyId], references: [id], onDelete: Cascade)
+
+   start DateTime
+   end   DateTime
+   days  String
 }
 
 model LdRuleOperator {
@@ -14510,6 +14666,8 @@ model LdLead {
    isPicked         Boolean
    overrideCallback Boolean
 
+   leadResponseTime Int?
+
    logs                  LdLeadLog[]
    notificationProcesses LdLeadNotificationProcess[]
    messages              LdLeadMessage[]
@@ -14530,7 +14688,8 @@ model LdLeadCompleted {
 
    CompanyKey String? @db.UniqueIdentifier
 
-   notes String
+   notes            String
+   leadResponseTime Int?
 
    success        Boolean
    completeStatus String
@@ -14671,6 +14830,7 @@ model LdLeadResponse {
    isCompleted   Boolean
    type          String
    responseValue String
+   UserKey       String?
 
    actionType String
    actionsId  String?

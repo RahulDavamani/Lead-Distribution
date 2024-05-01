@@ -3,6 +3,8 @@ import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import { getUserStr, getUserValues } from './user';
 import { updateLeadFunc } from './updateLead';
 import { endNotificationProcesses } from './notificationProcess';
+import { calculateLeadDuration } from '$lib/client/DateTime';
+import { getWorkingHours } from './getWorkingHours';
 
 export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	const updateLead = updateLeadFunc(ProspectKey);
@@ -15,9 +17,11 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 			where: { ProspectKey },
 			select: {
 				id: true,
-				rule: { select: { isActive: true, outboundCallNumber: true } },
+				CompanyKey: true,
+				leadResponseTime: true,
+				rule: { select: { id: true, isActive: true, outboundCallNumber: true, overrideOutboundNumber: true } },
 				notificationProcesses: {
-					select: { id: true },
+					select: { id: true, createdAt: true },
 					orderBy: { createdAt: 'desc' },
 					take: 1
 				}
@@ -31,16 +35,39 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	if (!lead.rule.isActive)
 		throw new TRPCError({ code: 'METHOD_NOT_SUPPORTED', message: 'Lead Distribution Rule is Inactive' });
 
+	// Get Outbound Number
+	let outboundCallNumber = lead.rule.outboundCallNumber;
+	if (lead.rule.overrideOutboundNumber) {
+		const prospect = await prisma.leadProspect
+			.findFirstOrThrow({
+				where: { ProspectKey },
+				select: { OutBoundNumber: true }
+			})
+			.catch(prismaErrorHandler);
+		if (prospect.OutBoundNumber) outboundCallNumber = prospect.OutBoundNumber;
+	}
+
 	// Call Customer
-	await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${userValues?.VonageAgentId},${lead.rule.outboundCallNumber}`.catch(
+	await prisma.$queryRaw`exec [p_Von_InitiateOutboundCall] ${ProspectKey},${userValues?.VonageAgentId},${outboundCallNumber}`.catch(
 		prismaErrorHandler
 	);
+
+	// Lead Response Time
+	let leadResponseTime = lead.leadResponseTime;
+	if (!leadResponseTime) {
+		const workingHours = await getWorkingHours(lead.rule.id, lead.CompanyKey);
+		const notificationProcess = lead.notificationProcesses.find((np) => np.createdAt < new Date());
+		leadResponseTime = notificationProcess
+			? calculateLeadDuration(notificationProcess.createdAt, new Date(), workingHours)
+			: null;
+	}
 
 	// Update Lead
 	await updateLead({
 		log: { log: `Lead picked by "${userStr}"` },
 		isPicked: true,
 		CompanyKey: userValues?.CompanyKey,
+		leadResponseTime,
 		call: { user: { connect: { UserKey } } }
 	});
 

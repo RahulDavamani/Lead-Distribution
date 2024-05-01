@@ -25,8 +25,7 @@ export const createActions = async (actions: Actions) => {
 	const { id } = await prisma.ldRuleActions
 		.create({
 			data: Object.fromEntries(
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				keyActionsList.map((k) => [k, { create: actions[k].map(({ id, ...values }) => values) }])
+				keyActionsList.map((k) => [k, { create: actions[k].map(({ id: _, ...values }) => values) }])
 			)
 		})
 		.catch(prismaErrorHandler);

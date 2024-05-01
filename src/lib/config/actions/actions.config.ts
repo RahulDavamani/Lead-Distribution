@@ -5,6 +5,8 @@ import scheduleCallbackConfig from './scheduleCallback/scheduleCallback.config';
 import type { ScheduleCallback } from './scheduleCallback/scheduleCallback.schema';
 import completeLeadConfig from './completeLead/completeLead.config';
 import type { CompleteLead } from './completeLead/completeLead.schema';
+import { nanoid } from 'nanoid';
+import type { Actions } from './actions.schema';
 
 export type ActionKey = 'sendSMS' | 'scheduleCallback' | 'completeLead';
 
@@ -41,6 +43,12 @@ export const actionsConfig: ActionsConfig = {
 export const actionKeys = Object.keys(actionsConfig) as ActionKey[];
 export const actionsConfigList = Object.values(actionsConfig);
 export const keyActionsList = actionsConfigList.map(({ labels }) => labels.keyActions);
+export const actionsSelect: { select: Prisma.LdRuleActionsSelect } = {
+	select: Object.fromEntries(keyActionsList.map((k) => [k, true]))
+};
 export const actionsInclude: { include: Prisma.LdRuleActionsInclude } = {
 	include: Object.fromEntries(keyActionsList.map((k) => [k, true]))
 };
+
+export const getNewActions = (): Actions =>
+	Object.fromEntries([['id', nanoid()], ...actionsConfigList.map(({ labels: { keyActions } }) => [keyActions, []])]);

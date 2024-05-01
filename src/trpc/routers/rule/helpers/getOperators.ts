@@ -1,5 +1,11 @@
 import { prisma } from '../../../../prisma/prisma';
-import type { Operator } from '../../../../zod/operator.schema';
+export interface Operator {
+	UserKey: string | null;
+	VonageAgentId: string | null;
+	FirstName: string | null;
+	LastName: string | null;
+	Email: string | null;
+}
 
 export const getOperators = async () =>
 	(await prisma.$queryRaw`

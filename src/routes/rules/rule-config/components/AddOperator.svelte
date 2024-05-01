@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { afterUpdate } from 'svelte';
-	import Modal from '../../../components/Modal.svelte';
 	import DataTable from 'datatables.net-dt';
-	import 'datatables.net-dt/css/jquery.dataTables.min.css';
 	import { ruleConfig } from '../../../../stores/ruleConfig.store';
 	import type { Rule } from '../../../../zod/rule.schema';
 	import { nanoid } from 'nanoid';
+	import { ui } from '../../../../stores/ui.store';
+	import Modal from '../../../components/ui/Modal.svelte';
 
 	afterUpdate(() => new DataTable('#operatorsTable'));
 
-	export let showModal: boolean;
 	$: ({
 		rule: { operators },
-		operators: allOperators
+		masterData
 	} = $ruleConfig);
 
 	let selectedOperators: string[] = [];
@@ -33,17 +32,12 @@
 			assignCallbackLeads: true
 		}));
 		$ruleConfig.rule.operators = [...operators, ...newOperators];
-		showModal = false;
 		selectedOperators = [];
-	};
-
-	const closeModal = () => {
-		showModal = false;
-		selectedOperators = [];
+		ui.setModals();
 	};
 </script>
 
-<Modal bind:showModal title="Add Campaign Operator" boxClasses="max-w-6xl" {closeModal}>
+<Modal title="Add Campaign Operator" boxClasses="max-w-6xl">
 	<div class="overflow-x-auto">
 		<table id="operatorsTable" class="table table-zebra border rounded-t-none">
 			<thead class="bg-base-300">
@@ -55,23 +49,25 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each allOperators as { UserKey, VonageAgentId, FirstName, LastName, Email }}
-					<tr
-						class="hover {!addedOperators.includes(UserKey) && 'cursor-pointer'}"
-						on:click={() => selectOperator(UserKey)}
-					>
-						<td class="text-center w-12">
-							<input
-								type="checkbox"
-								class="checkbox checkbox-sm checkbox-success"
-								checked={selectedOperators.includes(UserKey)}
-								disabled={addedOperators.includes(UserKey)}
-							/>
-						</td>
-						<td>{VonageAgentId}</td>
-						<td>{FirstName} {LastName}</td>
-						<td>{Email}</td>
-					</tr>
+				{#each masterData.operators as { UserKey, VonageAgentId, FirstName, LastName, Email }}
+					{#if UserKey}
+						<tr
+							class="hover {!addedOperators.includes(UserKey) && 'cursor-pointer'}"
+							on:click={() => UserKey && selectOperator(UserKey)}
+						>
+							<td class="text-center w-12">
+								<input
+									type="checkbox"
+									class="checkbox checkbox-sm checkbox-success"
+									checked={selectedOperators.includes(UserKey)}
+									disabled={addedOperators.includes(UserKey)}
+								/>
+							</td>
+							<td>{VonageAgentId}</td>
+							<td>{FirstName} {LastName}</td>
+							<td>{Email}</td>
+						</tr>
+					{/if}
 				{/each}
 			</tbody>
 		</table>
