@@ -1,6 +1,4 @@
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { getCompanyValues } from './company';
-import { getUserValues } from './user';
 
 export const getRuleCompanies = async (ruleId: string) => {
 	const operators = await prisma.ldRuleOperator
@@ -10,14 +8,17 @@ export const getRuleCompanies = async (ruleId: string) => {
 		})
 		.catch(prismaErrorHandler);
 
-	const companies: { CompanyKey: string; CompanyName: string }[] = [];
-	for (const { UserKey } of operators) {
-		const CompanyKey = (await getUserValues(UserKey))?.CompanyKey;
-		if (CompanyKey && companies.find((c) => c.CompanyKey === CompanyKey) === undefined) {
-			const CompanyName = CompanyKey && (await getCompanyValues(CompanyKey))?.CompanyName;
-			CompanyName && companies.push({ CompanyKey, CompanyName });
-		}
-	}
+	const users = await prisma.users
+		.findMany({
+			where: { UserKey: { in: operators.map((operator) => operator.UserKey) } },
+			select: { UserKey: true, CompanyKey: true }
+		})
+		.catch(prismaErrorHandler);
 
-	return companies;
+	return await prisma.companies
+		.findMany({
+			where: { CompanyKey: { in: users.map((user) => user.CompanyKey) } },
+			select: { CompanyKey: true, CompanyName: true }
+		})
+		.catch(prismaErrorHandler);
 };

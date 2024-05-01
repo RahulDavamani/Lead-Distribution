@@ -326,7 +326,7 @@
 							<div class="opacity-75 text-xs">(Disposition: {responses[0].responseValue})</div>
 						{/if}
 
-						{#if latestCall}
+						{#if latestCall && VonageGUID}
 							{#if latestCall.createdAt < responses[0]?.createdAt}
 								<div />
 							{:else if today.getTime() - latestCall.createdAt.getTime() > 600000}

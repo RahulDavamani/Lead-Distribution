@@ -19,9 +19,9 @@
 	let selectedCompanyKey: string | null = null;
 
 	const fetchRuleCompanies = async () => {
-		if (!id) return;
+		if (!selectedLead?.ruleId) return;
 		ruleCompanies = undefined;
-		ruleCompanies = await trpc($page).lead.getRuleCompanies.query({ ruleId: id });
+		ruleCompanies = await trpc($page).lead.getRuleCompanies.query({ ruleId: selectedLead.ruleId });
 		selectedCompanyKey =
 			ruleCompanies.find(({ CompanyKey }) => CompanyKey === selectedLead?.CompanyKey)?.CompanyKey ?? null;
 	};

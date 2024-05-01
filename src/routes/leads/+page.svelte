@@ -31,7 +31,7 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="form-control {viewMode ? 'fixed' : 'absolute'} top-2 right-2 z-50 bg-base-300 rounded-box px-2">
+<div class="form-control {viewMode ? 'fixed' : 'absolute'} top-2 right-2 z-10 bg-base-300 rounded-box px-2">
 	<label
 		class="label cursor-pointer gap-2 text-sm"
 		on:click={() => {
