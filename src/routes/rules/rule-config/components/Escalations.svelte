@@ -7,6 +7,8 @@
 	import { tick } from 'svelte';
 	import DurationPicker from '../../../components/DurationPicker.svelte';
 	import IconBtn from '../../../components/ui/IconBtn.svelte';
+	import { notificationTypes } from '$lib/data/notificationTypes';
+	import { notificationTargets } from '$lib/data/notificationTargets';
 
 	$: ({
 		rule: { escalations }
@@ -18,6 +20,8 @@
 			{
 				id: nanoid(),
 				num: escalations.length + 1,
+				type: 'push',
+				target: 'one',
 				messageTemplate: '',
 				waitTime: 0
 			}
@@ -100,6 +104,42 @@
 						</div>
 					</div>
 					<div class="divider m-0" />
+
+					<div class="grid grid-cols-2 mt-1">
+						<div>
+							<div class="font-semibold mt-1">Notification Type</div>
+							<div class="flex gap-4">
+								{#each Object.entries(notificationTypes) as [key, value]}
+									<FormControl inputType="In" label={value}>
+										<input
+											type="radio"
+											name="Escalation {num} Type"
+											class="radio radio-sm radio-primary"
+											value={key}
+											bind:group={$ruleConfig.rule.escalations[i].type}
+										/>
+									</FormControl>
+								{/each}
+							</div>
+						</div>
+
+						<div>
+							<div class="font-semibold mt-1">Notification Target</div>
+							<div class="flex gap-4">
+								{#each Object.entries(notificationTargets('Supervisor')) as [key, value]}
+									<FormControl inputType="In" label={value}>
+										<input
+											type="radio"
+											name="Escalation {num} Target"
+											class="radio radio-sm radio-primary"
+											value={key}
+											bind:group={$ruleConfig.rule.escalations[i].target}
+										/>
+									</FormControl>
+								{/each}
+							</div>
+						</div>
+					</div>
 
 					<div class="flex gap-6">
 						<FormControl

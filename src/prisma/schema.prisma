@@ -4839,6 +4839,7 @@ model ImportComcastPayment {
    StatusKey                String?   @db.UniqueIdentifier
    Originator               String?   @db.VarChar(255)
    DerivedPackage           String?   @db.VarChar(100)
+   Provider_Cancel_Date     DateTime? @map("Provider Cancel Date") @db.Date
 
    @@ignore
 }
@@ -5496,6 +5497,7 @@ model ImportSpectrumMobileActivation {
    Sales___Mobile_Lines_Sold___BYOD            String?   @map("Sales - Mobile Lines Sold - BYOD") @db.VarChar(10)
    Sequence_Number                             String?   @map("Sequence Number") @db.VarChar(50)
    Line_Rate_Plan                              String?   @map("Line Rate Plan") @db.VarChar(255)
+   BT                                          String?   @db.VarChar(1)
 
    @@ignore
 }
@@ -9563,6 +9565,7 @@ model Users {
    LdLeadNotificationProcesses LdLeadNotificationProcess[]
    LdRuleOperators             LdRuleOperator[]
    LdRuleSupervisors           LdRuleSupervisor[]
+   LdRuleHistory               LdRuleHistory[]
 }
 
 model UsersArc {
@@ -13348,6 +13351,7 @@ model RunControl {
    CreatedOn   DateTime? @db.DateTime
    CreatedBy   String?   @db.UniqueIdentifier
    RunType     Int?
+   IsError     Boolean?  @default(false, map: "DF__RunContro__IsErr__5A542845")
 }
 
 model RunControlLog {
@@ -14325,36 +14329,40 @@ model CampaignPhoneNotification {
 }
 
 model RingbaCalls {
-   Seq               Int       @default(autoincrement())
-   CallUID           String    @id(map: "PK__RingbaCa__16364F37961BFACF") @db.VarChar(100)
-   CallerID          String?   @db.VarChar(20)
-   CampaignId        String?   @db.VarChar(100)
-   PublisherID       String?   @db.VarChar(100)
-   CallStatus        String?   @db.VarChar(20)
-   CallDateTime      DateTime? @db.DateTime
-   DialedNumber      String?   @db.VarChar(20)
-   CreatedOn         DateTime? @default(now(), map: "DF__RingbaCal__Creat__31F13130") @db.DateTime
-   ValidFrom         DateTime
-   ValidTo           DateTime
-   CallCompletedTime DateTime? @db.DateTime
-   CallDurationSec   Int?
+   Seq                  Int       @default(autoincrement())
+   CallUID              String    @id(map: "PK__RingbaCa__16364F37961BFACF") @db.VarChar(100)
+   CallerID             String?   @db.VarChar(20)
+   CampaignId           String?   @db.VarChar(100)
+   PublisherID          String?   @db.VarChar(100)
+   CallStatus           String?   @db.VarChar(20)
+   CallDateTime         DateTime? @db.DateTime
+   DialedNumber         String?   @db.VarChar(20)
+   CreatedOn            DateTime? @default(now(), map: "DF__RingbaCal__Creat__31F13130") @db.DateTime
+   ValidFrom            DateTime
+   ValidTo              DateTime
+   CallCompletedTime    DateTime? @db.DateTime
+   CallDurationSec      Int?
+   IsOrderInfoAvailable Boolean?
+   OrderInfoSentOn      DateTime? @db.DateTime
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model RingbaCallsHistory {
-   Seq               Int
-   CallUID           String    @db.VarChar(100)
-   CallerID          String?   @db.VarChar(20)
-   CampaignId        String?   @db.VarChar(100)
-   PublisherID       String?   @db.VarChar(100)
-   CallStatus        String?   @db.VarChar(20)
-   CallDateTime      DateTime? @db.DateTime
-   DialedNumber      String?   @db.VarChar(20)
-   CreatedOn         DateTime? @db.DateTime
-   ValidFrom         DateTime
-   ValidTo           DateTime
-   CallCompletedTime DateTime? @db.DateTime
-   CallDurationSec   Int?
+   Seq                  Int
+   CallUID              String    @db.VarChar(100)
+   CallerID             String?   @db.VarChar(20)
+   CampaignId           String?   @db.VarChar(100)
+   PublisherID          String?   @db.VarChar(100)
+   CallStatus           String?   @db.VarChar(20)
+   CallDateTime         DateTime? @db.DateTime
+   DialedNumber         String?   @db.VarChar(20)
+   CreatedOn            DateTime? @db.DateTime
+   ValidFrom            DateTime
+   ValidTo              DateTime
+   CallCompletedTime    DateTime? @db.DateTime
+   CallDurationSec      Int?
+   IsOrderInfoAvailable Boolean?
+   OrderInfoSentOn      DateTime? @db.DateTime
 
    @@index([ValidTo, ValidFrom], map: "ix_RingbaCallsHistory", clustered: true)
    @@ignore
@@ -14404,6 +14412,113 @@ model QBComSummary {
    @@unique([ProviderKey, PeriodKey, CompanyKey, Type], map: "uk_QBComSummary")
 }
 
+model SpectrumWorkOrderAccount {
+   Seq                       Int       @default(autoincrement())
+   Work_Order_Number         String    @map("Work Order Number") @db.VarChar(50)
+   Customer___Account_Number String    @map("Customer - Account Number") @db.VarChar(50)
+   ImportId                  Int
+   CreatedOn                 DateTime? @db.DateTime
+
+   @@id([Work_Order_Number, Customer___Account_Number], map: "PK_SpectrumWorkOrderAccount")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanSource_wqVF5Cw8gEGT_21IdUVgZ_91_RCdfGcUtzt4_IKpNW0 {
+   CompanyType           Int?
+   CompanyId             Int?
+   RatePlan              String?   @db.VarChar(255)
+   PackageName           String?   @db.VarChar(255)
+   CompanyKey            String?   @db.UniqueIdentifier
+   ProviderKey           String?   @db.UniqueIdentifier
+   OrderKey              String    @db.UniqueIdentifier
+   OrderItemKey          String    @db.UniqueIdentifier
+   OrderSeq              Int
+   CustomerKey           String?   @db.UniqueIdentifier
+   SaleDate              DateTime? @db.DateTime
+   InstallDate           DateTime? @db.Date
+   DisconnectDate        DateTime? @db.Date
+   CancelDate            DateTime? @db.Date
+   InstallDate2          DateTime? @db.Date
+   ProductKey            String    @db.UniqueIdentifier
+   CreditLevel           String?   @db.Char(2)
+   CreditBucket          String?   @db.VarChar(50)
+   Account               String?   @db.VarChar(100)
+   DerivedAccount        String?   @db.VarChar(100)
+   WorkOrder             String?   @db.VarChar(100)
+   ProviderOrderId       String?   @db.VarChar(50)
+   CustomerInteractionId String?   @db.VarChar(100)
+   ProductName           String    @db.VarChar(255)
+   ProductCommonName     String?   @db.VarChar(20)
+   ProviderProductName   String?   @db.VarChar(255)
+   ProviderProductKey    String?   @db.UniqueIdentifier
+   Package               String?   @db.VarChar(255)
+   StatusKey             String?   @db.UniqueIdentifier
+   Status                String?   @db.VarChar(200)
+   LineItems             Int?
+   IsInstalled           Boolean?
+   IsConfirmed           Boolean?
+   IsCancelled           Int
+   IsProviderConfirmed   Boolean?
+   LeadTransferred       Boolean?
+   SalesRepKey           String?   @db.UniqueIdentifier
+   CreatedBy             String?   @db.UniqueIdentifier
+   XYZPackage            String?   @db.VarChar(255)
+   LineInstalled         Int?
+   LineOrdered           Int?
+   SubAccount            String    @db.VarChar(50)
+
+   @@map("ZPlanSource_wqVF5Cw8gEGT-21IdUVgZ_91-RCdfGcUtzt4-IKpNW0")
+   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ZPlanSource_XKWRAGPdmfLNYrRSte3ss_xh5_o_QVsTvVBhoeuaUuj {
+   CompanyType           Int?
+   CompanyId             Int?
+   RatePlan              String?   @db.VarChar(255)
+   PackageName           String?   @db.VarChar(255)
+   CompanyKey            String?   @db.UniqueIdentifier
+   ProviderKey           String?   @db.UniqueIdentifier
+   OrderKey              String    @db.UniqueIdentifier
+   OrderItemKey          String    @db.UniqueIdentifier
+   OrderSeq              Int
+   CustomerKey           String?   @db.UniqueIdentifier
+   SaleDate              DateTime? @db.DateTime
+   InstallDate           DateTime? @db.Date
+   DisconnectDate        DateTime? @db.Date
+   CancelDate            DateTime? @db.Date
+   InstallDate2          DateTime? @db.Date
+   ProductKey            String    @db.UniqueIdentifier
+   CreditLevel           String?   @db.Char(2)
+   CreditBucket          String?   @db.VarChar(50)
+   Account               String?   @db.VarChar(100)
+   DerivedAccount        String?   @db.VarChar(100)
+   WorkOrder             String?   @db.VarChar(100)
+   ProviderOrderId       String?   @db.VarChar(50)
+   CustomerInteractionId String?   @db.VarChar(100)
+   ProductName           String    @db.VarChar(255)
+   ProductCommonName     String?   @db.VarChar(20)
+   ProviderProductName   String?   @db.VarChar(255)
+   ProviderProductKey    String?   @db.UniqueIdentifier
+   Package               String?   @db.VarChar(255)
+   StatusKey             String?   @db.UniqueIdentifier
+   Status                String?   @db.VarChar(200)
+   LineItems             Int?
+   IsInstalled           Boolean?
+   IsConfirmed           Boolean?
+   IsCancelled           Int
+   IsProviderConfirmed   Boolean?
+   LeadTransferred       Boolean?
+   SalesRepKey           String?   @db.UniqueIdentifier
+   CreatedBy             String?   @db.UniqueIdentifier
+   XYZPackage            String?   @db.VarChar(255)
+   LineInstalled         Int?
+   LineOrdered           Int?
+   SubAccount            String    @db.VarChar(50)
+
+   @@ignore
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -14446,6 +14561,7 @@ model LdRuleHistory {
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
    UserKey String @db.UniqueIdentifier
+   user    Users  @relation(fields: [UserKey], references: [UserKey], onDelete: Cascade)
 }
 
 model LdRuleAffiliate {
@@ -14534,6 +14650,8 @@ model LdRuleNotificationAttempt {
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
    num             Int
+   type            String
+   target          String
    messageTemplate String
    waitTime        Int
 
@@ -14551,6 +14669,8 @@ model LdRuleEscalation {
    rule   LdRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
    num             Int
+   type            String
+   target          String
    messageTemplate String
    waitTime        Int
 

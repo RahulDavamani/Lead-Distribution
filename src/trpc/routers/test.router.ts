@@ -2,6 +2,11 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const history = await prisma.ldRuleHistory.findMany({
+		// 	orderBy: { createdAt: 'desc' },
+		// 	where: { ruleId: 'Udh-jPC1b6xk4Q7J3HAbS' }
+		// });
+		// console.log(history);
 		// const leads = await prisma.ldLeadCompleted.findMany({
 		// 	select: {
 		// 		id: true,

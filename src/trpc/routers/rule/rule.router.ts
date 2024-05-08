@@ -5,7 +5,7 @@ import { getMasterData } from './procedures/getMasterData.procedure';
 import { create } from './procedures/create.procedure';
 import { update } from './procedures/update.procedure';
 import { remove } from './procedures/remove.procedure';
-import { updateOperators } from './procedures/updateOperators';
+import { updateOperators } from './procedures/updateOperators.procedure';
 import { router } from '../../server';
 import { duplicate } from './procedures/duplicate.procedure';
 

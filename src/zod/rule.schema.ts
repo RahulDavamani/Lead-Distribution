@@ -39,6 +39,8 @@ export const supervisorSchema = z.object({
 export const notificationAttemptSchema = z.object({
 	id: z.string().min(1),
 	num: z.number(),
+	type: z.enum(['push', 'audio']),
+	target: z.enum(['all', 'one']),
 	messageTemplate: z.string(),
 	waitTime: z.number()
 });
@@ -46,6 +48,8 @@ export const notificationAttemptSchema = z.object({
 export const escalationSchema = z.object({
 	id: z.string().min(1),
 	num: z.number(),
+	type: z.enum(['push', 'audio']),
+	target: z.enum(['all', 'one']),
 	messageTemplate: z.string(),
 	waitTime: z.number()
 });

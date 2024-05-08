@@ -29,8 +29,11 @@ const method = async ({ id }: z.infer<typeof schema>) => {
 
 				operators: { select: { num: true, UserKey: true, assignNewLeads: true, assignCallbackLeads: true } },
 				supervisors: { select: { num: true, UserKey: true, isEscalate: true, isRequeue: true } },
-				notificationAttempts: { select: { num: true, messageTemplate: true, waitTime: true } },
-				escalations: { select: { num: true, messageTemplate: true, waitTime: true } },
+
+				notificationAttempts: {
+					select: { num: true, type: true, target: true, messageTemplate: true, waitTime: true }
+				},
+				escalations: { select: { num: true, type: true, target: true, messageTemplate: true, waitTime: true } },
 
 				responses: { select: { num: true, type: true, values: true, actions: actionsSelect } },
 				responseOptions: {
