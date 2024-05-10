@@ -19,11 +19,11 @@
 		[] as string[]
 	);
 
+	$: leadsWithResponseTime = completedLeads.filter(({ leadResponseTime }) => leadResponseTime && leadResponseTime >= 0);
 	$: avgLeadResponseTime =
-		completedLeads.length > 0
+		leadsWithResponseTime.length > 0
 			? Math.floor(
-					completedLeads.reduce((acc, cur) => acc + getTimeElapsed(cur.createdAt, cur.updatedAt), 0) /
-						completedLeads.length
+					leadsWithResponseTime.reduce((acc, cur) => acc + cur.leadResponseTime!, 0) / leadsWithResponseTime.length
 				)
 			: 0;
 
@@ -74,8 +74,10 @@
 	$: endIndex = startIndex + tableOpts.show;
 	$: displayLeads = completedLeads
 		.filter((lead) => (completeStatusSelect ? lead.completeStatus === completeStatusSelect : true))
-		.filter(({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
-			Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
+		.filter(
+			({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
+				Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase()) &&
+				($lead.affiliate ? values.CompanyName === $lead.affiliate : true)
 		);
 </script>
 

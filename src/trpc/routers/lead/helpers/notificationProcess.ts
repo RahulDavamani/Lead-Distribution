@@ -1,7 +1,5 @@
 import { prisma } from '../../../../prisma/prisma';
-import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
-import { getUserStr } from './user';
 import { updateLeadFunc } from './updateLead';
 import { getProcessName } from '$lib/getProcessName';
 
@@ -41,26 +39,6 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 	});
 
 	// Methods
-	const addNotificationAttempt = async (
-		num: number,
-		notificationAttempt: Prisma.LdLeadNotificationAttemptCreateWithoutNotificationProcessInput
-	) => {
-		const userStr = await getUserStr(notificationAttempt.user?.connect?.UserKey ?? '');
-		await updateLead({
-			log: { log: `${name}: Attempt #${num} sent to operator "${userStr}"` }
-		});
-		await prisma.ldLeadNotificationProcess.update({
-			where: { id },
-			data: { notificationAttempts: { create: notificationAttempt } }
-		});
-	};
-
-	const addEscalation = async (escalation: Prisma.LdLeadEscalationCreateWithoutNotificationProcessInput) =>
-		await prisma.ldLeadNotificationProcess.update({
-			where: { id },
-			data: { escalations: { create: escalation } }
-		});
-
 	const isCompleted = async () =>
 		(
 			await prisma.ldLeadNotificationProcess
@@ -78,14 +56,7 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 			.catch(prismaErrorHandler);
 	};
 
-	return {
-		id,
-		name,
-		addNotificationAttempt,
-		addEscalation,
-		isCompleted,
-		completeProcess
-	};
+	return { id, name, isCompleted, completeProcess };
 };
 
 export const endNotificationProcesses = async (ProspectKey: string) => {

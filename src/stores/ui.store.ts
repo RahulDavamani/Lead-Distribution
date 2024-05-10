@@ -3,7 +3,6 @@ import type { Modals } from '../types/Modals.type';
 
 export interface UI {
 	loader?: Loader;
-	contentLoader?: string;
 	toast?: Toast;
 	alertModal?: AlertModal;
 	modals: Modals;

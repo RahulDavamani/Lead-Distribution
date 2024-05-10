@@ -46,7 +46,7 @@
 				<div class="text-lg font-semibold col-span-4">Notification Dispatch Process:</div>
 
 				{#each leadDetails.notificationProcesses as { processName, createdAt, completedAt, status, notificationAttempts, escalations }}
-					{@const leadResponseTime = getTimeElapsed(createdAt, completedAt ?? new Date())}
+					{@const leadResponseTime = getTimeElapsed(createdAt, completedAt ?? $lead.today)}
 					<details class="collapse collapse-arrow border shadow-sm col-span-4">
 						<summary class="collapse-title p-3 pl-4 pr-10 bg-base-200 rounded-box text-sm">
 							<div class="flex justify-between items-center">
@@ -67,10 +67,10 @@
 								</div>
 
 								<div class="max-w-48 text-right mr-2">
-									<span class="font-semibold">Lead Response Time:</span>
-									<span>
-										{getTimeElapsedText(createdAt, leadResponseTime < 0 ? createdAt : completedAt ?? new Date())}
-									</span>
+									<div class="font-semibold">Lead Response Time</div>
+									<div>
+										{getTimeElapsedText(createdAt, leadResponseTime < 0 ? createdAt : completedAt ?? $lead.today)}
+									</div>
 								</div>
 							</div>
 						</summary>
@@ -91,7 +91,11 @@
 											<tr>
 												<td>{i + 1}</td>
 												<td>{createdAt.toLocaleString()}</td>
-												<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
+												{#if userValues}
+													<td>{userValues.VonageAgentId} - {userValues.FirstName} {userValues.LastName}</td>
+												{:else}
+													<td>N/A</td>
+												{/if}
 												<td>{message}</td>
 											</tr>
 										{:else}
@@ -118,7 +122,11 @@
 											<tr>
 												<td>{i + 1}</td>
 												<td>{createdAt.toLocaleString()}</td>
-												<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
+												{#if userValues}
+													<td>{userValues.VonageAgentId} - {userValues.FirstName} {userValues.LastName}</td>
+												{:else}
+													<td>N/A</td>
+												{/if}
 												<td>{message}</td>
 											</tr>
 										{:else}

@@ -16,17 +16,23 @@
 	onMount(lead.init);
 
 	afterUpdate(() => {
-		$page.url.searchParams.set('connection', $lead.connectionType);
-		$page.url.searchParams.set('type', $lead.tab);
+		$page.url.searchParams.set('connection', connectionType);
+		$page.url.searchParams.set('type', tab);
 		window.history.replaceState(history.state, '', $page.url.toString());
 	});
 
-	$: leads = [...(completedLeads ?? []), ...(queuedLeads ?? [])];
-	$: affiliates = leads.reduce(
-		(acc, cur) =>
-			!cur.prospect.CompanyName || acc.includes(cur.prospect.CompanyName) ? acc : [...acc, cur.prospect.CompanyName],
-		[] as string[]
-	);
+	$: leads = tab === 'queued' ? queuedLeads : completedLeads;
+	$: affiliates = leads
+		? leads.reduce(
+				(acc, cur) => {
+					if (!cur.prospect.CompanyName) return acc;
+					if (acc[cur.prospect.CompanyName]) acc[cur.prospect.CompanyName]++;
+					else acc[cur.prospect.CompanyName] = 1;
+					return acc;
+				},
+				{} as { [key: string]: number }
+			)
+		: {};
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
@@ -85,7 +91,7 @@
 			</button>
 		</div>
 
-		{#if roleType === 'ADMIN' || (roleType === 'SUPERVISOR' && !$lead.viewMode)}
+		{#if roleType === 'ADMIN' || (roleType === 'SUPERVISOR' && !viewMode)}
 			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => ui.setModals({ showSettingsModal: true })}>
 				<Icon icon="mdi:settings" width={22} />
 			</button>
@@ -93,7 +99,10 @@
 
 		<button
 			class="btn btn-sm {tab === 'queued' ? 'btn-success' : 'btn-warning'}"
-			on:click={() => ($lead.tab = tab === 'queued' ? 'completed' : 'queued')}
+			on:click={() => {
+				$lead.tab = tab === 'queued' ? 'completed' : 'queued';
+				$lead.affiliate = undefined;
+			}}
 		>
 			{tab === 'queued' ? 'View Completed Leads' : 'View Queued Leads'}
 		</button>

@@ -346,6 +346,10 @@ export const ruleChanges = derived(ruleConfig, ({ ogRule, rule }) => {
 				};
 				if (notificationAttempt.num !== ogRuleNotificationAttempt.num)
 					updateNotificationAttempt.num = notificationAttempt.num;
+				if (notificationAttempt.type !== ogRuleNotificationAttempt.type)
+					updateNotificationAttempt.type = notificationAttempt.type;
+				if (notificationAttempt.target !== ogRuleNotificationAttempt.target)
+					updateNotificationAttempt.target = notificationAttempt.target;
 				if (notificationAttempt.messageTemplate !== ogRuleNotificationAttempt.messageTemplate)
 					updateNotificationAttempt.messageTemplate = notificationAttempt.messageTemplate;
 				if (notificationAttempt.waitTime !== ogRuleNotificationAttempt.waitTime)
@@ -382,6 +386,8 @@ export const ruleChanges = derived(ruleConfig, ({ ogRule, rule }) => {
 					id: escalation.id
 				};
 				if (escalation.num !== ogRuleEscalation.num) updateEscalation.num = escalation.num;
+				if (escalation.type !== ogRuleEscalation.type) updateEscalation.type = escalation.type;
+				if (escalation.target !== ogRuleEscalation.target) updateEscalation.target = escalation.target;
 				if (escalation.messageTemplate !== ogRuleEscalation.messageTemplate)
 					updateEscalation.messageTemplate = escalation.messageTemplate;
 				if (escalation.waitTime !== ogRuleEscalation.waitTime) updateEscalation.waitTime = escalation.waitTime;

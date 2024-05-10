@@ -19,8 +19,8 @@
 		roleType
 	} = $auth);
 
-	$: leadsWithResponseTime = queuedLeads.filter((lead) => lead.leadResponseTime);
-	$: avgLeadTimeElapsed =
+	$: leadsWithResponseTime = queuedLeads.filter(({ leadResponseTime }) => leadResponseTime && leadResponseTime >= 0);
+	$: avgLeadResponseTime =
 		leadsWithResponseTime.length > 0
 			? Math.floor(
 					leadsWithResponseTime.reduce((acc, cur) => acc + cur.leadResponseTime!, 0) / leadsWithResponseTime.length
@@ -105,8 +105,10 @@
 	};
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
-	$: displayLeads = queuedLeads.filter(({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
-		Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase())
+	$: displayLeads = queuedLeads.filter(
+		({ prospect: { CompanyKey, ProspectId: _, ...values } }) =>
+			Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase()) &&
+			($lead.affiliate ? values.CompanyName === $lead.affiliate : true)
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
 </script>
@@ -124,7 +126,7 @@
 
 <div class="text-sm mb-2">
 	<span class="font-semibold">Avg. Lead Time Elapsed:</span>
-	<span class="">{timeToText(avgLeadTimeElapsed)}</span>
+	<span class="">{timeToText(avgLeadResponseTime)}</span>
 </div>
 
 <div class="flex justify-between items-center">

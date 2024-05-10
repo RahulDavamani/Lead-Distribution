@@ -8,6 +8,7 @@ import { trpc } from '../trpc/client';
 import { page } from '$app/stores';
 import { trpcClientErrorHandler } from '../trpc/trpcErrorhandler';
 import superjson from 'superjson';
+import { audioAlert } from '$lib/client/audioAlert';
 
 type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>[number];
 
@@ -78,12 +79,24 @@ export const lead = (() => {
 			roleType
 		} = get(auth);
 		const { socket } = get(lead);
-		if (socket) socket.send(JSON.stringify({ UserKey, roleType }));
+		const message = {
+			type: 'getLeads',
+			data: { UserKey, roleType }
+		};
+		if (socket) socket.send(JSON.stringify(message));
 	};
 
 	const onMessageSocket = async (event: MessageEvent) => {
-		const queuedLeads = superjson.parse(event.data) as QueuedLead[];
-		updateQueuedLeads(queuedLeads);
+		const { type, data } = superjson.parse(event.data) as { type: string; data: unknown };
+		if (type === 'getLeads') {
+			const { leads } = data as { leads: QueuedLead[] };
+			updateQueuedLeads(leads);
+		}
+		if (type === 'triggerAudioNotification') {
+			const { message } = data as { message: string };
+			audioAlert(message);
+			ui.setToast({ title: message, alertClasses: 'alert-info' });
+		}
 	};
 
 	const closeSocket = () =>
