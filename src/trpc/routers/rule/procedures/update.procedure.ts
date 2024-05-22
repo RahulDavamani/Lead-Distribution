@@ -141,12 +141,11 @@ const method = async ({
 			}
 		}),
 
-		responses?.create?.map(async ({ id, actions, ...values }) => {
+		responses?.create?.map(async ({ actions, ...values }) => {
 			const actionsId = await createActions(actions);
 			await prisma.ldRuleResponse
-				.update({
-					where: { id },
-					data: { ...values, actionsId },
+				.create({
+					data: { ...values, ruleId: id, actionsId },
 					select: { id: true }
 				})
 				.catch(prismaErrorHandler);
@@ -161,6 +160,14 @@ const method = async ({
 					select: { id: true }
 				})
 				.catch(prismaErrorHandler);
+		}),
+
+		responses?.remove?.map(async ({ id }) => {
+			const { actionsId } = await prisma.ldRuleResponse
+				.delete({ where: { id }, select: { actionsId: true } })
+				.catch(prismaErrorHandler);
+
+			await prisma.ldRuleActions.delete({ where: { id: actionsId } }).catch(prismaErrorHandler);
 		})
 	]);
 

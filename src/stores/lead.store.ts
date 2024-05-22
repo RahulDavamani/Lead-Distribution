@@ -61,8 +61,9 @@ export const lead = (() => {
 			completedLeads: undefined
 		}));
 
-		if (connectionType === 'http') await initHttp();
-		else initSocket();
+		// if (connectionType === 'http') await initHttp();
+		// else initSocket();
+		initSocket();
 	};
 
 	const initSocket = () => {
