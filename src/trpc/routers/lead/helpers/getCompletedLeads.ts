@@ -60,10 +60,14 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 		}
 	});
 
-	const vonageCalls =
-		(await prisma.$queryRaw`Select Guid, Duration from VonageCalls where Guid in (${Prisma.join(leads.map((lead) => lead.VonageGUID).filter(Boolean))})`.catch(
-			prismaErrorHandler
-		)) as { Guid: string; Duration: string | null }[];
+	const VonageGUIDs = leads.map((lead) => lead.VonageGUID).filter(Boolean);
+	const vonageCalls = (
+		VonageGUIDs.length > 0
+			? await prisma.$queryRaw`
+               Select Guid, Duration from VonageCalls where Guid in (${Prisma.join(VonageGUIDs)})
+            `.catch(prismaErrorHandler)
+			: []
+	) as { Guid: string; Duration: string | null }[];
 
 	const allWorkingHours = await prisma.ldRuleCompanyWorkingHours.findMany({
 		where: {

@@ -77,7 +77,17 @@
 				.catch(trpcClientErrorHandler);
 			ui.setToast({ title: 'Lead Completed Successfully', alertClasses: 'alert-success' });
 			ui.setLoader();
-			window.location.href = `https://bundle.xyzies.com/Web/OrderRedirect?OrderType=1&lpk=${prospect.ProspectKey}`;
+			goto('/leads');
+
+			const url = `https://bundle.xyzies.com/Web/OrderRedirect?OrderType=1&lpk=${prospect.ProspectKey}`;
+			try {
+				window.open(url, '_blank')?.focus();
+			} catch (error) {
+				ui.setAlertModal({
+					title: 'Popup has been blocked!!',
+					body: 'Please allow popups for this site to open the link'
+				});
+			}
 		}
 	};
 
