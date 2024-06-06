@@ -38,13 +38,17 @@ export const auth = (() => {
 
 			if (res.status === 200) {
 				const user = (await res.json()) as Auth['user'];
+				console.log('User: ', user);
 
 				const roleType = user?.userRole.find(({ ID }) => [5, 9].includes(ID))
 					? 'ADMIN'
 					: user?.userRole.find(({ ID }) => [41, 43, 44].includes(ID))
 						? 'SUPERVISOR'
-						: 'AGENT';
-				set({ token, user, roleType });
+						: user?.userRole.find(({ ID }) => [42].includes(ID))
+							? 'AGENT'
+							: null;
+
+				if (roleType) set({ token, user, roleType });
 			}
 		}
 

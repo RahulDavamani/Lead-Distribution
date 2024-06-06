@@ -67,7 +67,10 @@ export const lead = (() => {
 	};
 
 	const initSocket = () => {
-		const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
+		// const socket = new WebSocket('ws://lead-distribution-ws.politeflower-b7858b41.westus3.azurecontainerapps.io:8000');
+		// const socket = new WebSocket('ws://lead-distribution-ws.aygefaeaceb4aug5.westus3.azurecontainer.io:8000');
+		// const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
+		const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
 		// const socket = new WebSocket('ws://localhost:8000');
 		socket.onopen = messageSocket;
 		socket.onmessage = onMessageSocket;

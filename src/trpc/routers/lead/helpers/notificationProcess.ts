@@ -59,6 +59,53 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 	return { id, name, isCompleted, completeProcess };
 };
 
+export const continueNotificationProcess = async (ProspectKey: string) => {
+	const updateLead = updateLeadFunc(ProspectKey);
+
+	const process = await prisma.ldLeadNotificationProcess.findFirstOrThrow({
+		where: { lead: { ProspectKey } },
+		select: {
+			id: true,
+			callbackNum: true,
+			requeueNum: true,
+			notificationAttempts: {
+				select: {
+					attempt: { select: { id: true, num: true } },
+					UserKey: true
+				}
+			},
+			escalations: {
+				select: {
+					escalation: { select: { id: true, num: true } },
+					UserKey: true
+				}
+			}
+		}
+	});
+
+	const name = getProcessName(process.callbackNum, process.requeueNum);
+
+	// Methods
+	const isCompleted = async () =>
+		(
+			await prisma.ldLeadNotificationProcess
+				.findUnique({ where: { id: process.id, lead: { ProspectKey } }, select: { status: true } })
+				.catch(prismaErrorHandler)
+		)?.status !== 'ACTIVE';
+
+	const completeProcess = async () => {
+		await updateLead({ log: { log: `${name}: Completed Sending notifications` } });
+		await prisma.ldLeadNotificationProcess
+			.update({
+				where: { id: process.id },
+				data: { status: 'COMPLETED' }
+			})
+			.catch(prismaErrorHandler);
+	};
+
+	return { ...process, name, isCompleted, completeProcess };
+};
+
 export const endNotificationProcesses = async (ProspectKey: string) => {
 	const notificationProcesses = await prisma.ldLeadNotificationProcess.findMany({
 		where: {

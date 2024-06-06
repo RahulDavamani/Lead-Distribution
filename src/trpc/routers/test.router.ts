@@ -2,6 +2,40 @@ import { procedure, router } from '../server';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		// const result = await prisma.users.findMany({
+		// 	where: { VonageAgentId: '2397' }
+		// });
+		// console.log(result);
+		// const UserKey = 'e3ecd717-54e3-48df-86a9-dee0b2b8a43d';
+		// const result =
+		// 	(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
+		// 		{ TokenKey: string }
+		// 	];
+		// const token = result[0].TokenKey;
+		// console.log(token);
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { createdAt: { lte: new Date('6/3/2024, 1:40:00 PM') } },
+		// 	orderBy: { createdAt: 'desc' },
+		// 	select: {
+		// 		ProspectKey: true,
+		// 		notificationProcesses: {
+		// 			select: { status: true }
+		// 		}
+		// 	}
+		// });
+		// const probLeads = leads.filter(
+		// 	(lead) => lead.notificationProcesses.length === 1 && lead.notificationProcesses[0].status === 'ACTIVE'
+		// );
+		// console.log(probLeads.length);
+		// const prospect = await prisma.leadProspect.findMany({
+		// 	where: { ProspectKey: probLeads[0].ProspectKey }
+		// });
+		// console.log(prospect);
+		// probLeads.map(({ ProspectKey }) => {
+		// 	scheduleJob(new Date(Date.now() + 1000), () => {
+		// 		requeueLead(ProspectKey);
+		// 	});
+		// });
 		// const history = await prisma.ldRuleHistory.findMany({
 		// 	orderBy: { createdAt: 'desc' },
 		// 	where: { ruleId: 'Udh-jPC1b6xk4Q7J3HAbS' }
