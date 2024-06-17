@@ -1,13 +1,15 @@
-import { scheduleJob } from 'node-schedule';
 import { procedure, router } from '../server';
-import { continueDispatchNotifications } from './lead/helpers/continueDispatchNotifications';
+import { scheduleCallback } from './lead/helpers/scheduleCallback';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		// const leads = await prisma.ldLead.findMany({
-		// 	where: { notificationProcesses: { some: { status: 'ACTIVE' } } },
-		// 	select: { ProspectKey: true }
-		// });
+		const leads = await prisma.ldLead.findMany({
+			where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
+			select: { ProspectKey: true }
+		});
+		for (const { ProspectKey } of leads) {
+			scheduleCallback(ProspectKey, new Date('2024-06-17T16:00:00.000Z'), undefined);
+		}
 		// for (const { ProspectKey } of leads) {
 		// 	scheduleJob(new Date(Date.now() + 1000), async () => {
 		// 		continueDispatchNotifications(ProspectKey);
