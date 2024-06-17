@@ -4,7 +4,6 @@ import { getUserStr, getUserValues } from './user';
 import { updateLeadFunc } from './updateLead';
 import { endNotificationProcesses } from './notificationProcess';
 import { calculateLeadDuration } from '$lib/client/DateTime';
-import { getWorkingHours } from './getWorkingHours';
 
 export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	const updateLead = updateLeadFunc(ProspectKey);
@@ -55,10 +54,30 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 	// Lead Response Time
 	let leadResponseTime = lead.leadResponseTime;
 	if (!leadResponseTime) {
-		const workingHours = await getWorkingHours(lead.rule.id, lead.CompanyKey);
+		const company = await prisma.ldRuleCompany
+			.findFirstOrThrow({
+				where: {
+					ruleId: lead.rule.id,
+					CompanyKey: userValues?.CompanyKey
+				},
+				select: {
+					ruleId: true,
+					CompanyKey: true,
+					timezone: true,
+					workingHours: {
+						select: {
+							id: true,
+							start: true,
+							end: true,
+							days: true
+						}
+					}
+				}
+			})
+			.catch(prismaErrorHandler);
 		const notificationProcess = lead.notificationProcesses.find((np) => np.createdAt < new Date());
 		leadResponseTime = notificationProcess
-			? calculateLeadDuration(notificationProcess.createdAt, new Date(), workingHours)
+			? calculateLeadDuration(notificationProcess.createdAt, new Date(), company)
 			: null;
 	}
 

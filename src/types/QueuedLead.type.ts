@@ -56,7 +56,18 @@ export interface QueuedLead {
 		ZipCode: string | null;
 	};
 
-	company: { CompanyName: string | null } | undefined;
+	company:
+		| {
+				CompanyName?: string | null;
+				timezone: string;
+				workingHours: {
+					id: string;
+					start: Date;
+					end: Date;
+					days: string;
+				}[];
+		  }
+		| undefined;
 
 	latestCall:
 		| {
@@ -67,13 +78,4 @@ export interface QueuedLead {
 		| undefined;
 
 	leadResponseTime: number | undefined;
-
-	workingHours:
-		| {
-				id: string;
-				start: Date;
-				end: Date;
-				days: string;
-		  }[]
-		| undefined;
 }

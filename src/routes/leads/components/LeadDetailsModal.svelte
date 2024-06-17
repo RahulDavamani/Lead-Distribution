@@ -14,6 +14,8 @@
 
 	type LeadDetails = inferProcedureOutput<AppRouter['lead']['getLeadDetails']>;
 
+	$: ({ timezone } = $lead);
+
 	let leadDetails: LeadDetails | undefined;
 	$: id = $ui.modals.leadDetailsModelId;
 
@@ -35,7 +37,7 @@
 						<li class="step step-primary my-2">
 							<div class="text-left">
 								<div class="font-semibold">{log}</div>
-								<div class="text-xs">{createdAt.toLocaleString()}</div>
+								<div class="text-xs">{createdAt.toLocaleString('en-US', { timeZone: timezone })}</div>
 							</div>
 						</li>
 					{/each}
@@ -63,7 +65,7 @@
 											<div class="badge badge-sm badge-error">Cancelled</div>
 										{/if}
 									</div>
-									<div>{createdAt.toLocaleString()}</div>
+									<div>{createdAt.toLocaleString('en-US', { timeZone: timezone })}</div>
 								</div>
 
 								<div class="max-w-48 text-right mr-2">
@@ -90,7 +92,7 @@
 										{#each notificationAttempts as { createdAt, userValues, message }, i}
 											<tr>
 												<td>{i + 1}</td>
-												<td>{createdAt.toLocaleString()}</td>
+												<td>{createdAt.toLocaleString('en-US', { timeZone: timezone })}</td>
 												{#if userValues}
 													<td>{userValues.VonageAgentId} - {userValues.FirstName} {userValues.LastName}</td>
 												{:else}
@@ -121,7 +123,7 @@
 										{#each escalations as { createdAt, userValues, message }, i}
 											<tr>
 												<td>{i + 1}</td>
-												<td>{createdAt.toLocaleString()}</td>
+												<td>{createdAt.toLocaleString('en-US', { timeZone: timezone })}</td>
 												{#if userValues}
 													<td>{userValues.VonageAgentId} - {userValues.FirstName} {userValues.LastName}</td>
 												{:else}
@@ -166,7 +168,7 @@
 											<summary>
 												<div class="flex items-center cursor-pointer">
 													<div class="w-12">{i + 1}</div>
-													<td class="w-full">{createdAt.toLocaleString()}</td>
+													<td class="w-full">{createdAt.toLocaleString('en-US', { timeZone: timezone })}</td>
 													<td class="w-full">{type.charAt(0).toUpperCase()}{type.slice(1)}</td>
 													<td class="w-full">{responseValue}</td>
 													<td class="w-full">
@@ -221,7 +223,7 @@
 							{#each leadDetails.calls as { createdAt, userValues }, i}
 								<tr>
 									<td>{i + 1}</td>
-									<td>{createdAt.toLocaleString()}</td>
+									<td>{createdAt.toLocaleString('en-US', { timeZone: timezone })}</td>
 									<td>{userValues?.VonageAgentId} - {userValues?.FirstName} {userValues?.LastName}</td>
 								</tr>
 							{:else}
@@ -249,7 +251,7 @@
 							{#each leadDetails.messages as { createdAt, message, messageResponse }, i}
 								<tr>
 									<td>{i + 1}</td>
-									<td>{createdAt.toLocaleString()}</td>
+									<td>{createdAt.toLocaleString('en-US', { timeZone: timezone })}</td>
 									<td>{message}</td>
 									<td>{messageResponse?.conversationId ?? 'N/A'}</td>
 									<td>{messageResponse?.status ?? 'N/A'}</td>

@@ -10,6 +10,7 @@ export const affiliateSchema = z.object({
 export const companySchema = z.object({
 	id: z.string().min(1),
 	CompanyKey: z.string().min(1),
+	timezone: z.string(),
 	workingHours: z.array(
 		z.object({
 			id: z.string().min(1),

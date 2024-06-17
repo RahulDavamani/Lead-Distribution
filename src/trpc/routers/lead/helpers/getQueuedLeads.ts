@@ -1,7 +1,8 @@
-import type { Prisma } from '@prisma/client';
-import type { RoleType } from '../../../../stores/auth.store';
+import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
-export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
+const prisma = new PrismaClient();
+export const getQueuedLeads = async (UserKey: string, roleType: 'ADMIN' | 'SUPERVISOR' | 'AGENT') => {
 	let where: Prisma.LdLeadWhereInput = {};
 	switch (roleType) {
 		case 'ADMIN':
@@ -117,19 +118,23 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 		}
 	});
 
-	const allWorkingHours = await prisma.ldRuleCompanyWorkingHours.findMany({
+	const ruleCompanies = await prisma.ldRuleCompany.findMany({
 		where: {
-			ruleCompany: {
-				ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
-				CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
-			}
+			ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
+			CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
 		},
 		select: {
-			id: true,
-			ruleCompany: { select: { ruleId: true, CompanyKey: true } },
-			start: true,
-			end: true,
-			days: true
+			ruleId: true,
+			CompanyKey: true,
+			timezone: true,
+			workingHours: {
+				select: {
+					id: true,
+					start: true,
+					end: true,
+					days: true
+				}
+			}
 		}
 	});
 
@@ -147,11 +152,17 @@ export const getQueuedLeads = async (UserKey: string, roleType: RoleType) => {
 			? `${latestCallUser.VonageAgentId}: ${latestCallUser.FirstName} ${latestCallUser.LastName}`
 			: undefined;
 		const latestCall = lead.calls[0] ? { ...lead.calls[0], userStr: latestCallUserStr } : undefined;
-		const workingHours = allWorkingHours.find(
-			({ ruleCompany: { ruleId, CompanyKey } }) => ruleId === lead.ruleId && CompanyKey === lead.CompanyKey
+		const ruleCompany = ruleCompanies.find(
+			({ ruleId, CompanyKey }) => ruleId === lead.ruleId && CompanyKey === lead.CompanyKey
 		);
 
-		return { ...lead, isNewLead, prospect, company, latestCall, workingHours };
+		return {
+			...lead,
+			isNewLead,
+			prospect,
+			company: lead.CompanyKey ? { ...company, ...ruleCompany } : undefined,
+			latestCall
+		};
 	});
 
 	// Filter Leads

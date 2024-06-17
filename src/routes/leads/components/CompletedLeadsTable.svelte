@@ -11,6 +11,7 @@
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 	import { goto } from '$app/navigation';
 
+	$: ({ timezone } = $lead);
 	$: completedLeads = $lead.completedLeads!;
 
 	let completeStatusSelect: string | undefined;
@@ -235,12 +236,12 @@
 					<td>{prospect.CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">
-						<div>{createdAt.toLocaleDateString()}</div>
-						<div>{createdAt.toLocaleTimeString()}</div>
+						<div>{createdAt.toLocaleDateString('en-US', { timeZone: timezone })}</div>
+						<div>{createdAt.toLocaleTimeString('en-US', { timeZone: timezone })}</div>
 					</td>
 					<td class="text-center">
-						<div>{updatedAt.toLocaleDateString()}</div>
-						<div>{updatedAt.toLocaleTimeString()}</div>
+						<div>{updatedAt.toLocaleDateString('en-US', { timeZone: timezone })}</div>
+						<div>{updatedAt.toLocaleTimeString('en-US', { timeZone: timezone })}</div>
 					</td>
 					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
 					<td class="text-center">{leadResponseTime && calls.length ? timeToText(leadResponseTime) : 'N/A'}</td>

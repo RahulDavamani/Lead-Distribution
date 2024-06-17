@@ -12,6 +12,7 @@ import type { AppRouter } from '../trpc/routers/app.router';
 import { getNewActions } from '$lib/config/actions/actions.config';
 import cloneDeep from 'lodash.clonedeep';
 import { auth } from './auth.store';
+import moment from 'moment-timezone';
 
 type MasterData = inferRouterOutputs<AppRouter>['rule']['getMasterData'];
 
@@ -44,6 +45,7 @@ export const ruleConfig = (() => {
 					return {
 						id: nanoid(),
 						CompanyKey: company.CompanyKey,
+						timezone: moment.tz.guess(),
 						workingHours: []
 					};
 				}) ?? [],

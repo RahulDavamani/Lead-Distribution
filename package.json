@@ -58,6 +58,7 @@
 		"@trpc/server": "^10.45.2",
 		"datatables.net-dt": "^2.0.5",
 		"lodash.clonedeep": "^4.5.0",
+		"moment-timezone": "^0.5.45",
 		"nanoid": "^5.0.7",
 		"node-schedule": "^2.1.1",
 		"quill": "^2.0.0",

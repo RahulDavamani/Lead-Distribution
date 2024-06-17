@@ -11,7 +11,7 @@
 	import { trpcClientErrorHandler } from '../../../trpc/trpcErrorhandler';
 	import { goto } from '$app/navigation';
 
-	$: ({ today } = $lead);
+	$: ({ today, timezone } = $lead);
 	$: queuedLeads = $lead.queuedLeads!;
 
 	$: ({
@@ -197,7 +197,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, company, rule, notificationProcesses, latestCall, responses, leadResponseTime, workingHours }, i}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, ProspectKey, isNewLead, isPicked, prospect, company, rule, notificationProcesses, latestCall, responses, leadResponseTime }, i}
 				{@const notificationProcessName = getProcessNameSplit(
 					notificationProcesses[0]?.callbackNum ?? 0,
 					notificationProcesses[0]?.requeueNum ?? 0
@@ -207,7 +207,7 @@
 						latestCall?.UserKey !== UserKey &&
 						(isNewLead
 							? i !== agentFirstNewLead
-							: notificationProcesses[0]?.createdAt.toLocaleDateString() !== today.toLocaleDateString())) ||
+							: notificationProcesses[0]?.createdAt.toDateString() !== today.toDateString())) ||
 					(isPicked ? latestCall?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
@@ -293,14 +293,18 @@
 					<td>{prospect.CompanyName ?? 'N/A'}</td>
 					<td>{rule?.name ?? 'N/A'}</td>
 					<td class="text-center">
-						<div>{createdAt.toLocaleDateString()}</div>
-						<div>{createdAt.toLocaleTimeString()}</div>
+						<div>{createdAt.toLocaleDateString('en-US', { timeZone: timezone })}</div>
+						<div>{createdAt.toLocaleTimeString('en-US', { timeZone: timezone })}</div>
 					</td>
 					<td class="text-center">
-						<div>{updatedAt.toLocaleDateString()}</div>
-						<div>{updatedAt.toLocaleTimeString()}</div>
+						<div>{updatedAt.toLocaleDateString('en-US', { timeZone: timezone })}</div>
+						<div>{updatedAt.toLocaleTimeString('en-US', { timeZone: timezone })}</div>
 					</td>
-					<td class="text-center">{timeToText(calculateLeadDuration(createdAt, today, workingHours))}</td>
+					<td class="text-center">
+						{company
+							? timeToText(calculateLeadDuration(createdAt, today, company))
+							: getTimeElapsedText(createdAt, today)}
+					</td>
 					<td class="text-center">{leadResponseTime ? timeToText(leadResponseTime) : 'N/A'}</td>
 					<td>
 						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>

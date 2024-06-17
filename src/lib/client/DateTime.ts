@@ -1,4 +1,4 @@
-import { allDays } from '$lib/data/allDays';
+import moment from 'moment-timezone';
 import type { QueuedLead } from '../../types/QueuedLead.type';
 
 export type Time = { days: number; hours: number; minutes: number; seconds: number };
@@ -35,41 +35,66 @@ export const secondsToTime = (seconds: number) => {
 
 export const formatTime = (inputTime: Time) => secondsToTime(timeToSeconds(inputTime));
 
-export const calculateLeadDuration = (startDate: Date, endDate: Date, workingHours: QueuedLead['workingHours']) => {
-	if (!workingHours?.length) return getTimeElapsed(startDate, endDate);
-	else {
-		const date = new Date(startDate.toDateString());
-		const startTime = startDate.getTime() - new Date(startDate.toDateString()).getTime();
-		const endTime = endDate.getTime() - new Date(endDate.toDateString()).getTime();
+export const calculateLeadDuration = (startDate: Date, endDate: Date, company: NonNullable<QueuedLead['company']>) => {
+	const { timezone, workingHours } = company;
 
-		let leadDuration = 0;
-		while (date <= endDate) {
-			const day = allDays[date.getDay()];
-			const workingHour = workingHours.find(({ days }) => days.split(',').includes(day));
-			const workingHourStartTime = workingHour
-				? workingHour.start.getTime() - new Date(workingHour.start.toDateString()).getTime()
-				: 0;
-			const workingHourEndTime = workingHour
-				? workingHour.end.getTime() - new Date(workingHour.end.toDateString()).getTime()
-				: 0;
+	const startMoment = moment.tz(startDate, timezone);
+	const endMoment = moment.tz(endDate, timezone);
 
-			const leadStartTime =
-				date.toDateString() === startDate.toDateString()
-					? startTime < workingHourStartTime
-						? workingHourStartTime
-						: startTime
-					: workingHourStartTime;
+	const currentMoment = startMoment.clone().startOf('day');
+	let leadDuration = 0;
+	while (currentMoment.isBefore(endMoment) || currentMoment.isSame(endMoment)) {
+		const day = currentMoment.format('ddd').toLowerCase();
+		const previousDay = currentMoment.clone().subtract(1, 'day').format('ddd').toLowerCase();
 
-			const leadEndTime =
-				date.toDateString() === endDate.toDateString()
-					? endTime > workingHourEndTime
-						? workingHourEndTime
-						: endTime
-					: workingHourEndTime;
+		const workingHour = workingHours.find(({ days }) => days.split(',').includes(day));
+		const previousWorkingHour = workingHours.find(({ days }) => days.split(',').includes(previousDay));
 
-			leadDuration += (leadEndTime - leadStartTime) / 1000;
-			date.setDate(date.getDate() + 1);
+		const start = currentMoment.isSame(startMoment, 'date') ? startMoment : currentMoment;
+		const end = currentMoment.isSame(endMoment, 'date') ? endMoment : currentMoment.clone().endOf('day');
+
+		if (previousWorkingHour) {
+			const previousWorkingStart = moment
+				.tz(previousWorkingHour.start, timezone)
+				.clone()
+				.set({ year: currentMoment.year(), month: currentMoment.month(), date: currentMoment.date() });
+			const previousWorkingEnd = moment
+				.tz(previousWorkingHour.end, timezone)
+				.clone()
+				.set({ year: currentMoment.year(), month: currentMoment.month(), date: currentMoment.date() });
+
+			if (previousWorkingEnd.isBefore(previousWorkingStart)) {
+				let diff = 0;
+				if (start.isBefore(previousWorkingEnd) && end.isBefore(previousWorkingEnd)) diff = end.diff(start, 'seconds');
+				else if (start.isBefore(previousWorkingEnd)) diff = previousWorkingEnd.diff(start, 'seconds');
+				if (diff > 0) leadDuration += diff;
+			}
 		}
-		return Math.floor(leadDuration);
+
+		if (workingHour) {
+			const workingStart = moment
+				.tz(workingHour.start, timezone)
+				.clone()
+				.set({ year: currentMoment.year(), month: currentMoment.month(), date: currentMoment.date() });
+			const workingEnd = moment
+				.tz(workingHour.end, timezone)
+				.clone()
+				.set({ year: currentMoment.year(), month: currentMoment.month(), date: currentMoment.date() });
+
+			let diff = 0;
+			if (workingEnd.isBefore(workingStart)) {
+				if (start.isAfter(workingStart) && end.isAfter(workingStart)) diff = end.diff(start, 'seconds');
+				else if (end.isAfter(workingStart)) diff = end.diff(workingStart, 'seconds');
+			} else {
+				const start =
+					currentMoment.isSame(startMoment, 'date') && startMoment.isAfter(workingStart) ? startMoment : workingStart;
+				const end = currentMoment.isSame(endMoment, 'date') && endMoment.isBefore(workingEnd) ? endMoment : workingEnd;
+				diff = end.diff(start, 'seconds');
+			}
+			if (diff > 0) leadDuration += diff;
+		}
+		currentMoment.add(1, 'day');
 	}
+
+	return leadDuration;
 };

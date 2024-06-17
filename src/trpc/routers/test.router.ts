@@ -1,20 +1,127 @@
+import { scheduleJob } from 'node-schedule';
 import { procedure, router } from '../server';
+import { continueDispatchNotifications } from './lead/helpers/continueDispatchNotifications';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		// const result = await prisma.users.findMany({
-		// 	where: { VonageAgentId: '2397' }
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { notificationProcesses: { some: { status: 'ACTIVE' } } },
+		// 	select: { ProspectKey: true }
 		// });
-		// console.log(result);
-		// const UserKey = 'e3ecd717-54e3-48df-86a9-dee0b2b8a43d';
+		// for (const { ProspectKey } of leads) {
+		// 	scheduleJob(new Date(Date.now() + 1000), async () => {
+		// 		continueDispatchNotifications(ProspectKey);
+		// 	});
+		// }
+		// const baseCompanies = await prisma.ldRuleCompany.findMany({
+		// 	where: { rule: { name: 'FastestInternetPlans.com' } },
+		// 	select: {
+		// 		CompanyKey: true,
+		// 		workingHours: true
+		// 	},
+		// 	orderBy: { rule: { name: 'asc' } }
+		// });
+		// const ruleCompanies = await prisma.ldRuleCompany.findMany({
+		// 	select: { id: true, CompanyKey: true }
+		// });
+		// for (const { id, CompanyKey } of ruleCompanies) {
+		// 	const workingHours = baseCompanies.find((bc) => bc.CompanyKey === CompanyKey)?.workingHours;
+		// 	if (!workingHours) continue;
+		// 	await prisma.ldRuleCompany.update({
+		// 		where: { id },
+		// 		data: {
+		// 			workingHours: {
+		// 				deleteMany: {},
+		// 				createMany: {
+		// 					data: workingHours.map(({ days, start, end }) => ({ days, start, end }))
+		// 				}
+		// 			}
+		// 		}
+		// 	});
+		// 	console.log(CompanyKey);
+		// }
+		// const leads = await prisma.ldLeadCompleted.findMany({
+		// 	select: { updatedAt: true, ProspectKey: true, leadResponseTime: true }
+		// });
+		// for (const { updatedAt, ProspectKey, leadResponseTime } of leads) {
+		// 	const newLeadResponseTime = await getLeadResponseTime(ProspectKey);
+		// 	if (leadResponseTime !== newLeadResponseTime)
+		// 		await prisma.ldLeadCompleted.update({
+		// 			where: { ProspectKey },
+		// 			data: { updatedAt, leadResponseTime: newLeadResponseTime }
+		// 		});
+		// 	console.log(ProspectKey, leadResponseTime, newLeadResponseTime);
+		// }
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { leadResponseTime: { lt: 0 }, ProspectKey: '328A6272-A566-437A-B2F7-48B0D560CBB9' },
+		// 	select: {
+		// 		updatedAt: true,
+		// 		ProspectKey: true,
+		// 		ruleId: true,
+		// 		CompanyKey: true,
+		// 		notificationProcesses: {
+		// 			orderBy: { createdAt: 'desc' },
+		// 			select: { createdAt: true }
+		// 		},
+		// 		calls: {
+		// 			orderBy: { createdAt: 'asc' },
+		// 			take: 1,
+		// 			select: { createdAt: true, user: { select: { CompanyKey: true } } }
+		// 		}
+		// 	}
+		// });
+		// for (const { updatedAt, ProspectKey, ruleId, CompanyKey, notificationProcesses, calls } of leads) {
+		// 	if (!ruleId || !CompanyKey) continue;
+		// 	const firstCall = calls[0].createdAt;
+		// 	const np = notificationProcesses.find((np) => np.createdAt < firstCall)?.createdAt;
+		// 	if (!np) continue;
+		// 	const workingHour = await prisma.ldRuleCompanyWorkingHours.findMany({
+		// 		where: { ruleCompany: { ruleId, CompanyKey: calls[0].user?.CompanyKey } },
+		// 		select: {
+		// 			id: true,
+		// 			start: true,
+		// 			end: true,
+		// 			timezone: true,
+		// 			days: true
+		// 		}
+		// 	});
+		// 	const leadResponseTime = calculateLeadDuration(np, firstCall, workingHour);
+		// 	// console.log(
+		// 	// 	ProspectKey,
+		// 	// 	moment.tz(np.toLocaleString(), 'M/D/YYYY, h:mm:ss A', 'America/Los_Angeles').toDate().toLocaleString(),
+		// 	// 	moment.tz(firstCall.toLocaleString(), 'M/D/YYYY, h:mm:ss A', 'America/Los_Angeles').toDate().toLocaleString(),
+		// 	// 	leadResponseTime,
+		// 	// 	leadResponseTime / 60 / 60
+		// 	// );
+		// 	console.log('ProspectKey: ', ProspectKey);
+		// 	console.log(workingHour[2].start.toTimeString());
+		// 	console.log(
+		// 		'Notification Process Start Time: ',
+		// 		moment.tz(np.toLocaleString(), 'M/D/YYYY, h:mm:ss A', 'America/Los_Angeles').toDate()
+		// 	);
+		// 	console.log(
+		// 		'First Call Time: ',
+		// 		moment.tz(firstCall.toLocaleString(), 'M/D/YYYY, h:mm:ss A', 'America/Los_Angeles').toDate()
+		// 	);
+		// 	// console.log('Working Hours Start: ', workingHour.[])
+		// 	console.log('Lead Response Time (Hours): ', leadResponseTime / 60 / 60);
+		// 	console.log();
+		// 	// await prisma.ldLead.update({
+		// 	// 	where: { ProspectKey },
+		// 	// 	data: { updatedAt, leadResponseTime }
+		// 	// });
+		// }
+		// const user = await prisma.users.findMany({
+		// 	where: { Email: 'crueda@xyzies.com' }
+		// });
 		// const result =
-		// 	(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
+		// 	(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${user[0].UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
 		// 		{ TokenKey: string }
 		// 	];
 		// const token = result[0].TokenKey;
 		// console.log(token);
 		// const leads = await prisma.ldLead.findMany({
-		// 	where: { createdAt: { lte: new Date('6/3/2024, 1:40:00 PM') } },
+		// 	where: { createdAt: { lte: new Date('6/3/2024, 1:40:00 PM') } },s
 		// 	orderBy: { createdAt: 'desc' },
 		// 	select: {
 		// 		ProspectKey: true,

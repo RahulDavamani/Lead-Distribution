@@ -15,33 +15,35 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 	const process = await startNotificationProcess(ProspectKey, callbackNum, requeueNum);
 
 	// Get Rule
-	const { rule } = await prisma.ldLead.findUniqueOrThrow({
-		where: { ProspectKey },
-		select: {
-			rule: {
-				select: {
-					operators: {
-						orderBy: { num: 'asc' },
-						where: callbackNum === 0 ? { assignNewLeads: true } : { assignCallbackLeads: true },
-						select: { UserKey: true }
-					},
-					supervisors: {
-						orderBy: { num: 'asc' },
-						where: { isEscalate: true },
-						select: { UserKey: true, isEscalate: true }
-					},
-					notificationAttempts: {
-						orderBy: { num: 'asc' },
-						select: { id: true, num: true, type: true, target: true, messageTemplate: true, waitTime: true }
-					},
-					escalations: {
-						orderBy: { num: 'asc' },
-						select: { id: true, num: true, type: true, target: true, messageTemplate: true, waitTime: true }
+	const { rule } = await prisma.ldLead
+		.findUniqueOrThrow({
+			where: { ProspectKey },
+			select: {
+				rule: {
+					select: {
+						operators: {
+							orderBy: { num: 'asc' },
+							where: callbackNum === 0 ? { assignNewLeads: true } : { assignCallbackLeads: true },
+							select: { UserKey: true }
+						},
+						supervisors: {
+							orderBy: { num: 'asc' },
+							where: { isEscalate: true },
+							select: { UserKey: true, isEscalate: true }
+						},
+						notificationAttempts: {
+							orderBy: { num: 'asc' },
+							select: { id: true, num: true, type: true, target: true, messageTemplate: true, waitTime: true }
+						},
+						escalations: {
+							orderBy: { num: 'asc' },
+							select: { id: true, num: true, type: true, target: true, messageTemplate: true, waitTime: true }
+						}
 					}
 				}
 			}
-		}
-	});
+		})
+		.catch(prismaErrorHandler);
 	if (!rule) return;
 
 	const { operators, supervisors, notificationAttempts, escalations } = rule;
@@ -96,9 +98,11 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 
 		// Log Notification Attempt
 		await updateLead({ log: { log } });
-		await prisma.ldLeadNotificationAttempt.create({
-			data: { notificationProcessId: process.id, attemptId, message, UserKey }
-		});
+		await prisma.ldLeadNotificationAttempt
+			.create({
+				data: { notificationProcessId: process.id, attemptId, message, UserKey }
+			})
+			.catch(prismaErrorHandler);
 
 		await waitFor(waitTime);
 	}
@@ -145,9 +149,11 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 
 		// Log Escalation
 		await updateLead({ log: { log } });
-		await prisma.ldLeadEscalation.create({
-			data: { notificationProcessId: process.id, escalationId, message, UserKey }
-		});
+		await prisma.ldLeadEscalation
+			.create({
+				data: { notificationProcessId: process.id, escalationId, message, UserKey }
+			})
+			.catch(prismaErrorHandler);
 
 		await waitFor(waitTime);
 	}
@@ -172,9 +178,9 @@ export const triggerPushNotification = async (UserKeys: string[], message: strin
 		UserKeys.map(async (UserKey) => {
 			// Generate Token
 			const result =
-				(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`) as [
-					{ TokenKey: string }
-				];
+				(await prisma.$queryRaw`Exec p_Report_AuthUserAction 'TK_INS',null,${UserKey},null,'84AE2871-599E-4812-A874-321FA7ED5CF6'`.catch(
+					prismaErrorHandler
+				)) as [{ TokenKey: string }];
 			const token = result[0].TokenKey;
 
 			// Trigger Notification
@@ -189,8 +195,9 @@ export const triggerPushNotification = async (UserKeys: string[], message: strin
 	);
 
 export const triggerAudioNotification = async (UserKeys: string[], message: string) => {
-	const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
 	// const socket = new WebSocket('ws://localhost:8000');
+	const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
+
 	socket.onopen = () => {
 		const socketMessage = {
 			type: 'triggerAudioNotification',

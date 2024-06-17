@@ -4,6 +4,9 @@
 	import Flatpickr from 'svelte-flatpickr';
 	import IconBtn from '../../../components/ui/IconBtn.svelte';
 	import { allDays } from '$lib/data/allDays';
+	import SelectTimezone from './SelectTimezone.svelte';
+	import Icon from '@iconify/svelte';
+	import moment from 'moment-timezone';
 
 	$: ({
 		masterData,
@@ -15,8 +18,8 @@
 			...$ruleConfig.rule.companies[i].workingHours,
 			{
 				id: nanoid(),
-				start: new Date(new Date().setHours(0, 0, 0, 0)),
-				end: new Date(new Date().setHours(0, 0, 0, 0)),
+				start: moment.tz($ruleConfig.rule.companies[i].timezone).startOf('day').toDate(),
+				end: moment.tz($ruleConfig.rule.companies[i].timezone).startOf('day').toDate(),
 				days: ''
 			}
 		]);
@@ -24,17 +27,20 @@
 	const deleteWorkingHours = (i: number, j: number) => {
 		$ruleConfig.rule.companies[i].workingHours = $ruleConfig.rule.companies[i].workingHours.filter((_, k) => k !== j);
 	};
+
+	let showSelectTimezone = false;
+	let companyI: number | undefined;
 </script>
 
 <div class="w-full h-fit pl-4">
-	<details class="collapse collapse-arrow">
+	<details class="collapse collapse-arrow" open>
 		<summary class="collapse-title px-0">
 			<div>
 				<span class="text-lg font-bold">Companies:</span>
 				<span class="font-mono">({companies.length})</span>
 			</div>
 		</summary>
-		<div class="collapse-content pl-2 max-h-96 overflow-auto">
+		<div class="collapse-content pl-2 max-h-[500px] overflow-auto">
 			<div class="space-y-3 mt-1">
 				{#each companies as { CompanyKey, workingHours }, i}
 					{@const companyName =
@@ -43,12 +49,27 @@
 					<div class="my-card">
 						<div class="flex justify-between items-center">
 							<div class="font-semibold">{companyName}</div>
-							<button class="btn btn-sm btn-success" on:click={() => addWorkingHours(i)}>Add Working Hours</button>
+
+							<label class="input input-bordered input-sm flex items-center gap-2 cursor-pointer">
+								<Icon icon="mdi:timezone" width={16} />
+								<input
+									type="text"
+									class="grow cursor-pointer"
+									value={$ruleConfig.rule.companies[i].timezone.replaceAll('_', ' ').replaceAll('/', ' / ')}
+									readonly
+									on:click={() => {
+										showSelectTimezone = true;
+										companyI = i;
+									}}
+								/>
+							</label>
 						</div>
 						<div class="divider m-0" />
 
 						{#each workingHours as { days }, j}
 							{@const daysArr = days.split(',')}
+							{@const timezone = $ruleConfig.rule.companies[i].timezone}
+							{@const workingHour = $ruleConfig.rule.companies[i].workingHours[j]}
 
 							<div class="flex justify-between items-center mt-3 gap-4">
 								<div class="flex items-center gap-3">
@@ -61,8 +82,12 @@
 									<Flatpickr
 										placeholder="Choose Time"
 										class="input input-bordered input-sm cursor-pointer text-center w-24"
-										value={$ruleConfig.rule.companies[i].workingHours[j].start}
-										on:close={(e) => ($ruleConfig.rule.companies[i].workingHours[j].start = e.detail[0][0])}
+										value={moment.tz(workingHour.start, timezone).clone().tz(moment.tz.guess(), true).toDate()}
+										on:close={(e) => {
+											$ruleConfig.rule.companies[i].workingHours[j].start = moment
+												.tz(e.detail[0][0].toLocaleString(), 'M/D/YYYY, h:mm:ss A', timezone)
+												.toDate();
+										}}
 										options={{
 											mode: 'time',
 											altInput: true,
@@ -73,8 +98,12 @@
 									<Flatpickr
 										placeholder="Choose Time"
 										class="input input-bordered input-sm cursor-pointer text-center w-24"
-										value={$ruleConfig.rule.companies[i].workingHours[j].end}
-										on:close={(e) => ($ruleConfig.rule.companies[i].workingHours[j].end = e.detail[0][0])}
+										value={moment.tz(workingHour.end, timezone).clone().tz(moment.tz.guess(), true).toDate()}
+										on:close={(e) => {
+											$ruleConfig.rule.companies[i].workingHours[j].end = moment
+												.tz(e.detail[0][0].toLocaleString(), 'M/D/YYYY, h:mm:ss A', timezone)
+												.toDate();
+										}}
 										options={{
 											mode: 'time',
 											altInput: true,
@@ -118,12 +147,19 @@
 									{/each}
 								</div>
 							</div>
-						{:else}
-							<div class="text-center mt-2">No Working Hours</div>
+							<div class="divider" />
 						{/each}
+						<button class="btn btn-success btn-sm w-full" on:click={() => addWorkingHours(i)}>
+							<Icon icon="mdi:add" width={16} />
+							Add Working Hours
+						</button>
 					</div>
 				{/each}
 			</div>
 		</div>
 	</details>
 </div>
+
+{#if showSelectTimezone && companyI !== undefined}
+	<SelectTimezone bind:showModal={showSelectTimezone} bind:timezone={$ruleConfig.rule.companies[companyI].timezone} />
+{/if}

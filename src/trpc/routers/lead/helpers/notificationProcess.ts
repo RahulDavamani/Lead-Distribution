@@ -63,6 +63,7 @@ export const continueNotificationProcess = async (ProspectKey: string) => {
 	const updateLead = updateLeadFunc(ProspectKey);
 
 	const process = await prisma.ldLeadNotificationProcess.findFirstOrThrow({
+		orderBy: { createdAt: 'desc' },
 		where: { lead: { ProspectKey } },
 		select: {
 			id: true,

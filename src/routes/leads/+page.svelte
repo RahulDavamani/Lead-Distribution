@@ -9,9 +9,11 @@
 	import CompletedLeadsTable from './components/CompletedLeadsTable.svelte';
 	import { ui } from '../../stores/ui.store';
 	import NotesModal from './components/NotesModal.svelte';
+	import SelectTimezone from '../rules/rule-config/components/SelectTimezone.svelte';
 
-	$: ({ connectionType, tab, viewMode, queuedLeads, completedLeads } = $lead);
+	$: ({ connectionType, tab, timezone, viewMode, queuedLeads, completedLeads } = $lead);
 	const { roleType } = $auth;
+	let showSelectTimezone = false;
 
 	onMount(lead.init);
 
@@ -37,17 +39,31 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="form-control {viewMode ? 'fixed' : 'absolute'} top-2 right-2 z-10 bg-base-300 rounded-box px-2">
-	<label
-		class="label cursor-pointer gap-2 text-sm"
-		on:click={() => {
-			if (document.fullscreenElement) document.exitFullscreen();
-			else document.documentElement.requestFullscreen();
-		}}
-	>
-		<div class="font-bold">View Mode</div>
-		<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" bind:checked={$lead.viewMode} />
+<div
+	class="{viewMode ? 'fixed' : 'absolute'} top-2 right-2 z-10 flex items-center gap-2 bg-base-300 rounded-box px-2 py-1"
+>
+	<label class="input input-bordered input-sm flex items-center gap-2 cursor-pointer">
+		<Icon icon="mdi:timezone" width={16} />
+		<input
+			type="text"
+			class="grow cursor-pointer"
+			value={timezone.replaceAll('_', ' ').replaceAll('/', ' / ')}
+			readonly
+			on:click={() => (showSelectTimezone = true)}
+		/>
 	</label>
+	<div class="form-control">
+		<label
+			class="label cursor-pointer gap-2 text-sm"
+			on:click={() => {
+				if (document.fullscreenElement) document.exitFullscreen();
+				else document.documentElement.requestFullscreen();
+			}}
+		>
+			<div class="font-bold">View Mode</div>
+			<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" bind:checked={$lead.viewMode} />
+		</label>
+	</div>
 </div>
 
 <div class="px-16 mx-auto mb-20">
@@ -124,4 +140,8 @@
 
 {#if $ui.modals.notesModalId}
 	<NotesModal />
+{/if}
+
+{#if showSelectTimezone}
+	<SelectTimezone bind:showModal={showSelectTimezone} bind:timezone={$lead.timezone} />
 {/if}

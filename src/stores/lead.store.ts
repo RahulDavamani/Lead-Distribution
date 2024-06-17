@@ -9,12 +9,14 @@ import { page } from '$app/stores';
 import { trpcClientErrorHandler } from '../trpc/trpcErrorhandler';
 import superjson from 'superjson';
 import { audioAlert } from '$lib/client/audioAlert';
+import moment from 'moment-timezone';
 
 type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>[number];
 
 export interface Lead {
 	connectionType: 'http' | 'ws';
 	tab: 'queued' | 'completed';
+	timezone: string;
 	viewMode: boolean;
 
 	socket?: WebSocket;
@@ -32,6 +34,7 @@ export const lead = (() => {
 	const initState: Lead = {
 		connectionType: 'http',
 		tab: 'queued',
+		timezone: moment.tz.guess(),
 		viewMode: false,
 
 		today: new Date(),
@@ -67,11 +70,8 @@ export const lead = (() => {
 	};
 
 	const initSocket = () => {
-		// const socket = new WebSocket('ws://lead-distribution-ws.politeflower-b7858b41.westus3.azurecontainerapps.io:8000');
-		// const socket = new WebSocket('ws://lead-distribution-ws.aygefaeaceb4aug5.westus3.azurecontainer.io:8000');
-		// const socket = new WebSocket('wss://lead-distribution-ws.onrender.com');
-		const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
 		// const socket = new WebSocket('ws://localhost:8000');
+		const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
 		socket.onopen = messageSocket;
 		socket.onmessage = onMessageSocket;
 		update((state) => ({ ...state, socket }));

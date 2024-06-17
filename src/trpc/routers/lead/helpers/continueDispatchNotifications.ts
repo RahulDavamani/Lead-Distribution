@@ -14,7 +14,7 @@ export const continueDispatchNotifications = async (ProspectKey: string) => {
 		select: {
 			ruleId: true,
 			notificationProcesses: {
-				orderBy: { callbackNum: 'desc', requeueNum: 'desc' },
+				orderBy: { createdAt: 'desc' },
 				take: 1,
 				select: { id: true, status: true }
 			}
