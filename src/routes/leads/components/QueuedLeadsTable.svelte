@@ -320,6 +320,8 @@
 							{:else if notificationProcesses[0]}
 								{#if notificationProcesses[0].status === 'SCHEDULED'}
 									Scheduled in {getTimeElapsedText(today, notificationProcesses[0].createdAt)}
+								{:else if notificationProcesses[0].status === 'CANCELLED'}
+									Cancelled
 								{:else if notificationProcesses[0].escalations.length > 0}
 									Escalation #{notificationProcesses[0].escalations[0].escalation?.num}
 								{:else if notificationProcesses[0].notificationAttempts.length > 0}

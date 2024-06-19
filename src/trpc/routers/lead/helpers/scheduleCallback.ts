@@ -6,6 +6,8 @@ import { scheduleJob } from 'node-schedule';
 import { endNotificationProcesses } from './notificationProcess';
 import { sendSMS } from './message';
 import { waitFor } from '$lib/waitFor';
+import { calculateLeadDuration, timeToText } from '$lib/client/DateTime';
+import moment from 'moment-timezone';
 
 export const scheduleCallback = async (
 	ProspectKey: string,
@@ -15,11 +17,12 @@ export const scheduleCallback = async (
 ) => {
 	const updateLead = updateLeadFunc(ProspectKey);
 	// Get Lead
-	const { rule, notificationProcesses } = await prisma.ldLead
+	const { rule, CompanyKey, notificationProcesses } = await prisma.ldLead
 		.findFirstOrThrow({
 			where: { ProspectKey },
 			select: {
 				rule: { select: { id: true, isActive: true } },
+				CompanyKey: true,
 				notificationProcesses: {
 					orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
 					take: 1,
@@ -48,8 +51,7 @@ export const scheduleCallback = async (
 		select: { id: true }
 	});
 
-	// Schedule Requeue Lead
-	scheduleJob(scheduledTime, async () => {
+	const callbackRequeue = async () => {
 		const process = await prisma.ldLeadNotificationProcess
 			.findUniqueOrThrow({ where: { id }, select: { status: true } })
 			.catch(prismaErrorHandler);
@@ -76,5 +78,54 @@ export const scheduleCallback = async (
 
 		// Send Notification to Operators
 		await dispatchNotifications(ProspectKey, callbackNum, 0);
+	};
+
+	// Schedule Requeue Lead
+	scheduleJob(scheduledTime, callbackRequeue).on('error', async () => {
+		await updateLead({ log: { log: `Callback #${callbackNum}: Cancelled due to internal error` } });
+		await prisma.ldLeadNotificationProcess.update({
+			where: { id },
+			data: { status: 'CANCELLED' }
+		});
+
+		if (!rule?.id || !CompanyKey) return;
+		const ruleCompany = await prisma.ldRuleCompany.findFirstOrThrow({
+			where: { ruleId: rule.id, CompanyKey },
+			select: {
+				ruleId: true,
+				CompanyKey: true,
+				timezone: true,
+				workingHours: {
+					select: {
+						id: true,
+						start: true,
+						end: true,
+						days: true
+					}
+				}
+			}
+		});
+
+		let rescheduleTime = new Date(Date.now() + 1000);
+		const leadDuration = calculateLeadDuration(rescheduleTime, new Date(rescheduleTime.getTime() + 5000), ruleCompany);
+		if (leadDuration > 0) {
+			await updateLead({ log: { log: `Callback #${callbackNum}: Retry Initiated` } });
+			rescheduleTime = new Date(Date.now() + 1000);
+		} else {
+			rescheduleTime = moment
+				.tz(rescheduleTime, 'America/Los_Angeles')
+				.add(1, 'day')
+				.set({ hour: 9, minute: 0, second: 0 })
+				.toDate();
+
+			const diff = rescheduleTime.getTime() - Date.now();
+			await updateLead({ log: { log: `Callback #${callbackNum}: Retry Initiated in ${timeToText(diff)}` } });
+			await prisma.ldLeadNotificationProcess.update({
+				where: { id },
+				data: { createdAt: rescheduleTime, status: 'SCHEDULED' }
+			});
+		}
+
+		scheduleJob(rescheduleTime, callbackRequeue);
 	});
 };

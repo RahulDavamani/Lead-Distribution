@@ -8,7 +8,7 @@ export const testRouter = router({
 			select: { ProspectKey: true }
 		});
 		for (const { ProspectKey } of leads) {
-			scheduleCallback(ProspectKey, new Date('2024-06-17T16:00:00.000Z'), undefined);
+			scheduleCallback(ProspectKey, new Date('2024-06-19T16:00:00.000Z'), undefined);
 		}
 		// for (const { ProspectKey } of leads) {
 		// 	scheduleJob(new Date(Date.now() + 1000), async () => {
