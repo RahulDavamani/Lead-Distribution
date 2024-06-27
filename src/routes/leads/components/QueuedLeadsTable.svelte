@@ -281,7 +281,7 @@
 							{:else}
 								<div class="badge badge-sm badge-warning" />
 							{/if}
-							{prospect.ProspectId}
+							{prospect.ProspectId ?? 'N/A'}
 						</div>
 					</td>
 					<td
@@ -307,8 +307,8 @@
 					</td>
 					<td class="text-center">{leadResponseTime ? timeToText(leadResponseTime) : 'N/A'}</td>
 					<td>
-						<div>{prospect.CustomerFirstName} {prospect.CustomerLastName}</div>
-						<div class="text-xs">{prospect.Address} {prospect.ZipCode}</div>
+						<div>{prospect.CustomerFirstName ?? ''} {prospect.CustomerLastName ?? ''}</div>
+						<div class="text-xs">{prospect.Address ?? ''} {prospect.ZipCode ?? ''}</div>
 					</td>
 					<td>{company?.CompanyName ?? 'All'} </td>
 					<td>

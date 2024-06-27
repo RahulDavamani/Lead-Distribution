@@ -69,19 +69,38 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			: []
 	) as { Guid: string; Duration: string | null }[];
 
-	const allWorkingHours = await prisma.ldRuleCompanyWorkingHours.findMany({
+	// const allWorkingHours = await prisma.ldRuleCompanyWorkingHours.findMany({
+	// 	where: {
+	// 		ruleCompany: {
+	// 			ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
+	// 			CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
+	// 		}
+	// 	},
+	// 	select: {
+	// 		id: true,
+	// 		ruleCompany: { select: { ruleId: true, CompanyKey: true } },
+	// 		start: true,
+	// 		end: true,
+	// 		days: true
+	// 	}
+	// });
+	const ruleCompanies = await prisma.ldRuleCompany.findMany({
 		where: {
-			ruleCompany: {
-				ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
-				CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
-			}
+			ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
+			CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
 		},
 		select: {
-			id: true,
-			ruleCompany: { select: { ruleId: true, CompanyKey: true } },
-			start: true,
-			end: true,
-			days: true
+			ruleId: true,
+			CompanyKey: true,
+			timezone: true,
+			workingHours: {
+				select: {
+					id: true,
+					start: true,
+					end: true,
+					days: true
+				}
+			}
 		}
 	});
 
@@ -90,17 +109,23 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			const prospectDetails = prospects.find(
 				(prospect) => prospect.ProspectKey.toLowerCase() === lead.ProspectKey.toLowerCase()
 			)!;
-			const affiliate = affiliates.find((affiliate) => affiliate.CompanyKey === prospectDetails.CompanyKey);
+			const affiliate = affiliates.find((affiliate) => affiliate.CompanyKey === prospectDetails?.CompanyKey);
 			const prospect = { ...prospectDetails, CompanyName: affiliate?.CompanyName };
 			const company = companies.find((company) => company.CompanyKey === lead.CompanyKey);
 			const user = users.find((user) => user.UserKey === lead.UserKey);
 			const userStr = user ? `${user.VonageAgentId}: ${user.FirstName} ${user.LastName}` : undefined;
 			const customerTalkTime = Number(vonageCalls.find((call) => call.Guid === lead.VonageGUID)?.Duration ?? '0');
-			const workingHours = allWorkingHours.find(
-				({ ruleCompany: { ruleId, CompanyKey } }) => ruleId === lead.ruleId && CompanyKey === lead.CompanyKey
+			const ruleCompany = ruleCompanies.find(
+				({ ruleId, CompanyKey }) => ruleId === lead.ruleId && CompanyKey === lead.CompanyKey
 			);
 
-			return { ...lead, prospect, company, user: userStr, customerTalkTime, workingHours };
+			return {
+				...lead,
+				prospect,
+				company: lead.CompanyKey ? { ...company, ...ruleCompany } : undefined,
+				user: userStr,
+				customerTalkTime
+			};
 		})
 	);
 

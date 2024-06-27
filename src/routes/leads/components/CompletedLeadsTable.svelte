@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { ui } from '../../../stores/ui.store';
-	import { getTimeElapsed, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
+	import { calculateLeadDuration, getTimeElapsedText, timeToText } from '$lib/client/DateTime';
 	import Flatpickr from 'svelte-flatpickr';
 	import FormControl from '../../components/FormControl.svelte';
 	import { trpc } from '../../../trpc/client';
@@ -193,7 +193,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospect, company, rule, success, completeStatus, customerTalkTime, user, calls, leadResponseTime }}
+			{#each displayLeads.slice(startIndex, endIndex) as { id, VonageGUID, createdAt, updatedAt, prospect, company, rule, success, completeStatus, customerTalkTime, user, leadResponseTime }}
 				<tr class="hover">
 					{#if deleteLeadIds !== undefined}
 						<td class="w-1">
@@ -243,8 +243,12 @@
 						<div>{updatedAt.toLocaleDateString('en-US', { timeZone: timezone })}</div>
 						<div>{updatedAt.toLocaleTimeString('en-US', { timeZone: timezone })}</div>
 					</td>
-					<td class="text-center">{getTimeElapsedText(createdAt, updatedAt)}</td>
-					<td class="text-center">{leadResponseTime && calls.length ? timeToText(leadResponseTime) : 'N/A'}</td>
+					<td class="text-center">
+						{company
+							? timeToText(calculateLeadDuration(createdAt, updatedAt, company))
+							: getTimeElapsedText(createdAt, updatedAt)}
+					</td>
+					<td class="text-center">{leadResponseTime ? timeToText(leadResponseTime) : 'N/A'}</td>
 
 					<td class="text-center">{timeToText(customerTalkTime)}</td>
 					<td>

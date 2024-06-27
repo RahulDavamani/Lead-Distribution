@@ -1,15 +1,29 @@
 import { procedure, router } from '../server';
-import { scheduleCallback } from './lead/helpers/scheduleCallback';
+import { getLeadResponseTime } from './lead/helpers/getLeadResponseTime';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		const leads = await prisma.ldLead.findMany({
-			where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
-			select: { ProspectKey: true }
-		});
-		for (const { ProspectKey } of leads) {
-			scheduleCallback(ProspectKey, new Date('2024-06-19T16:00:00.000Z'), undefined);
-		}
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { leadResponseTime: null },
+		// 	select: { updatedAt: true, ProspectKey: true, leadResponseTime: true }
+		// });
+		// console.log(leads);
+		// for (const { updatedAt, ProspectKey, leadResponseTime } of leads) {
+		// 	const newLeadResponseTime = await getLeadResponseTime(ProspectKey);
+		// 	if (leadResponseTime !== newLeadResponseTime)
+		// 		await prisma.ldLead.update({
+		// 			where: { ProspectKey },
+		// 			data: { updatedAt, leadResponseTime: newLeadResponseTime }
+		// 		});
+		// 	console.log(ProspectKey, leadResponseTime, newLeadResponseTime);
+		// }
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
+		// 	select: { ProspectKey: true }
+		// });
+		// for (const { ProspectKey } of leads) {
+		// 	scheduleCallback(ProspectKey, new Date('2024-06-19T16:00:00.000Z'), undefined);
+		// }
 		// for (const { ProspectKey } of leads) {
 		// 	scheduleJob(new Date(Date.now() + 1000), async () => {
 		// 		continueDispatchNotifications(ProspectKey);

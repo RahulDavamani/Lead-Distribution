@@ -80,8 +80,7 @@ export const scheduleCallback = async (
 		await dispatchNotifications(ProspectKey, callbackNum, 0);
 	};
 
-	// Schedule Requeue Lead
-	scheduleJob(scheduledTime, callbackRequeue).on('error', async () => {
+	const callbackErrorFn = async () => {
 		await updateLead({ log: { log: `Callback #${callbackNum}: Cancelled due to internal error` } });
 		await prisma.ldLeadNotificationProcess.update({
 			where: { id },
@@ -127,5 +126,8 @@ export const scheduleCallback = async (
 		}
 
 		scheduleJob(rescheduleTime, callbackRequeue);
-	});
+	};
+
+	// Schedule Requeue Lead
+	scheduleJob(scheduledTime, callbackRequeue).on('error', callbackErrorFn).on('canceled', callbackErrorFn);
 };

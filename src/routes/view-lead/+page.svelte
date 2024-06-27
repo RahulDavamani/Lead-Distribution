@@ -44,7 +44,9 @@
 			user: { UserKey },
 			roleType
 		} = $auth;
-		const data = await trpc($page).lead.view.query({ ProspectKey, UserKey, roleType }).catch(trpcClientErrorHandler);
+		const data = await trpc($page)
+			.lead.view.query({ ProspectKey, UserKey, roleType })
+			.catch((e) => trpcClientErrorHandler(e, () => goto('/leads')));
 		lead = {
 			...data.lead,
 			createdAt: new Date(data.lead.createdAt),
