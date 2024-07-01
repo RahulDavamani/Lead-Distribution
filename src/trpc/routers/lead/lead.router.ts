@@ -48,7 +48,7 @@ export const leadRouter = router({
 		.query(async ({ input: { id, CompanyKey } }) => {
 			await prisma.ldLead.update({
 				where: { id },
-				data: { CompanyKey }
+				data: { isUpdated: true, CompanyKey }
 			});
 		}),
 
@@ -68,7 +68,7 @@ export const leadRouter = router({
 			await prisma.ldLead
 				.update({
 					where: { id },
-					data: { notes }
+					data: { isUpdated: true, notes }
 				})
 				.catch(prismaErrorHandler);
 		}),

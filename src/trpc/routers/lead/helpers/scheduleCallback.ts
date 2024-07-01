@@ -50,6 +50,7 @@ export const scheduleCallback = async (
 		},
 		select: { id: true }
 	});
+	await updateLead({});
 
 	const callbackRequeue = async () => {
 		const process = await prisma.ldLeadNotificationProcess
@@ -86,6 +87,7 @@ export const scheduleCallback = async (
 			where: { id },
 			data: { status: 'CANCELLED' }
 		});
+		await updateLead({});
 
 		if (!rule?.id || !CompanyKey) return;
 		const ruleCompany = await prisma.ldRuleCompany.findFirstOrThrow({
@@ -118,11 +120,11 @@ export const scheduleCallback = async (
 				.toDate();
 
 			const diff = rescheduleTime.getTime() - Date.now();
-			await updateLead({ log: { log: `Callback #${callbackNum}: Retry Initiated in ${timeToText(diff)}` } });
 			await prisma.ldLeadNotificationProcess.update({
 				where: { id },
 				data: { createdAt: rescheduleTime, status: 'SCHEDULED' }
 			});
+			await updateLead({ log: { log: `Callback #${callbackNum}: Retry Initiated in ${timeToText(diff)}` } });
 		}
 
 		scheduleJob(rescheduleTime, callbackRequeue);

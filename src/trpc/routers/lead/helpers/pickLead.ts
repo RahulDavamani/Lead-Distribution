@@ -101,6 +101,7 @@ export const pickLead = async (ProspectKey: string, UserKey: string) => {
 				}
 			})
 			.catch(prismaErrorHandler);
+	await updateLead({});
 
 	// End Notification Processes
 	await endNotificationProcesses(ProspectKey);

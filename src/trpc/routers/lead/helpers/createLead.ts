@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { updateLeadFunc } from './updateLead';
 
 type Args = {
 	ruleId?: string;
@@ -10,10 +11,11 @@ type Args = {
 
 export const createLeadFunc =
 	(ProspectKey: string) =>
-	async ({ ruleId, log, isPicked, overrideCallback }: Args) =>
+	async ({ ruleId, log, isPicked, overrideCallback }: Args) => {
 		await prisma.ldLead
 			.create({
 				data: {
+					isUpdated: true,
 					ProspectKey,
 					ruleId,
 					notes: '',
@@ -23,3 +25,6 @@ export const createLeadFunc =
 				}
 			})
 			.catch(prismaErrorHandler);
+
+		await updateLeadFunc(ProspectKey)({});
+	};

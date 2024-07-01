@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { getUserStr } from './user';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { updateLeadFunc } from './updateLead';
 
 export const completeLead = async ({
 	ProspectKey,
@@ -37,6 +38,7 @@ export const completeLead = async ({
 
 	// Delete Lead
 	await prisma.ldLead.delete({ where: { ProspectKey } }).catch(prismaErrorHandler);
+	await updateLeadFunc(ProspectKey)({});
 
 	// Create Completed Lead
 	const UserKey = user?.connect?.UserKey ?? calls[0]?.UserKey;

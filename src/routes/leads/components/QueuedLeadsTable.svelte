@@ -86,9 +86,7 @@
 							.lead.delete.query({ ids: deleteLeadIds, isCompleted: false })
 							.catch(trpcClientErrorHandler);
 
-						ui.setLoader({ title: 'Updating Leads' });
-						await lead.fetchQueuedLeads();
-
+						$lead.queuedLeads = queuedLeads.filter((lead) => !deleteLeadIds?.includes(lead.id));
 						deleteLeadIds = undefined;
 					})
 				}
@@ -106,9 +104,19 @@
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
 	$: displayLeads = queuedLeads.filter(
-		({ prospect: { CompanyKey, ProspectId: _, ...values } }) =>
-			Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase()) &&
-			($lead.affiliate ? values.CompanyName === $lead.affiliate : true)
+		({ prospect: { CompanyName, CustomerFirstName, CustomerLastName, Address, ZipCode }, notificationProcesses }) => {
+			const value = [CompanyName, CustomerFirstName, CustomerLastName, Address, ZipCode]
+				.join('')
+				.replaceAll(' ', '')
+				.toLowerCase();
+			const searchValue = tableOpts.search.replaceAll(' ', '').toLowerCase();
+			return (
+				value.includes(searchValue) &&
+				($lead.affiliate ? CompanyName === $lead.affiliate : true) &&
+				notificationProcesses[0].status === 'SCHEDULED' &&
+				notificationProcesses[0].createdAt < today
+			);
+		}
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
 </script>

@@ -7,6 +7,7 @@ import { startNotificationProcess } from './notificationProcess';
 import { updateLeadFunc } from './updateLead';
 import { getUserStr } from './user';
 import WebSocket from 'ws';
+import { socketURL } from '$lib/socketURL';
 
 export const dispatchNotifications = async (ProspectKey: string, callbackNum: number, requeueNum: number) => {
 	const updateLead = updateLeadFunc(ProspectKey);
@@ -97,12 +98,10 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 		}
 
 		// Log Notification Attempt
-		await updateLead({ log: { log } });
 		await prisma.ldLeadNotificationAttempt
-			.create({
-				data: { notificationProcessId: process.id, attemptId, message, UserKey }
-			})
+			.create({ data: { notificationProcessId: process.id, attemptId, message, UserKey } })
 			.catch(prismaErrorHandler);
+		await updateLead({ log: { log } });
 
 		await waitFor(waitTime);
 	}
@@ -148,12 +147,12 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 		}
 
 		// Log Escalation
-		await updateLead({ log: { log } });
 		await prisma.ldLeadEscalation
 			.create({
 				data: { notificationProcessId: process.id, escalationId, message, UserKey }
 			})
 			.catch(prismaErrorHandler);
+		await updateLead({ log: { log } });
 
 		await waitFor(waitTime);
 	}
@@ -195,8 +194,7 @@ export const triggerPushNotification = async (UserKeys: string[], message: strin
 	);
 
 export const triggerAudioNotification = async (UserKeys: string[], message: string) => {
-	// const socket = new WebSocket('ws://localhost:8000');
-	const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
+	const socket = new WebSocket(socketURL);
 
 	socket.onopen = () => {
 		const socketMessage = {

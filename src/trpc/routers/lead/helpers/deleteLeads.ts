@@ -1,4 +1,5 @@
 import { endNotificationProcesses } from './notificationProcess';
+import { updateLeadFunc } from './updateLead';
 
 export const deleteLeads = async (ids: string[], isCompleted: boolean) => {
 	let leads;
@@ -37,4 +38,5 @@ export const deleteLeads = async (ids: string[], isCompleted: boolean) => {
 
 	if (isCompleted) await prisma.ldLeadCompleted.deleteMany({ where: { id: { in: ids } } });
 	else await prisma.ldLead.deleteMany({ where: { id: { in: ids } } });
+	await updateLeadFunc('')({});
 };

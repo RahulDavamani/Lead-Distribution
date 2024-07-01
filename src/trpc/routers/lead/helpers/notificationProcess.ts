@@ -47,13 +47,13 @@ export const startNotificationProcess = async (ProspectKey: string, callbackNum:
 		)?.status !== 'ACTIVE';
 
 	const completeProcess = async () => {
-		await updateLead({ log: { log: `${name}: Completed Sending notifications` } });
 		await prisma.ldLeadNotificationProcess
 			.update({
 				where: { id },
 				data: { status: 'COMPLETED' }
 			})
 			.catch(prismaErrorHandler);
+		await updateLead({ log: { log: `${name}: Completed Sending notifications` } });
 	};
 
 	return { id, name, isCompleted, completeProcess };
@@ -127,4 +127,5 @@ export const endNotificationProcesses = async (ProspectKey: string) => {
 			});
 		})
 	);
+	await updateLeadFunc(ProspectKey)({});
 };

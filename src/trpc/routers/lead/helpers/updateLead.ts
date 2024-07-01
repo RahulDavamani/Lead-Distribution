@@ -1,5 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import WebSocket from 'ws';
+import { socketURL } from '$lib/socketURL';
 
 type Args = {
 	isPicked?: boolean;
@@ -14,11 +16,12 @@ type Args = {
 
 export const updateLeadFunc =
 	(ProspectKey: string) =>
-	async ({ isPicked, overrideCallback, CompanyKey, leadResponseTime, log, message, call, response }: Args) =>
+	async ({ isPicked, overrideCallback, CompanyKey, leadResponseTime, log, message, call, response }: Args) => {
 		await prisma.ldLead
 			.update({
 				where: { ProspectKey },
 				data: {
+					isUpdated: true,
 					isPicked,
 					overrideCallback,
 					CompanyKey,
@@ -29,4 +32,11 @@ export const updateLeadFunc =
 					responses: { create: response }
 				}
 			})
-			.catch(prismaErrorHandler);
+			.catch(() => {});
+
+		const socket = new WebSocket(socketURL);
+		socket.onopen = () => {
+			socket.send(JSON.stringify({ type: 'updateLeads' }));
+			socket.close();
+		};
+	};

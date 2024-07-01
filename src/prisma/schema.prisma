@@ -1796,6 +1796,8 @@ model CompanyComDetail {
    CreditId              String?   @db.VarChar(50)
    CreditName            String?   @db.VarChar(255)
    SubAccount            String    @db.VarChar(50)
+   IsPaid                Boolean?
+   PaymentKey            String?   @db.UniqueIdentifier
 
    @@id([ProviderKey, ComType, Account, ProductKey, Type, SubAccount], map: "PK_CompanyComDetail")
 }
@@ -3618,6 +3620,13 @@ model IFileImportStatus {
    IsAzureUpload    Boolean?
    IsLoadData       Boolean?
    IsDataSync       Boolean?
+   NewUnits         Int?
+   UpdUnits         Int?
+   NewAddOns        Int?
+   NewLines         Int?
+   UpdAddOns        Int?
+   UpdLines         Int?
+   NewPac           Int?
 }
 
 model IFileImportStatusLog {
@@ -3815,32 +3824,37 @@ model ImportAlderPayment {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportAlticeOptimumPayment {
-   Seq                     Int       @default(autoincrement())
-   ImportId                Int
-   VENDOR                  String?   @db.NVarChar(50)
-   LEAD_AGENT_ID           String?   @map("LEAD AGENT ID") @db.NVarChar(255)
-   Corp                    Int?
-   House                   BigInt?
-   Cust                    Int?
-   CUSTOMER_NAME           String?   @map("CUSTOMER NAME") @db.NVarChar(255)
-   ORDER_CONFIRMATION      String?   @map("ORDER CONFIRMATION") @db.VarChar(20)
-   SALES_CHANNEL           String?   @map("SALES CHANNEL") @db.NVarChar(50)
-   Sales_Rep_ID            String?   @map("Sales Rep ID") @db.NVarChar(50)
-   AFFILIATE_ID            String?   @map("AFFILIATE ID") @db.NVarChar(50)
-   PRODUCT_DESCRIPTION     String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
-   SPEED_TIER              String?   @map("SPEED TIER") @db.NVarChar(50)
-   PRODUCT_SPEED           String?   @map("PRODUCT/SPEED") @db.NVarChar(100)
-   DATE                    DateTime? @db.Date
-   LINE_DESCRIPTION        String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
-   TOTAL_COMMISSION        Decimal?  @map("TOTAL COMMISSION") @db.Decimal(10, 2)
-   MANAGER                 String?   @db.NVarChar(100)
-   UNIT_COUNT              Int?      @map("UNIT COUNT")
-   Customer                String?   @db.VarChar(20)
-   Addy                    String?   @db.VarChar(255)
-   InstallConfirmation     BigInt?
-   Account__               String?   @map("Account #") @db.VarChar(12)
-   Order_Confirmation_Orig BigInt?   @map("Order Confirmation Orig")
-   WIP_TRANSACTION         BigInt?   @map("WIP TRANSACTION")
+   Seq                      Int       @default(autoincrement())
+   ImportId                 Int
+   VENDOR                   String?   @db.NVarChar(50)
+   LEAD_AGENT_ID            String?   @map("LEAD AGENT ID") @db.NVarChar(255)
+   Corp                     Int?
+   House                    BigInt?
+   Cust                     Int?
+   CUSTOMER_NAME            String?   @map("CUSTOMER NAME") @db.NVarChar(255)
+   ORDER_CONFIRMATION       String?   @map("ORDER CONFIRMATION") @db.VarChar(20)
+   SALES_CHANNEL            String?   @map("SALES CHANNEL") @db.NVarChar(50)
+   Sales_Rep_ID             String?   @map("Sales Rep ID") @db.NVarChar(50)
+   AFFILIATE_ID             String?   @map("AFFILIATE ID") @db.NVarChar(50)
+   PRODUCT_DESCRIPTION      String?   @map("PRODUCT DESCRIPTION") @db.NVarChar(255)
+   SPEED_TIER               String?   @map("SPEED TIER") @db.NVarChar(50)
+   PRODUCT_SPEED            String?   @map("PRODUCT/SPEED") @db.NVarChar(100)
+   DATE                     DateTime? @db.Date
+   LINE_DESCRIPTION         String?   @map("LINE DESCRIPTION") @db.NVarChar(500)
+   TOTAL_COMMISSION         Decimal?  @map("TOTAL COMMISSION") @db.Decimal(10, 2)
+   MANAGER                  String?   @db.NVarChar(100)
+   UNIT_COUNT               Int?      @map("UNIT COUNT")
+   Customer                 String?   @db.VarChar(20)
+   Addy                     String?   @db.VarChar(255)
+   InstallConfirmation      BigInt?
+   Account__                String?   @map("Account #") @db.VarChar(12)
+   Order_Confirmation_Orig  BigInt?   @map("Order Confirmation Orig")
+   WIP_TRANSACTION          BigInt?   @map("WIP TRANSACTION")
+   Region                   String?   @db.VarChar(50)
+   VIDEO_TIER               String?   @map("VIDEO TIER") @db.VarChar(50)
+   Disco_Date               DateTime? @map("Disco Date") @db.Date
+   Legacy_Commission_Totals Decimal?  @map("Legacy Commission Totals") @db.Decimal(10, 2)
+   Trial_Vendor_Addl_Comp   Decimal?  @map("Trial Vendor Addl Comp") @db.Decimal(10, 2)
 
    @@ignore
 }
@@ -4739,25 +4753,27 @@ model ImportClearConnect {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model ImportClearConnectPayment {
-   Seq                Int       @default(autoincrement())
-   ImportId           Int
-   Service_Provider   String?   @map("Service Provider") @db.VarChar(255)
-   Customer_Name      String?   @map("Customer Name") @db.VarChar(150)
-   Contact_First_Name String?   @map("Contact First Name") @db.VarChar(150)
-   Contact_Last_Name  String?   @map("Contact Last Name") @db.VarChar(150)
-   Account__          String?   @map("Account #") @db.VarChar(50)
-   Agent_ID           String?   @map("Agent ID") @db.VarChar(50)
-   Lead_Date          DateTime? @map("Lead Date") @db.Date
-   Lead__             String?   @map("Lead #") @db.VarChar(50)
-   Contract_Sign_Date DateTime? @map("Contract Sign Date") @db.Date
-   Order__            String?   @map("Order #") @db.VarChar(50)
-   Install_Date       DateTime? @map("Install Date") @db.Date
-   MRC                Decimal?  @db.Decimal(10, 2)
-   Rate               Decimal?  @db.Decimal(10, 1)
-   Total_Payout       Decimal?  @map("Total Payout") @db.Decimal(10, 2)
-   CreatedOn          DateTime? @default(now(), map: "DF__ImportCle__Creat__1E855E4E") @db.DateTime
-   Disconnect_Date    DateTime? @map("Disconnect Date") @db.Date
-   ProductKey         String?   @db.UniqueIdentifier
+   Seq                 Int       @default(autoincrement())
+   ImportId            Int
+   Service_Provider    String?   @map("Service Provider") @db.VarChar(255)
+   Customer_Name       String?   @map("Customer Name") @db.VarChar(150)
+   Contact_First_Name  String?   @map("Contact First Name") @db.VarChar(150)
+   Contact_Last_Name   String?   @map("Contact Last Name") @db.VarChar(150)
+   Account__           String?   @map("Account #") @db.VarChar(50)
+   Agent_ID            String?   @map("Agent ID") @db.VarChar(50)
+   Lead_Date           DateTime? @map("Lead Date") @db.Date
+   Lead__              String?   @map("Lead #") @db.VarChar(50)
+   Contract_Sign_Date  DateTime? @map("Contract Sign Date") @db.Date
+   Order__             String?   @map("Order #") @db.VarChar(50)
+   Install_Date        DateTime? @map("Install Date") @db.Date
+   MRC                 Decimal?  @db.Decimal(10, 2)
+   Rate                Decimal?  @db.Decimal(10, 1)
+   Total_Payout        Decimal?  @map("Total Payout") @db.Decimal(10, 2)
+   CreatedOn           DateTime? @default(now(), map: "DF__ImportCle__Creat__1E855E4E") @db.DateTime
+   Disconnect_Date     DateTime? @map("Disconnect Date") @db.Date
+   ProductKey          String?   @db.UniqueIdentifier
+   ProviderOrderStatus String?   @db.VarChar(50)
+   StatusKey           String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -5090,6 +5106,8 @@ model ImportDirectvCartesianInstalls {
    Original_BAN                          String?   @map("Original BAN") @db.VarChar(50)
    Reissue_Cancel_Date                   DateTime? @map("Reissue Cancel Date") @db.Date
    DIRECTV_STREAM_INDICATOR              String?   @db.VarChar(20)
+   Productkey                            String?   @db.UniqueIdentifier
+   StatusKey                             String?   @db.UniqueIdentifier
 
    @@ignore
 }
@@ -10529,6 +10547,7 @@ model ClearConnectLead {
    PaymentImportId     Int?
    DisconnectDate      DateTime? @db.Date
    CreatedOn           DateTime? @db.DateTime
+   StatusKey           String?   @db.UniqueIdentifier
 }
 
 model ComcastInstalls {
@@ -12096,7 +12115,7 @@ model ProviderInstalls {
    UpdateImportId  Int?
    CreatedOn       DateTime? @default(now(), map: "DF__ProviderI__Creat__09A0E6AF") @db.DateTime
    ModifiedOn      DateTime? @default(now(), map: "DF__ProviderI__Modif__0A950AE8") @db.DateTime
-   OrderDate       DateTime? @db.Date
+   OrderDate       DateTime  @db.Date
    PaymentImportId Int?
    Modifier        String?   @db.VarChar(50)
    Comment         String?   @db.VarChar(255)
@@ -12117,6 +12136,7 @@ model ProviderInstalls {
    Reserve4        String?   @db.VarChar(50)
    CustAddress2    String?   @db.VarChar(255)
    InKey           String?   @default(dbgenerated("newid()"), map: "DF__ProviderI__InKey__2343EA7D") @db.UniqueIdentifier
+   TransId         Int?
 
    @@id([ProviderKey, Account, ProductKey], map: "PK_ProviderInstalls")
 }
@@ -13762,6 +13782,7 @@ model OrderItemCommission {
    MarketingExpense     Decimal?  @db.Decimal(10, 2)
    CreatedOn            DateTime? @db.DateTime
    CreatedBy            String?   @db.UniqueIdentifier
+   CallCommission       Decimal?  @db.Decimal(10, 2)
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -14841,18 +14862,20 @@ model pp_UserSalesStat {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model RewardDetail {
-   RewardRowKey      String?   @db.UniqueIdentifier
-   RewardProgramKey  String?   @db.UniqueIdentifier
-   OrderKey          String?   @db.UniqueIdentifier
-   OrderItemKey      String?   @db.UniqueIdentifier
-   ProductKey        String?   @db.UniqueIdentifier
-   CreatedOn         DateTime? @default(now(), map: "DF__RewardDet__Creat__7BA00D77") @db.DateTime
-   CreatedBy         String?   @db.UniqueIdentifier
-   ModifiedOn        DateTime? @db.DateTime
-   ModifiedBy        String?   @db.UniqueIdentifier
-   IsRewardPaid      Boolean?
-   RewardPaidDate    DateTime? @db.Date
-   RewardPaidComment String?   @db.VarChar(255)
+   RewardRowKey        String?   @db.UniqueIdentifier
+   RewardProgramKey    String?   @db.UniqueIdentifier
+   OrderKey            String?   @db.UniqueIdentifier
+   OrderItemKey        String?   @db.UniqueIdentifier
+   ProductKey          String?   @db.UniqueIdentifier
+   CreatedOn           DateTime? @default(now(), map: "DF__RewardDet__Creat__7BA00D77") @db.DateTime
+   CreatedBy           String?   @db.UniqueIdentifier
+   ModifiedOn          DateTime? @db.DateTime
+   ModifiedBy          String?   @db.UniqueIdentifier
+   IsRewardPaid        Boolean?
+   RewardPaidDate      DateTime? @db.Date
+   RewardPaidComment   String?   @db.VarChar(255)
+   RewardPaidUpdatedBy String?   @db.UniqueIdentifier
+   RewardPaidUpdatedOn DateTime? @db.DateTime
 
    @@ignore
 }
@@ -14879,6 +14902,7 @@ model RewardProgramConfig {
    ModifiedBy        String?   @db.UniqueIdentifier
    ParticipantType   Int?
    RewardTypeName    String?   @db.VarChar(255)
+   RewardValue       Decimal?  @db.Decimal(10, 2)
 
    @@ignore
 }
@@ -14910,7 +14934,7 @@ model TempImport {
    SalesDate                     DateTime? @db.DateTime
    WorkOrderScheduledDate        String?   @db.NVarChar(255)
    OriginalServiceActivationDate DateTime? @db.DateTime
-   CancelDate                    String?   @db.NVarChar(255)
+   CancelDate                    DateTime? @db.DateTime
    CancelPendingDate             DateTime? @db.DateTime
    SecurityPackageType           String?   @db.NVarChar(255)
    ServiceRMR                    Float?
@@ -15266,6 +15290,83 @@ model ZPlanSource_wqVF5Cw8gEGT_21IdUVgZ_GuuyLvj2jEzYYhij21T6F {
    @@ignore
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model MissingPackages {
+   Seq         Int       @default(autoincrement())
+   RowKey      String?   @default(dbgenerated("newid()"), map: "DF__MissingPa__RowKe__6B1F8CEB") @db.UniqueIdentifier
+   ProviderKey String?   @db.UniqueIdentifier
+   Package     String?   @db.VarChar(255)
+   CreatedOn   DateTime? @default(now(), map: "DF__MissingPa__Creat__6C13B124") @db.DateTime
+
+   @@ignore
+}
+
+model pp_LeadProspect {
+   ProspectId              Int       @unique(map: "UQ__pp_LeadP__95CA0CE5AADF3B2C")
+   ProspectKey             String    @id(map: "PK__pp_LeadP__DE7760A4C30980F6") @db.UniqueIdentifier
+   LeadCreatedOn           DateTime  @db.DateTime
+   LeadCompany             String    @db.VarChar(255)
+   BundleProspectID        Int
+   CustomerFirstName       String?   @db.VarChar(255)
+   CustomerLastName        String?   @db.VarChar(255)
+   Address                 String?   @db.VarChar(255)
+   ZipCode                 String?   @db.VarChar(20)
+   Phone                   String?   @db.VarChar(20)
+   Email                   String?   @db.VarChar(100)
+   LeadReferenceID         String?   @db.VarChar(100)
+   PropertyOwnership       String?   @db.VarChar(255)
+   InstallType             String?   @db.VarChar(50)
+   GHLContactCreatedOn     DateTime? @db.DateTime
+   GHLStatus               String?   @db.VarChar(255)
+   OCPId                   String?   @db.NVarChar(55)
+   OCPQueued               Int?
+   OCPCompleted            Int?
+   OCPLeadResponseDuration Int?
+   OCPQueuedDate           DateTime?
+   OCPCompletedDate        DateTime?
+   OCPVonageGUID           String?   @db.NVarChar(100)
+   OCPRuleId               String?   @db.NVarChar(55)
+   OCPRuleName             String?   @db.NVarChar(255)
+   OCPCompanyKey           String?   @db.UniqueIdentifier
+   OCPcompleteStatus       String?   @db.NVarChar(255)
+   OCPLeadUserKey          String?   @db.UniqueIdentifier
+   OCPLeadType             String?   @db.VarChar(55)
+   OCPCompanyName          String?   @db.VarChar(255)
+   OCPCompanyId            Int?
+   OCPLeadOwnerName        String    @db.VarChar(255)
+   OCPLeadOwnerEmail       String?   @db.VarChar(250)
+   CallbackCount           Int?
+   RequeueCount            Int?
+   OCPQueueStatus          String?   @db.NVarChar(55)
+   UserKey                 String?   @db.UniqueIdentifier
+   FirstCallDate           DateTime?
+   FirstCallMadeByName     String?   @db.VarChar(255)
+   FirstCallMadeByEmail    String?   @db.VarChar(55)
+   TotalCallsMade          Int?
+   ResponseType            String?   @db.NVarChar(55)
+   OCPDisposition          String?   @db.NVarChar(255)
+   DispositioncreatedAt    DateTime?
+   Orders                  Int?
+   OrderIds                String?   @db.VarChar(Max)
+   OrderItems              Int?
+   ConfirmedOrderItems     Int?
+   LeadTransferredOrders   Int?
+   InstalledOrderItems     Int?
+   Internet                Int?
+   TV                      Int?
+   Video                   Int?
+   Voice                   Int?
+   Wireless                Int?
+   WirelessInternet        Int?
+   Mobile                  Int?
+   Leads                   Int?
+   HomePhone               Int?
+   HomeSecurity            Int?
+   Energy                  Int?
+   Addons                  Int?
+   LastUpdatedDate         DateTime  @db.DateTime
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -15516,6 +15617,8 @@ model LdLead {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
    updatedAt DateTime @updatedAt
+
+   isUpdated Boolean @default(false)
 
    ProspectKey String  @unique
    VonageGUID  String? @db.NVarChar(100)

@@ -11,14 +11,13 @@
 	import NotesModal from './components/NotesModal.svelte';
 	import SelectTimezone from '../rules/rule-config/components/SelectTimezone.svelte';
 
-	$: ({ connectionType, tab, timezone, viewMode, queuedLeads, completedLeads } = $lead);
+	$: ({ tab, timezone, viewMode, queuedLeads, completedLeads } = $lead);
 	const { roleType } = $auth;
 	let showSelectTimezone = false;
 
 	onMount(lead.init);
 
 	afterUpdate(() => {
-		$page.url.searchParams.set('connection', connectionType);
 		$page.url.searchParams.set('type', tab);
 		window.history.replaceState(history.state, '', $page.url.toString());
 	});
@@ -69,21 +68,6 @@
 <div class="px-16 mx-auto mb-20">
 	<div class="flex justify-between items-end">
 		<div class="text-3xl font-bold flex items-end gap-2 flex-grow">
-			<button
-				class="btn btn-sm btn-ghost"
-				on:click={() => {
-					$lead.connectionType = connectionType === 'http' ? 'ws' : 'http';
-					$page.url.searchParams.set('connection', $lead.connectionType);
-					window.history.replaceState(history.state, '', $page.url.toString());
-					lead.init();
-				}}
-			>
-				<Icon
-					icon={connectionType === 'ws' ? 'wpf:connected' : 'wpf:disconnected'}
-					class={connectionType === 'ws' ? 'text-success' : 'text-error'}
-					width={20}
-				/>
-			</button>
 			{#if tab === 'queued'}
 				Queued Leads:
 				<span class="font-normal font-mono text-2xl">({queuedLeads?.length ?? 0})</span>
@@ -102,7 +86,7 @@
 				{/each}
 			</select>
 
-			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={() => lead.init()}>
+			<button class="btn btn-sm btn-square btn-ghost mr-2" on:click={lead.init}>
 				<Icon icon="mdi:refresh" class="text-info" width={22} />
 			</button>
 		</div>

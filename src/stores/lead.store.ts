@@ -10,17 +10,16 @@ import { trpcClientErrorHandler } from '../trpc/trpcErrorhandler';
 import superjson from 'superjson';
 import { audioAlert } from '$lib/client/audioAlert';
 import moment from 'moment-timezone';
+import { socketURL } from '$lib/socketURL';
 
 type CompletedLead = inferProcedureOutput<AppRouter['lead']['getCompleted']>[number];
 
 export interface Lead {
-	connectionType: 'http' | 'ws';
 	tab: 'queued' | 'completed';
 	timezone: string;
 	viewMode: boolean;
 
 	socket?: WebSocket;
-	interval?: NodeJS.Timeout;
 
 	queuedLeads?: QueuedLead[];
 	completedLeads?: CompletedLead[];
@@ -32,7 +31,6 @@ export interface Lead {
 
 export const lead = (() => {
 	const initState: Lead = {
-		connectionType: 'http',
 		tab: 'queued',
 		timezone: moment.tz.guess(),
 		viewMode: false,
@@ -45,54 +43,51 @@ export const lead = (() => {
 	setInterval(() => update((state) => ({ ...state, today: new Date() })), 1000);
 
 	const init = async () => {
-		closeHttp();
-		closeSocket();
-
 		const $page = get(page);
-		const connectionType = ($page.url.searchParams.get('connection') as 'http' | 'ws') ?? 'http';
 		const tab = ($page.url.searchParams.get('type') as 'queued' | 'completed') ?? 'queued';
 
-		update((state) => ({
-			...state,
-			connectionType,
-			tab,
+		// Reset Socket
+		update((state) => {
+			state.socket?.close();
 
-			socket: undefined,
-			interval: undefined,
+			return {
+				...state,
+				tab,
+				socket: undefined,
+				interval: undefined,
+				queuedLeads: undefined,
+				completedLeads: undefined
+			};
+		});
 
-			queuedLeads: undefined,
-			completedLeads: undefined
-		}));
-
-		// if (connectionType === 'http') await initHttp();
-		// else initSocket();
-		initSocket();
-	};
-
-	const initSocket = () => {
-		// const socket = new WebSocket('ws://localhost:8000');
-		const socket = new WebSocket('wss://lead-distribution-ws-1vtw.onrender.com');
+		// Init Socket
+		const socket = new WebSocket(socketURL);
 		socket.onopen = messageSocket;
 		socket.onmessage = onMessageSocket;
 		update((state) => ({ ...state, socket }));
 	};
 
 	const messageSocket = () => {
+		const { socket } = get(lead);
+		if (!socket) return;
+
+		// Generate Message
 		const {
-			user: { UserKey },
+			user: { UserKey, CompanyKey },
 			roleType
 		} = get(auth);
-		const { socket } = get(lead);
 		const message = {
-			type: 'getLeads',
-			data: { UserKey, roleType }
+			type: 'init',
+			data: { UserKey, CompanyKey, roleType }
 		};
-		if (socket) socket.send(JSON.stringify(message));
+
+		// Send Message Interval
+		socket.send(JSON.stringify(message));
 	};
 
 	const onMessageSocket = async (event: MessageEvent) => {
 		const { type, data } = superjson.parse(event.data) as { type: string; data: unknown };
-		if (type === 'getLeads') {
+		if (type === 'queuedLeads') {
 			const { leads } = data as { leads: QueuedLead[] };
 			updateQueuedLeads(leads);
 		}
@@ -101,39 +96,6 @@ export const lead = (() => {
 			audioAlert(message);
 			ui.setToast({ title: message, alertClasses: 'alert-info' });
 		}
-	};
-
-	const closeSocket = () =>
-		update((state) => {
-			state.socket?.close();
-			return { ...state, socket: undefined };
-		});
-
-	const initHttp = async () => {
-		await fetchQueuedLeads();
-		fetchCompletedLeads();
-		const interval = setInterval(fetchQueuedLeads, 10000);
-		update((state) => ({ ...state, interval }));
-	};
-
-	const closeHttp = () =>
-		update((state) => {
-			clearInterval(state.interval);
-			return { ...state, interval: undefined };
-		});
-
-	const fetchQueuedLeads = async () => {
-		const {
-			user: { UserKey },
-			roleType
-		} = get(auth);
-		const $page = get(page);
-
-		const queuedLeads = (await trpc($page)
-			.lead.getQueued.query({ UserKey, roleType })
-			.catch((e) => trpcClientErrorHandler(e, undefined, { showToast: false }))) as QueuedLead[];
-
-		updateQueuedLeads(queuedLeads);
 	};
 
 	const updateQueuedLeads = async (newLeads: QueuedLead[]) => {
@@ -182,5 +144,5 @@ export const lead = (() => {
 		update((state) => ({ ...state, completedLeads }));
 	};
 
-	return { subscribe, set, update, init, fetchQueuedLeads, fetchCompletedLeads };
+	return { subscribe, set, update, init, fetchCompletedLeads };
 })();

@@ -1,4 +1,5 @@
 import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
+import { updateLeadFunc } from './updateLead';
 
 export const unCompleteLead = async (ProspectKey: string) => {
 	// Get Completed Lead Data
@@ -21,6 +22,7 @@ export const unCompleteLead = async (ProspectKey: string) => {
 		data: {
 			id,
 			createdAt,
+			isUpdated: true,
 			ruleId,
 			VonageGUID,
 			notes,
@@ -30,6 +32,7 @@ export const unCompleteLead = async (ProspectKey: string) => {
 		},
 		select: { id: true }
 	});
+	await updateLeadFunc(ProspectKey)({});
 
 	// Update Lead Data
 	await Promise.all(

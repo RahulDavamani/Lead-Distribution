@@ -2,6 +2,7 @@ export interface QueuedLead {
 	id: string;
 	createdAt: Date;
 	updatedAt: Date;
+	isUpdated: boolean;
 	ProspectKey: string;
 	VonageGUID: string | null;
 	ruleId: string | null;
@@ -9,15 +10,16 @@ export interface QueuedLead {
 	notes: string;
 	isPicked: boolean;
 	overrideCallback: boolean;
+	leadResponseTime: number | null;
 
-	rule: {
-		id: string;
-		name: string;
-		supervisors: {
-			UserKey: string;
-			isRequeue: boolean;
-		}[];
-	} | null;
+	rule:
+		| {
+				id: string;
+				name: string;
+				operators: { UserKey: string; assignNewLeads: boolean; assignCallbackLeads: boolean }[];
+				supervisors: { UserKey: string; isRequeue: boolean }[];
+		  }
+		| undefined;
 
 	notificationProcesses: {
 		createdAt: Date;
@@ -59,8 +61,8 @@ export interface QueuedLead {
 	company:
 		| {
 				CompanyName?: string | null;
-				timezone: string;
-				workingHours: {
+				timezone?: string;
+				workingHours?: {
 					id: string;
 					start: Date;
 					end: Date;
@@ -76,6 +78,4 @@ export interface QueuedLead {
 				createdAt: Date;
 		  }
 		| undefined;
-
-	leadResponseTime: number | undefined;
 }

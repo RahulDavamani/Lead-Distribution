@@ -1,8 +1,31 @@
 import { procedure, router } from '../server';
-import { getLeadResponseTime } from './lead/helpers/getLeadResponseTime';
+import { scheduleCallback } from './lead/helpers/scheduleCallback';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
+		const leads = await prisma.ldLead.findMany({
+			where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { gt: new Date() } } } },
+			select: {
+				ProspectKey: true,
+				notificationProcesses: {
+					orderBy: { createdAt: 'desc' },
+					take: 1,
+					select: { createdAt: true }
+				}
+			}
+		});
+		for (const { ProspectKey, notificationProcesses } of leads) {
+			scheduleCallback(ProspectKey, notificationProcesses[0].createdAt, undefined);
+		}
+
+		// const oldLeads = await prisma.ldLead.findMany({
+		// 	where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
+		// 	select: { ProspectKey: true }
+		// });
+		// for (const { ProspectKey } of oldLeads) {
+		// 	scheduleCallback(ProspectKey, new Date('2024-06-19T16:00:00.000Z'), undefined);
+		// }
+
 		// const leads = await prisma.ldLead.findMany({
 		// 	where: { leadResponseTime: null },
 		// 	select: { updatedAt: true, ProspectKey: true, leadResponseTime: true }
