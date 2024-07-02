@@ -33,6 +33,7 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			ProspectId: true,
 			CustomerFirstName: true,
 			CustomerLastName: true,
+			Phone: true,
 			Address: true,
 			ZipCode: true,
 			CompanyKey: true
@@ -69,21 +70,6 @@ export const getCompletedLeads = async (UserKey: string, roleType: RoleType, dat
 			: []
 	) as { Guid: string; Duration: string | null }[];
 
-	// const allWorkingHours = await prisma.ldRuleCompanyWorkingHours.findMany({
-	// 	where: {
-	// 		ruleCompany: {
-	// 			ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },
-	// 			CompanyKey: { in: leads.map((lead) => lead.CompanyKey!).filter(Boolean) }
-	// 		}
-	// 	},
-	// 	select: {
-	// 		id: true,
-	// 		ruleCompany: { select: { ruleId: true, CompanyKey: true } },
-	// 		start: true,
-	// 		end: true,
-	// 		days: true
-	// 	}
-	// });
 	const ruleCompanies = await prisma.ldRuleCompany.findMany({
 		where: {
 			ruleId: { in: leads.map((lead) => lead.ruleId!).filter(Boolean) },

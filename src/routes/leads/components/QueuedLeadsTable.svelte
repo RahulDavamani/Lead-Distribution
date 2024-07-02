@@ -104,18 +104,13 @@
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
 	$: displayLeads = queuedLeads.filter(
-		({ prospect: { CompanyName, CustomerFirstName, CustomerLastName, Address, ZipCode }, notificationProcesses }) => {
-			const value = [CompanyName, CustomerFirstName, CustomerLastName, Address, ZipCode]
+		({ prospect: { ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode } }) => {
+			const value = [ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode]
 				.join('')
 				.replaceAll(' ', '')
 				.toLowerCase();
 			const searchValue = tableOpts.search.replaceAll(' ', '').toLowerCase();
-			return (
-				value.includes(searchValue) &&
-				($lead.affiliate ? CompanyName === $lead.affiliate : true) &&
-				notificationProcesses[0].status === 'SCHEDULED' &&
-				notificationProcesses[0].createdAt < today
-			);
+			return value.includes(searchValue) && ($lead.affiliate ? CompanyName === $lead.affiliate : true);
 		}
 	);
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);

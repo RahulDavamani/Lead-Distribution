@@ -49,12 +49,13 @@ export interface QueuedLead {
 	isNewLead: boolean;
 
 	prospect: {
-		CompanyName: string | undefined;
-		CompanyKey: string | null;
-		Address: string | null;
 		ProspectId: number;
+		CompanyKey: string | null;
+		CompanyName: string | undefined;
 		CustomerFirstName: string | null;
 		CustomerLastName: string | null;
+		Phone: string | null;
+		Address: string | null;
 		ZipCode: string | null;
 	};
 

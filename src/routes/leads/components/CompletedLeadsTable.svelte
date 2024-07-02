@@ -76,9 +76,14 @@
 	$: displayLeads = completedLeads
 		.filter((lead) => (completeStatusSelect ? lead.completeStatus === completeStatusSelect : true))
 		.filter(
-			({ prospect: { CompanyKey: _, ProspectId: __, ...values } }) =>
-				Object.values(values).join().toLowerCase().includes(tableOpts.search.toLowerCase()) &&
-				($lead.affiliate ? values.CompanyName === $lead.affiliate : true)
+			({ prospect: { ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode } }) => {
+				const value = [ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode]
+					.join('')
+					.replaceAll(' ', '')
+					.toLowerCase();
+				const searchValue = tableOpts.search.replaceAll(' ', '').toLowerCase();
+				return value.includes(searchValue) && ($lead.affiliate ? CompanyName === $lead.affiliate : true);
+			}
 		);
 </script>
 
