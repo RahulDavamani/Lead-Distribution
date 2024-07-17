@@ -26,14 +26,8 @@ export interface QueuedLead {
 		callbackNum: number;
 		requeueNum: number;
 		status: string;
-		notificationAttempts: {
-			UserKey: string | null;
-			attempt: { num: number } | null;
-		}[];
-		escalations: {
-			UserKey: string | null;
-			escalation: { num: number } | null;
-		}[];
+		notificationAttempts: { num: number }[];
+		escalations: { num: number }[];
 	}[];
 
 	calls: {

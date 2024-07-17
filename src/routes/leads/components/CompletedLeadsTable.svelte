@@ -90,13 +90,13 @@
 <div class="flex justify-between items-center mb-2">
 	<div class="flex text-sm">
 		<div>
-			<span class="font-semibold">Avg. Lead Response Time:</span>
-			<span class="">{timeToText(avgLeadResponseTime)}</span>
+			<span class="font-semibold">Avg. Lead Response Time :</span>
+			<span class="font-mono ml-2">{timeToText(avgLeadResponseTime)}</span>
 		</div>
 		<div class="divider divider-horizontal" />
 		<div>
-			<span class="font-semibold">Avg. Customer Talk Time:</span>
-			<span class="">{timeToText(avgCustomerTalkTime)}</span>
+			<span class="font-semibold">Avg. Customer Talk Time :</span>
+			<span class="font-mono ml-2">{timeToText(avgCustomerTalkTime)}</span>
 		</div>
 	</div>
 	<div class="flex flex-grow justify-end gap-4">
@@ -136,7 +136,9 @@
 					<option value={show}>{show}</option>
 				{/each}
 			</select>
-			Entries
+			of
+			<span class="font-mono">{displayLeads.length}</span>
+			entries
 		</div>
 	</FormControl>
 

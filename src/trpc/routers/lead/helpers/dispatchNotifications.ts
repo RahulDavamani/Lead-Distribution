@@ -99,7 +99,7 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 
 		// Log Notification Attempt
 		await prisma.ldLeadNotificationAttempt
-			.create({ data: { notificationProcessId: process.id, attemptId, message, UserKey } })
+			.create({ data: { notificationProcessId: process.id, attemptId, message, num, UserKey } })
 			.catch(prismaErrorHandler);
 		await updateLead({ log: { log } });
 
@@ -149,7 +149,7 @@ export const dispatchNotifications = async (ProspectKey: string, callbackNum: nu
 		// Log Escalation
 		await prisma.ldLeadEscalation
 			.create({
-				data: { notificationProcessId: process.id, escalationId, message, UserKey }
+				data: { notificationProcessId: process.id, escalationId, message, num, UserKey }
 			})
 			.catch(prismaErrorHandler);
 		await updateLead({ log: { log } });

@@ -15,8 +15,66 @@ export const testRouter = router({
 			}
 		});
 		for (const { ProspectKey, notificationProcesses } of leads) {
-			scheduleCallback(ProspectKey, notificationProcesses[0].createdAt, undefined);
+			scheduleCallback(ProspectKey, new Date(notificationProcesses[0].createdAt.getTime() + 1000), undefined);
 		}
+
+		// const leads = (
+		// 	await prisma.ldLead.findMany({
+		// 		select: {
+		// 			rule: {
+		// 				select: { _count: { select: { escalations: true } } }
+		// 			},
+		// 			notificationProcesses: {
+		// 				orderBy: [{ callbackNum: 'desc' }, { requeueNum: 'desc' }],
+		// 				take: 1,
+		// 				select: {
+		// 					escalations: {
+		// 						orderBy: { createdAt: 'desc' },
+		// 						take: 1,
+		// 						select: { id: true, updatedAt: true, num: true, message: true }
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	})
+		// ).filter((lead) => lead.notificationProcesses[0]?.escalations[0]?.num === 0);
+		// for (const { notificationProcesses, rule } of leads) {
+		// 	const escalation = notificationProcesses[0]?.escalations[0];
+		// 	if (!escalation) return;
+		// 	const { id, updatedAt, message } = escalation;
+		// 	console.log(message);
+		// 	await prisma.ldLeadEscalation.update({
+		// 		where: { id },
+		// 		data: { updatedAt, num: rule?._count.escalations }
+		// 	});
+		// 	// if (message.includes('Attempt')) {
+		// 	// 	const i = message.indexOf('Attempt');
+		// 	// 	const num = Number(message[i + 9]);
+		// 	// 	console.log(message);
+		// 	// 	console.log(num);
+		// 	// 	await prisma.ldLeadEscalation.update({
+		// 	// 		where: { id },
+		// 	// 		data: { updatedAt, num }
+		// 	// 	});
+		// 	// }
+		// }
+		// const notificationAttempts = await prisma.ldLeadEscalation.findMany({
+		// 	where: {
+		// 		notificationProcess: { leadId: { not: null } },
+		// 		escalationId: { not: null }
+		// 	},
+		// 	select: { id: true, updatedAt: true, escalation: { select: { num: true } } }
+		// });
+		// console.log(notificationAttempts.length);
+		// let i = 1;
+		// for (const { id, updatedAt, escalation } of notificationAttempts) {
+		// 	await prisma.ldLeadEscalation.update({
+		// 		where: { id },
+		// 		data: { updatedAt, num: escalation?.num ?? 0 }
+		// 	});
+		// 	console.log(i);
+		// 	i++;
+		// }
 
 		// const oldLeads = await prisma.ldLead.findMany({
 		// 	where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
@@ -25,7 +83,6 @@ export const testRouter = router({
 		// for (const { ProspectKey } of oldLeads) {
 		// 	scheduleCallback(ProspectKey, new Date('2024-06-19T16:00:00.000Z'), undefined);
 		// }
-
 		// const leads = await prisma.ldLead.findMany({
 		// 	where: { leadResponseTime: null },
 		// 	select: { updatedAt: true, ProspectKey: true, leadResponseTime: true }

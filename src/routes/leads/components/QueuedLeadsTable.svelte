@@ -94,8 +94,8 @@
 		};
 	};
 
-	$: agentFirstNewLead = queuedLeads.findIndex((lead) => lead.isNewLead && !lead.isPicked);
-
+	let showNewLeads = true;
+	let showCallbackLeads = true;
 	let tableOpts = {
 		search: '',
 		page: 1,
@@ -103,7 +103,7 @@
 	};
 	$: startIndex = (tableOpts.page - 1) * tableOpts.show;
 	$: endIndex = startIndex + tableOpts.show;
-	$: displayLeads = queuedLeads.filter(
+	$: searchLeads = queuedLeads.filter(
 		({ prospect: { ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode } }) => {
 			const value = [ProspectId, CompanyName, CustomerFirstName, CustomerLastName, Phone, Address, ZipCode]
 				.join('')
@@ -113,23 +113,30 @@
 			return value.includes(searchValue) && ($lead.affiliate ? CompanyName === $lead.affiliate : true);
 		}
 	);
+	$: displayLeads = searchLeads.filter(({ isNewLead }) => (isNewLead ? showNewLeads : showCallbackLeads));
 	$: firstCallback = displayLeads.slice(startIndex, endIndex).findIndex((lead) => !lead.isNewLead);
 </script>
 
-<div class="flex text-sm mb-2 gap-4">
-	<div>
-		<span class="font-semibold">New Leads:</span>
-		<span>{queuedLeads.filter(({ isNewLead }) => isNewLead).length}</span>
-	</div>
-	<div>
-		<span class="font-semibold">Callback Leads:</span>
-		<span>{queuedLeads.filter(({ isNewLead }) => !isNewLead).length}</span>
-	</div>
+<div class="flex text-sm mb-4 gap-8">
+	<button
+		class="btn btn-sm btn-outline btn-primary {!showNewLeads && 'btn-disabled pointer-events-auto'}"
+		on:click={() => (showNewLeads = !showNewLeads)}
+	>
+		<span>New Leads :</span>
+		<span class="font-mono">{searchLeads.filter(({ isNewLead }) => isNewLead).length}</span>
+	</button>
+	<button
+		class="btn btn-sm btn-outline btn-primary {!showCallbackLeads && 'btn-disabled pointer-events-auto'}"
+		on:click={() => (showCallbackLeads = !showCallbackLeads)}
+	>
+		<span>Callback Leads :</span>
+		<span class="font-mono">{searchLeads.filter(({ isNewLead }) => !isNewLead).length}</span>
+	</button>
 </div>
 
 <div class="text-sm mb-2">
-	<span class="font-semibold">Avg. Lead Time Elapsed:</span>
-	<span class="">{timeToText(avgLeadResponseTime)}</span>
+	<span class="font-semibold">Avg. Lead Time Elapsed :</span>
+	<span class="font-mono ml-2">{timeToText(avgLeadResponseTime)}</span>
 </div>
 
 <div class="flex justify-between items-center">
@@ -141,7 +148,9 @@
 					<option value={show}>{show}</option>
 				{/each}
 			</select>
-			Entries
+			of
+			<span class="font-mono">{displayLeads.length}</span>
+			entries
 		</div>
 	</FormControl>
 
@@ -208,9 +217,7 @@
 				{@const disableViewLead =
 					(roleType === 'AGENT' &&
 						latestCall?.UserKey !== UserKey &&
-						(isNewLead
-							? i !== agentFirstNewLead
-							: notificationProcesses[0]?.createdAt.toDateString() !== today.toDateString())) ||
+						(isNewLead ? false : notificationProcesses[0]?.createdAt.toDateString() !== today.toDateString())) ||
 					(isPicked ? latestCall?.UserKey !== UserKey : false)}
 
 				{@const canRequeue =
@@ -326,9 +333,9 @@
 								{:else if notificationProcesses[0].status === 'CANCELLED'}
 									Cancelled
 								{:else if notificationProcesses[0].escalations.length > 0}
-									Escalation #{notificationProcesses[0].escalations[0].escalation?.num}
+									Escalation #{notificationProcesses[0].escalations[0].num}
 								{:else if notificationProcesses[0].notificationAttempts.length > 0}
-									Attempt #{notificationProcesses[0].notificationAttempts[0].attempt?.num}
+									Attempt #{notificationProcesses[0].notificationAttempts[0].num}
 								{/if}
 							{/if}
 						</div>

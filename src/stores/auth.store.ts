@@ -40,11 +40,11 @@ export const auth = (() => {
 				const user = (await res.json()) as Auth['user'];
 				console.log('User: ', user);
 
-				const roleType = user?.userRole.find(({ ID }) => [5, 9].includes(ID))
+				const roleType = user?.userRole.find(({ ID }) => [5, 9, 101].includes(ID))
 					? 'ADMIN'
 					: user?.userRole.find(({ ID }) => [41, 43, 44].includes(ID))
 						? 'SUPERVISOR'
-						: user?.userRole.find(({ ID }) => [42].includes(ID))
+						: user?.userRole.find(({ ID }) => [42, 102].includes(ID))
 							? 'AGENT'
 							: null;
 

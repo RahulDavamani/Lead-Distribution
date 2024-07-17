@@ -1,5 +1,4 @@
 import type { Prisma } from '@prisma/client';
-import prismaErrorHandler from '../../../../prisma/prismaErrorHandler';
 import WebSocket from 'ws';
 import { socketURL } from '$lib/socketURL';
 

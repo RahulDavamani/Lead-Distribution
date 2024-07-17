@@ -3670,7 +3670,7 @@ model ImportADTLead {
    Call_Destination           String?   @db.VarChar(30)
    Inquiry_Date               DateTime? @db.Date
    Destination_Skill_A        String?   @db.VarChar(50)
-   Call_Disposition_A         String?   @db.VarChar(50)
+   Call_Disposition_A         String?   @db.VarChar(100)
    Call_Answer_Agent_A        String?   @db.VarChar(50)
    Call_Skill_Duration_A      String?   @db.VarChar(50)
    Total_Talktime_Duration_A  String?   @db.VarChar(50)
@@ -3696,6 +3696,20 @@ model ImportADTLead {
    MRKTG_GENERIC_CD           String?   @db.VarChar(100)
    DNIS_BUSN_SEG_CD           String?   @db.VarChar(100)
    LIST_SEGMENT               String?   @db.VarChar(100)
+   QuoteCreatedDttm           DateTime? @db.Date
+   Ordr_Submitted_Dt          DateTime? @db.Date
+   Address                    String?   @db.VarChar(255)
+   City                       String?   @db.VarChar(100)
+   State                      String?   @db.VarChar(2)
+   SOLD_USR_TYPE              String?   @db.VarChar(50)
+   Order_Num                  String?   @db.VarChar(50)
+   Init_Ordr_Type             String?   @db.VarChar(50)
+   Ordr_Type                  String?   @db.VarChar(50)
+   Ordr_Subtype               String?   @db.VarChar(50)
+   Current_Inquiry_Status     String?   @db.VarChar(50)
+   StatusKey                  String?   @db.UniqueIdentifier
+   ProductKey                 String?   @db.UniqueIdentifier
+   DerivedStatus              String?   @db.VarChar(50)
 
    @@ignore
 }
@@ -3901,6 +3915,8 @@ model ImportAlticeOrders {
    SELF_INSTALL_FLAG        Int?
    PENDING_DISCO_FLAG       Int?
    PENDING_DISCO_ORDER_DATE DateTime? @db.Date
+   DISCO_DATE               DateTime? @db.Date
+   DAYS_TO_DISCONNECT       Int?
 
    @@ignore
 }
@@ -5498,6 +5514,7 @@ model ImportSpectrumInstallDisconnects {
    Xumo___Time_of_Sale_Count                Int?      @map("Xumo - Time of Sale Count")
    Internet_Usage                           String?   @map("Internet Usage") @db.VarChar(10)
    Internet_Usage_Date                      DateTime? @map("Internet Usage Date") @db.Date
+   DateConnectOrig                          DateTime? @db.Date
 
    @@ignore
 }
@@ -5643,6 +5660,7 @@ model ImportSpectrumPaymentSFTP {
    Xumo_Boxes_Rate        Decimal?  @map("Xumo Boxes Rate") @db.Decimal(10, 2)
    Xumo_Bounty_Amount     Decimal?  @map("Xumo Bounty Amount") @db.Decimal(10, 2)
    Xumo_Boxes             Int?      @map("Xumo Boxes")
+   Affiliate_Type         String?   @map("Affiliate Type") @db.VarChar(20)
 
    @@ignore
 }
@@ -8188,6 +8206,7 @@ model ProviderProductMap {
    IsActive              Boolean?  @default(false, map: "DF__ProviderP__IsAct__0D85BAD5")
    EffKey                String?   @db.UniqueIdentifier
    IsAddon               Boolean?
+   ImportId              Int?
 
    @@unique([ProviderKey, ProductTierProductKey, ProductTierName, EffKey], map: "UK__Provider__D47000A7C44F083E")
 }
@@ -12212,6 +12231,7 @@ model ProviderProductMapHistory {
    IsActive              Boolean?
    EffKey                String?   @db.UniqueIdentifier
    IsAddon               Boolean?
+   ImportId              Int?
 
    @@index([SysEndTime, SysStartTime], map: "ix_ProviderProductMapHistory", clustered: true)
    @@ignore
@@ -13427,6 +13447,7 @@ model RunControl {
    CreatedBy   String?   @db.UniqueIdentifier
    RunType     Int?
    IsError     Boolean?  @default(false, map: "DF__RunContro__IsErr__5A542845")
+   Priority    Int?      @default(2, map: "DF__RunContro__Prior__4519DF94")
 }
 
 model RunControlLog {
@@ -14636,6 +14657,7 @@ model OrderItemExt {
    MoneyCredited        String?   @db.VarChar(50)
    LastProviderUpdateOn DateTime? @db.Date
    CreatedOn            DateTime? @default(now(), map: "DF__OrderItem__Creat__191074CD") @db.DateTime
+   ConnectDate          DateTime? @db.Date
 }
 
 model SpectrumSaleIdPlan {
@@ -14740,6 +14762,8 @@ model ImportAlticeOrdersTemp {
    SELF_INSTALL_FLAG        Int?
    PENDING_DISCO_FLAG       Int?
    PENDING_DISCO_ORDER_DATE DateTime? @db.Date
+   DISCO_DATE               DateTime? @db.Date
+   DAYS_TO_DISCONNECT       Int?
 
    @@ignore
 }
@@ -14924,49 +14948,204 @@ model RewardProgramConfigItems {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model TempImport {
-   SalesOffice                   String?   @db.NVarChar(255)
-   OppSalesPartnerRepId          Int?
-   OppSalesPartnerRepName        String?   @db.NVarChar(255)
-   AccountName                   String?   @db.NVarChar(255)
-   OppName                       String?   @db.NVarChar(255)
-   ServiceName                   Float?    @db.Money
-   ServiceStatus                 String?   @db.NVarChar(255)
-   SalesDate                     DateTime? @db.DateTime
-   WorkOrderScheduledDate        String?   @db.NVarChar(255)
-   OriginalServiceActivationDate DateTime? @db.DateTime
-   CancelDate                    DateTime? @db.DateTime
-   CancelPendingDate             DateTime? @db.DateTime
-   SecurityPackageType           String?   @db.NVarChar(255)
-   ServiceRMR                    Float?
-   InitialContractTerm           Int?
-   ActivationFeeAmount           Int?
-   OppRecordTypeName             String?   @db.NVarChar(255)
-   OppStage                      String?   @db.NVarChar(255)
-   CreditScoreRange              String?   @db.NVarChar(255)
-   OppSalesCredit                String?   @db.NVarChar(255)
-   OppSalesCreditBadgeId         Int?
-   AccountCreatedDate            DateTime? @db.DateTime
-   OppCreatedDate                DateTime? @db.DateTime
-   ServiceCreatedDate            DateTime? @db.DateTime
-   FirstPaymentDate              DateTime? @db.DateTime
-   PreInstallSurveyCreatedDate   DateTime? @db.DateTime
-   SalesDateAndTime              DateTime? @db.DateTime
-   WorkOrderStatus               String?   @db.NVarChar(255)
-   OppSalesPartnerPhoneNumber    String?   @db.NVarChar(255)
-   OppSalesPartnerRecordId       Int?
-   CustomerFirstName             String?   @db.NVarChar(255)
-   CustomerLastName              String?   @db.NVarChar(255)
-   CustomerEmailAddress          String?   @db.NVarChar(255)
-   ContractSignerPhone           Float?
-   CustomerServiceAddress        String?   @db.NVarChar(255)
-   CustomerServiceCity           String?   @db.NVarChar(255)
-   CustomerServiceState          String?   @db.NVarChar(255)
-   CustomerServiceZipCode        String?   @db.NVarChar(255)
-   CustomerServiceCountry        String?   @db.NVarChar(255)
-   EquipCost                     Float?
-   DiscountAmount                Float?
-   PromoCodeName                 String?   @db.NVarChar(255)
-   AccountType                   String?   @db.NVarChar(255)
+   DealerID                          String?   @db.NVarChar(255)
+   Dealer_Name                       String?   @map("Dealer Name") @db.NVarChar(255)
+   Region                            String?   @db.NVarChar(255)
+   Market_Area                       String?   @map("Market Area") @db.NVarChar(255)
+   Location                          String?   @db.NVarChar(255)
+   Office                            String?   @db.NVarChar(255)
+   D2D_Company                       String?   @map("D2D Company") @db.NVarChar(255)
+   D2D_Sales_Code                    String?   @map("D2D Sales Code") @db.NVarChar(255)
+   Customer_Name                     String?   @map("Customer Name") @db.NVarChar(255)
+   PDC_Order_ID                      String?   @map("PDC Order ID") @db.NVarChar(255)
+   BAN_BTN                           String?   @map("BAN BTN") @db.NVarChar(255)
+   CBR                               String?   @db.NVarChar(255)
+   Product_Category                  String?   @map("Product Category") @db.NVarChar(255)
+   Product_Desc                      String?   @map("Product Desc") @db.NVarChar(255)
+   Taken_Date                        String?   @map("Taken Date") @db.NVarChar(255)
+   Month_Yr_Taken_Dt                 String?   @map("Month Yr Taken Dt") @db.NVarChar(255)
+   Due_Date                          String?   @map("Due Date") @db.NVarChar(255)
+   Status                            String?   @db.NVarChar(255)
+   Posted_Date                       String?   @map("Posted Date") @db.NVarChar(255)
+   Month_Yr_Posted_Dt                String?   @map("Month Yr Posted Dt") @db.NVarChar(255)
+   Sales_MRC                         Float?    @map("Sales MRC")
+   Order_Type                        String?   @map("Order Type") @db.NVarChar(255)
+   Disconnected_Date                 String?   @map("Disconnected Date") @db.NVarChar(255)
+   Cancel_Date                       String?   @map("Cancel Date") @db.NVarChar(255)
+   Month_Yr_Cancel_Dt                String?   @map("Month Yr Cancel Dt") @db.NVarChar(255)
+   Cancel_Reason                     String?   @map("Cancel Reason") @db.NVarChar(255)
+   Cancel_Description                String?   @map("Cancel Description") @db.NVarChar(255)
+   Source_System_Code                String?   @map("Source System Code") @db.NVarChar(255)
+   Service_Address_1                 String?   @map("Service Address 1") @db.NVarChar(255)
+   Service_Address_2                 String?   @map("Service Address 2") @db.NVarChar(255)
+   Service_City                      String?   @map("Service City") @db.NVarChar(255)
+   Service_State                     String?   @map("Service State") @db.NVarChar(255)
+   Service_Zip                       String?   @map("Service Zip") @db.NVarChar(255)
+   i_Phone_Sale                      Float?    @map("i Phone Sale")
+   Rep_ATTUID                        String?   @map("Rep ATTUID") @db.NVarChar(255)
+   Rep_First_Name                    String?   @map("Rep First Name") @db.NVarChar(255)
+   Rep_Last_Name                     String?   @map("Rep Last Name") @db.NVarChar(255)
+   Sales_Coach_ATTUID                String?   @map("Sales Coach ATTUID") @db.NVarChar(255)
+   Sales_Coach_First_Name            String?   @map("Sales Coach First Name") @db.NVarChar(255)
+   Sales_Coach_Last_Name             String?   @map("Sales Coach Last Name") @db.NVarChar(255)
+   Sales_Manager_ATTUID              String?   @map("Sales Manager ATTUID") @db.NVarChar(255)
+   Sales_Coach_First_Name_2          String?   @map("Sales Coach First Name-2") @db.NVarChar(255)
+   Sales_Coach_Last_Name_2           String?   @map("Sales Coach Last Name-2") @db.NVarChar(255)
+   GM_ATTUID                         String?   @map("GM ATTUID") @db.NVarChar(255)
+   GM_First_Name                     String?   @map("GM First Name") @db.NVarChar(255)
+   GM_Last_Name                      String?   @map("GM Last Name") @db.NVarChar(255)
+   VPGM_ATTUID                       String?   @map("VPGM ATTUID") @db.NVarChar(255)
+   VPGM_First_Name                   String?   @map("VPGM First Name") @db.NVarChar(255)
+   VPGM_Last_Name                    String?   @map("VPGM Last Name") @db.NVarChar(255)
+   Regional_President_ATTUID         String?   @map("Regional President ATTUID") @db.NVarChar(255)
+   Regional_President_First_Name     String?   @map("Regional President First Name") @db.NVarChar(255)
+   Regional_President_Last_Name      String?   @map("Regional President Last Name") @db.NVarChar(255)
+   CHANNEL                           String?   @db.NVarChar(255)
+   Qty                               Float?
+   Submitted_Product_Category        String?   @map("Submitted Product Category") @db.NVarChar(255)
+   Submitted_Product_Desc            String?   @map("Submitted Product Desc") @db.NVarChar(255)
+   Submitted_Sales_MRC               Float?    @map("Submitted Sales MRC")
+   ELU_ID                            String?   @map("ELU ID") @db.NVarChar(255)
+   Customer_Email                    String?   @map("Customer Email") @db.NVarChar(255)
+   Migration_Indicator               String?   @map("Migration Indicator") @db.NVarChar(255)
+   Customer_Region                   String?   @map("Customer Region") @db.NVarChar(255)
+   Customer_Market                   String?   @map("Customer Market") @db.NVarChar(255)
+   Customer_DMA                      String?   @map("Customer DMA") @db.NVarChar(255)
+   CLLI                              String?   @db.NVarChar(255)
+   DA                                String?   @db.NVarChar(255)
+   ELU_ID_2                          String?   @map("ELU ID-2") @db.NVarChar(255)
+   Global_Location_ID                String?   @map("Global Location ID") @db.NVarChar(255)
+   ACC_Indicator                     String?   @map("ACC Indicator") @db.NVarChar(255)
+   ACC_Property_ID                   Float?    @map("ACC Property ID")
+   ACC_Property_Name                 String?   @map("ACC Property Name") @db.NVarChar(255)
+   ACC_Report_Indicator              String?   @map("ACC Report Indicator") @db.NVarChar(255)
+   Home_Solutions_Region             String?   @map("Home Solutions Region") @db.NVarChar(255)
+   Home_Solutions_Market             String?   @map("Home Solutions Market") @db.NVarChar(255)
+   Home_Solutions_Location           String?   @map("Home Solutions Location") @db.NVarChar(255)
+   Taken_Order_Timestamp             String?   @map("Taken Order Timestamp") @db.NVarChar(255)
+   Order_Form                        String?   @map("Order Form") @db.NVarChar(255)
+   Unified_Billing_Indicator         String?   @map("Unified Billing Indicator") @db.NVarChar(255)
+   Dwelling_Type                     String?   @map("Dwelling Type") @db.NVarChar(255)
+   Typist_ID                         String?   @map("Typist ID") @db.NVarChar(255)
+   Original_BAN                      String?   @map("Original BAN") @db.NVarChar(255)
+   Disconnect_Reason                 String?   @map("Disconnect Reason") @db.NVarChar(255)
+   Customer_Tenure                   Float?    @map("Customer Tenure")
+   DTV_BAN                           String?   @map("DTV BAN") @db.NVarChar(255)
+   Submitted_USOC                    String?   @map("Submitted USOC") @db.NVarChar(255)
+   First_Available_Date              String?   @map("First Available Date") @db.NVarChar(255)
+   Customer_Location_ID              Float?    @map("Customer Location ID")
+   First_Streaming_Date              DateTime? @map("First Streaming Date") @db.DateTime
+   In_Out_Footprint_Flag             String?   @map("In Out Footprint Flag") @db.NVarChar(255)
+   Max_Internet_Speed                String?   @map("Max Internet Speed") @db.NVarChar(255)
+   Network_Transport_Type            String?   @map("Network Transport Type") @db.NVarChar(255)
+   Credit_Score_Category             String?   @map("Credit Score Category") @db.NVarChar(255)
+   Exclusive_Dealer_Flag             String?   @map("Exclusive Dealer Flag") @db.NVarChar(255)
+   Distributor                       String?   @db.NVarChar(255)
+   Product_Flags                     String?   @map("Product Flags") @db.NVarChar(255)
+   Auto_Bill_Pay_Indicator           String?   @map("Auto Bill Pay Indicator") @db.NVarChar(255)
+   Corp_ID                           String?   @map("Corp ID") @db.NVarChar(255)
+   Third_Party_Bundle_Indicator      String?   @map("Third Party Bundle Indicator") @db.NVarChar(255)
+   Third_Party_Bundle_LEC_Name       String?   @map("Third Party Bundle LEC Name") @db.NVarChar(255)
+   Advanced_Receiver_Services        String?   @map("Advanced Receiver Services") @db.NVarChar(255)
+   Fulfillment_Indicator             String?   @map("Fulfillment Indicator") @db.NVarChar(255)
+   ALOC                              String?   @db.NVarChar(255)
+   Dealer_ID                         String?   @map("Dealer ID") @db.NVarChar(255)
+   Retail_Store_ID                   String?   @map("Retail Store ID") @db.NVarChar(255)
+   DP_ID                             String?   @map("DP ID") @db.NVarChar(255)
+   Original_Install_Time             String?   @map("Original Install Time") @db.NVarChar(255)
+   Current_Due_Date                  String?   @map("Current Due Date") @db.NVarChar(255)
+   Current_Install_Time              String?   @map("Current Install Time") @db.NVarChar(255)
+   Access_Card                       String?   @map("Access Card") @db.NVarChar(255)
+   Serial_Number                     String?   @map("Serial Number") @db.NVarChar(255)
+   Master_Dealer_ID                  String?   @map("Master Dealer ID") @db.NVarChar(255)
+   Master_Dealer_Name                String?   @map("Master Dealer Name") @db.NVarChar(255)
+   Third_Party_Bundle_Status         String?   @map("Third Party Bundle Status") @db.NVarChar(255)
+   Third_Party_Bundle_Type           String?   @map("Third Party Bundle Type") @db.NVarChar(255)
+   Third_Party_Bundle_Create_Date    String?   @map("Third Party Bundle Create Date") @db.NVarChar(255)
+   Wireless_BAN                      String?   @map("Wireless BAN") @db.NVarChar(255)
+   Wireless_Line_Number              String?   @map("Wireless Line Number") @db.NVarChar(255)
+   Wireless_Ship_Date                String?   @map("Wireless Ship Date") @db.NVarChar(255)
+   Market_Source_Code                String?   @map("Market Source Code") @db.NVarChar(255)
+   Posted_USOC                       String?   @map("Posted USOC") @db.NVarChar(255)
+   Latitude                          String?   @db.NVarChar(255)
+   Longitude                         String?   @db.NVarChar(255)
+   NAM2_ATTUID                       String?   @map("NAM2 ATTUID") @db.NVarChar(255)
+   NAM2_First_Name                   String?   @map("NAM2 First Name") @db.NVarChar(255)
+   NAM2_Last_Name                    String?   @map("NAM2 Last Name") @db.NVarChar(255)
+   GEO_TAM_ATTUID                    String?   @map("GEO TAM ATTUID") @db.NVarChar(255)
+   GEO_TAM_First_Name                String?   @map("GEO TAM First Name") @db.NVarChar(255)
+   GEO_TAM_Last_Name                 String?   @map("GEO TAM Last Name") @db.NVarChar(255)
+   GEO_RSM_ATTUID                    String?   @map("GEO RSM ATTUID") @db.NVarChar(255)
+   GEO_RSM_First_Name                String?   @map("GEO RSM First Name") @db.NVarChar(255)
+   GEO_RSM_Last_Name                 String?   @map("GEO RSM Last Name") @db.NVarChar(255)
+   GEO_DIR_ATTUID                    String?   @map("GEO DIR ATTUID") @db.NVarChar(255)
+   GEO_DIR_First_Name                String?   @map("GEO DIR First Name") @db.NVarChar(255)
+   GEO_DIR_Last_Name                 String?   @map("GEO DIR Last Name") @db.NVarChar(255)
+   Retail_Store_Name                 String?   @map("Retail Store Name") @db.NVarChar(255)
+   New_Channel                       String?   @map("New Channel") @db.NVarChar(255)
+   DP_Loc_Address_1                  String?   @map("DP Loc Address 1") @db.NVarChar(255)
+   DP_Loc_Address_2                  String?   @map("DP Loc Address 2") @db.NVarChar(255)
+   DP_Loc_City                       String?   @map("DP Loc City") @db.NVarChar(255)
+   DP_Loc_State                      String?   @map("DP Loc State") @db.NVarChar(255)
+   DP_Loc_Zip                        String?   @map("DP Loc Zip") @db.NVarChar(255)
+   T_C_State                         String?   @map("T C State") @db.NVarChar(255)
+   Attempted_Date                    String?   @map("Attempted Date") @db.NVarChar(255)
+   IMEI                              String?   @db.NVarChar(255)
+   Common_Order_ID                   String?   @map("Common Order ID") @db.NVarChar(255)
+   Reissue_New_Take_Date             String?   @map("Reissue New Take Date") @db.NVarChar(255)
+   Reissue_Old_Cancel_Date           String?   @map("Reissue Old Cancel Date") @db.NVarChar(255)
+   Reissue_New_OMS_Order_ID          String?   @map("Reissue New OMS Order ID") @db.NVarChar(255)
+   BYOD_Indicator                    String?   @map("BYOD Indicator") @db.NVarChar(255)
+   DF_Indicator                      String?   @map("DF Indicator") @db.NVarChar(255)
+   High_Risk_Indicator               String?   @map("High Risk Indicator") @db.NVarChar(255)
+   High_Risk_Reason                  String?   @map("High Risk Reason") @db.NVarChar(255)
+   Postpaid_Order_Type               String?   @map("Postpaid Order Type") @db.NVarChar(255)
+   Port_Status                       String?   @map("Port Status") @db.NVarChar(255)
+   Tech_Required                     String?   @map("Tech Required") @db.NVarChar(255)
+   Installation_Type                 String?   @map("Installation Type") @db.NVarChar(255)
+   Reissued_Order_Sales_Code         String?   @map("Reissued Order Sales Code") @db.NVarChar(255)
+   Reissued_Order_Channel            String?   @map("Reissued Order Channel") @db.NVarChar(255)
+   High_Risk_Days                    String?   @map("High Risk Days") @db.NVarChar(255)
+   No_Queue_Days                     String?   @map("No Queue Days") @db.NVarChar(255)
+   Ops_Days                          String?   @map("Ops Days") @db.NVarChar(255)
+   T2_Days                           String?   @map("T2 Days") @db.NVarChar(255)
+   T_C_Days                          String?   @map("T C Days") @db.NVarChar(255)
+   Device_Make                       String?   @map("Device Make") @db.NVarChar(255)
+   Device_Model                      String?   @map("Device Model") @db.NVarChar(255)
+   Service_Access_ID                 String?   @map("Service Access ID") @db.NVarChar(255)
+   Consolidated_Reason_Code          String?   @map("Consolidated Reason Code") @db.NVarChar(255)
+   Primary_Flag                      String?   @map("Primary Flag") @db.NVarChar(255)
+   Wireless_Rate_Plan                String?   @map("Wireless Rate Plan") @db.NVarChar(255)
+   DTV_Indicator                     String?   @map("DTV Indicator") @db.NVarChar(255)
+   IPTV_Indicator                    String?   @map("IPTV Indicator") @db.NVarChar(255)
+   Wireless_Indicator                String?   @map("Wireless Indicator") @db.NVarChar(255)
+   VOIP_Indicator                    String?   @map("VOIP Indicator") @db.NVarChar(255)
+   OTT_Indicator                     String?   @map("OTT Indicator") @db.NVarChar(255)
+   Internet_Indicator                String?   @map("Internet Indicator") @db.NVarChar(255)
+   AT_T_TV_Indicator                 String?   @map("AT T TV Indicator") @db.NVarChar(255)
+   Detailed_Footprint_Indicator      String?   @map("Detailed Footprint Indicator") @db.NVarChar(255)
+   Rate_Plan_Group                   String?   @map("Rate Plan Group") @db.NVarChar(255)
+   Migrated_BAN                      String?   @map("Migrated BAN") @db.NVarChar(255)
+   Migrated_Product_Category_Code    String?   @map("Migrated Product Category Code") @db.NVarChar(255)
+   Migrated_Disconnect_Date          String?   @map("Migrated Disconnect Date") @db.NVarChar(255)
+   Installment_Plan                  String?   @map("Installment Plan") @db.NVarChar(255)
+   Contract_Type_Code                String?   @map("Contract Type Code") @db.NVarChar(255)
+   Receiver_Quantity                 String?   @map("Receiver Quantity") @db.NVarChar(255)
+   Non_Osprey_10Ft_First_Stream_Date String?   @map("Non Osprey 10Ft First Stream Date") @db.NVarChar(255)
+   Non_10Ft_First_Stream_Date        String?   @map("Non 10Ft First Stream Date") @db.NVarChar(255)
+   Non_10Ft_Device_Type              String?   @map("Non 10Ft Device Type") @db.NVarChar(255)
+   HBO_Indicator                     String?   @map("HBO Indicator") @db.NVarChar(255)
+   HBO_Max_Product_Category_Code     String?   @map("HBO Max Product Category Code") @db.NVarChar(255)
+   HBO_Max_First_login_Date          String?   @map("HBO Max First login Date") @db.NVarChar(255)
+   Selling_Tier                      String?   @map("Selling Tier") @db.NVarChar(255)
+   Previous_Product_Description      String?   @map("Previous Product Description") @db.NVarChar(255)
+   Fiber_Indicator                   String?   @map("Fiber Indicator") @db.NVarChar(255)
+   Shipping_Tracking_Number          String?   @map("Shipping Tracking Number") @db.NVarChar(255)
+   DVR_Type                          String?   @map("DVR Type") @db.NVarChar(255)
+   Reconnect_Product_Category_Code   String?   @map("Reconnect Product Category Code") @db.NVarChar(255)
+   Reconnect_Posted_Date             String?   @map("Reconnect Posted Date") @db.NVarChar(255)
+   External_Order_ID                 String?   @map("External Order ID") @db.NVarChar(255)
+   Bolt_On                           String?   @map("Bolt On") @db.NVarChar(255)
 
    @@ignore
 }
@@ -15367,6 +15546,70 @@ model pp_LeadProspect {
    LastUpdatedDate         DateTime  @db.DateTime
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model providerinstallstemp {
+   InSeq           Int
+   ProviderKey     String    @db.UniqueIdentifier
+   Account         String    @db.VarChar(50)
+   ProductKey      String    @db.UniqueIdentifier
+   WorkOrder       String?   @db.VarChar(50)
+   OrderNumber     String?   @db.VarChar(50)
+   StatusKey       String?   @db.UniqueIdentifier
+   ProviderStatus  String?   @db.VarChar(50)
+   InstallOn       DateTime? @db.Date
+   DisconnectOn    DateTime? @db.Date
+   CancelOn        DateTime? @db.Date
+   CancelReason    String?   @db.VarChar(255)
+   ProductType     String?   @db.VarChar(50)
+   ProductSubType  String?   @db.VarChar(50)
+   Lines           Int?
+   Package         String?   @db.VarChar(255)
+   PackageSub      String?   @db.VarChar(255)
+   ImportId        Int?
+   UpdateImportId  Int?
+   CreatedOn       DateTime? @db.DateTime
+   ModifiedOn      DateTime? @db.DateTime
+   OrderDate       DateTime  @db.Date
+   PaymentImportId Int?
+   Modifier        String?   @db.VarChar(50)
+   Comment         String?   @db.VarChar(255)
+   CustFirstName   String?   @db.VarChar(100)
+   CustLastName    String?   @db.VarChar(100)
+   CustEmail       String?   @db.VarChar(100)
+   CustPhone       String?   @db.VarChar(50)
+   CustAddress     String?   @db.VarChar(255)
+   CustCity        String?   @db.VarChar(100)
+   CustState       String?   @db.VarChar(50)
+   CustZip         String?   @db.VarChar(50)
+   LinesInstalled  Int?
+   ProviderSalesId Int?
+   DataSource      String?   @db.VarChar(20)
+   Reserve1        String?   @db.VarChar(50)
+   Reserve2        String?   @db.VarChar(50)
+   Reserve3        String?   @db.VarChar(50)
+   Reserve4        String?   @db.VarChar(50)
+   CustAddress2    String?   @db.VarChar(255)
+   InKey           String?   @db.UniqueIdentifier
+   TransId         Int?
+
+   @@ignore
+}
+
+model ScoreCalc {
+   ScoKey     String?   @db.UniqueIdentifier
+   ScoSeq     Int       @default(autoincrement())
+   RefKey     String    @db.VarChar(50)
+   RefType    Int?      @db.TinyInt
+   ModifierId String    @db.VarChar(50)
+   PeriodKey  String    @db.UniqueIdentifier
+   ScoreName  String    @db.VarChar(50)
+   ScoreValue String?   @db.VarChar(50)
+   ScoreJson  String?   @db.VarChar(4000)
+   CreatedOn  DateTime? @default(now(), map: "DF__ScoreCalc__Creat__15BFD22D") @db.DateTime
+
+   @@id([RefKey, ModifierId, PeriodKey, ScoreName], map: "PK_ScoreCalc")
+}
+
 model LdRule {
    id        String   @id @unique @default(nanoid())
    createdAt DateTime @default(now())
@@ -15723,6 +15966,7 @@ model LdLeadNotificationAttempt {
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
 
+   num     Int
    message String
 }
 
@@ -15740,6 +15984,7 @@ model LdLeadEscalation {
    UserKey String? @db.UniqueIdentifier
    user    Users?  @relation(fields: [UserKey], references: [UserKey])
 
+   num     Int
    message String
 }
 
