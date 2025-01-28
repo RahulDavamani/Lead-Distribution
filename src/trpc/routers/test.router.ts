@@ -1,23 +1,30 @@
 import { procedure, router } from '../server';
-import { scheduleCallback } from './lead/helpers/scheduleCallback';
 
 export const testRouter = router({
 	test: procedure.query(async () => {
-		const leads = await prisma.ldLead.findMany({
-			where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { gt: new Date() } } } },
-			select: {
-				ProspectKey: true,
-				notificationProcesses: {
-					orderBy: { createdAt: 'desc' },
-					take: 1,
-					select: { createdAt: true }
-				}
-			}
-		});
-		for (const { ProspectKey, notificationProcesses } of leads) {
-			scheduleCallback(ProspectKey, new Date(notificationProcesses[0].createdAt.getTime() + 1000), undefined);
-		}
-
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { notificationProcesses: { some: { callbackNum: 0, status: 'ACTIVE' } } },
+		// 	select: { ProspectKey: true }
+		// });
+		// console.log(leads.length);
+		// for (const { ProspectKey } of leads) {
+		// 	console.log(ProspectKey);
+		// 	requeueLead(ProspectKey, 'A');
+		// }
+		// const leads = await prisma.ldLead.findMany({
+		// 	where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { gt: new Date() } } } },
+		// 	select: {
+		// 		ProspectKey: true,
+		// 		notificationProcesses: {
+		// 			orderBy: { createdAt: 'desc' },
+		// 			take: 1,
+		// 			select: { createdAt: true }
+		// 		}
+		// 	}
+		// });
+		// for (const { ProspectKey, notificationProcesses } of leads) {
+		// 	scheduleCallback(ProspectKey, new Date(notificationProcesses[0].createdAt.getTime() + 1000), undefined);
+		// }
 		// const leads = (
 		// 	await prisma.ldLead.findMany({
 		// 		select: {
@@ -75,7 +82,6 @@ export const testRouter = router({
 		// 	console.log(i);
 		// 	i++;
 		// }
-
 		// const oldLeads = await prisma.ldLead.findMany({
 		// 	where: { notificationProcesses: { some: { status: 'SCHEDULED', createdAt: { lt: new Date() } } } },
 		// 	select: { ProspectKey: true }

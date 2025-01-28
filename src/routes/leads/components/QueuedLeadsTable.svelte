@@ -320,7 +320,7 @@
 						<div>{prospect.CustomerFirstName ?? ''} {prospect.CustomerLastName ?? ''}</div>
 						<div class="text-xs">{prospect.Address ?? ''} {prospect.ZipCode ?? ''}</div>
 					</td>
-					<td>{company?.CompanyName ?? 'All'} </td>
+					<td>{company?.CompanyName ?? 'All'} {notificationProcesses[0]?.status}</td>
 					<td>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[0]}</div>
 						<div class="font-semibold whitespace-nowrap">{notificationProcessName[1]}</div>
