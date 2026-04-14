@@ -26,7 +26,7 @@ export const requeueLead = async (ProspectKey: string, UserKey?: string) => {
 		.catch(prismaErrorHandler);
 
 	// Log Requeue
-	const log = `Lead ${notificationProcesses.length === 0 ? 'queued' : 'requeued'} by ${UserKey ? await getUserStr(UserKey) : 'GHL'}`;
+	const log = `Lead ${notificationProcesses.length === 0 ? 'queued' : 'requeued'} `;
 	await updateLead({ log: { log }, isPicked: false });
 
 	// Rule Not Found / Inactive
