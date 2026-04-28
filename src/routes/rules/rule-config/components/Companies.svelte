@@ -82,7 +82,7 @@
 									<Flatpickr
 										placeholder="Choose Time"
 										class="input input-bordered input-sm cursor-pointer text-center w-24"
-										value={moment.tz(workingHour.start, timezone).clone().tz(moment.tz.guess(), true).toDate()}
+										value={moment(moment.tz(workingHour.start, timezone).clone().tz(moment.tz.guess(), true).toDate()).format('HH:mm')}
 										on:close={(e) => {
 											$ruleConfig.rule.companies[i].workingHours[j].start = moment
 												.tz(e.detail[0][0].toLocaleString(), 'M/D/YYYY, h:mm:ss A', timezone)
@@ -98,7 +98,7 @@
 									<Flatpickr
 										placeholder="Choose Time"
 										class="input input-bordered input-sm cursor-pointer text-center w-24"
-										value={moment.tz(workingHour.end, timezone).clone().tz(moment.tz.guess(), true).toDate()}
+										value={moment(moment.tz(workingHour.end, timezone).clone().tz(moment.tz.guess(), true).toDate()).format('HH:mm')}
 										on:close={(e) => {
 											$ruleConfig.rule.companies[i].workingHours[j].end = moment
 												.tz(e.detail[0][0].toLocaleString(), 'M/D/YYYY, h:mm:ss A', timezone)
